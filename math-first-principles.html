@@ -217,7 +217,10 @@
         <a href="result-provenance.html">provenance</a>
         <a href="#problem">problem</a>
         <a href="#math">core math</a>
+        <a href="#laws">laws</a>
         <a href="#serving">serving math</a>
+        <a href="#proofs">why it works</a>
+        <a href="#training">training math</a>
         <a href="#papers">per source</a>
         <a href="#experiments">what we ran</a>
         <a href="#goal">end goal</a>
@@ -302,6 +305,39 @@ append token and repeat</div>
         </div>
       </section>
 
+      <section id="laws" class="panel wrap">
+        <div class="bug">invariants</div>
+        <h2>The whole lab is governed by a few conservation laws.</h2>
+        <p class="lead">
+          Most inference papers feel different because they use different words:
+          kernels, pages, engines, routers, caches, adapters, endpoints. Under
+          the names, they are moving the same three quantities: arithmetic,
+          bytes, and waiting time.
+        </p>
+        <div class="table">
+          <div class="row">
+            <b>Arithmetic cannot disappear</b>
+            <span>For a fixed model and output, some number of dot products must happen. Optimizations reduce repeated work, combine work, or execute the same work more efficiently.</span>
+            <span>KV cache removes old K/V recomputation. Speculative decoding reduces expensive target-model calls only when verification accepts enough proposed tokens.</span>
+          </div>
+          <div class="row">
+            <b>Bytes decide what arithmetic is possible</b>
+            <span>The GPU cannot compute with numbers it cannot load or store. Weight bytes, KV bytes, activation bytes, and temporary buffers compete for the same memory.</span>
+            <span>Quantization lowers bytes per number. PagedAttention lowers wasted KV slots. Admission control stops new work before memory failure.</span>
+          </div>
+          <div class="row">
+            <b>Waiting grows when demand exceeds service</b>
+            <span>If requests arrive faster than the runtime completes token work, the queue grows. More batching helps until memory, scheduling, or latency becomes the next limit.</span>
+            <span>This is why p95 latency, queue wait, and TTFT matter more than average tokens/sec alone.</span>
+          </div>
+          <div class="row">
+            <b>Approximation buys capacity with error risk</b>
+            <span>Lower precision, quantized weights, quantized KV, draft models, and low-rank adapters all replace a larger or more exact computation with a cheaper approximation.</span>
+            <span>The mathematical question is always: did the approximation preserve the decision we care about?</span>
+          </div>
+        </div>
+      </section>
+
       <section id="serving" class="panel wrap">
         <div class="bug">serving math</div>
         <h2>Inference optimization works by changing which arithmetic is repeated, stored, batched, or skipped.</h2>
@@ -357,6 +393,81 @@ layers * 2(K and V) * positions * KV_heads * head_dim * active_sequences * bytes
             <b>Queue control</b>
             <span>If arrivals are faster than service, waiting grows without bound.</span>
             <span>Rate limits, admission caps, timeouts, and retry budgets are mathematical controls around finite service rate.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="proofs" class="panel wrap">
+        <div class="bug">why it works</div>
+        <h2>Each optimization has a simple mathematical reason, and a simple failure mode.</h2>
+        <div class="table">
+          <div class="row">
+            <b>KV cache proof sketch</b>
+            <span>Without cache, decode step t can feed the whole prefix again, recreating K and V for positions 1 through t. With cache, it computes K and V only for the new token and reads old K/V rows.</span>
+            <span>It works because prior-token K/V values are deterministic functions of fixed weights and prior hidden states. It fails as a memory optimization when stored KV becomes the bottleneck.</span>
+          </div>
+          <div class="row">
+            <b>PagedAttention proof sketch</b>
+            <span>Attention needs logical order, not contiguous physical addresses. If a block table maps logical block i to physical block p, the same K/V rows can be read in the same mathematical order.</span>
+            <span>It works by lowering fragmentation. It can fail to improve latency if block management overhead dominates or memory was not the limiting resource.</span>
+          </div>
+          <div class="row">
+            <b>Prefix cache proof sketch</b>
+            <span>For identical token prefix and identical model state, the prefill K/V tensors for that prefix are identical. Reusing them gives the same downstream computation from the shared boundary.</span>
+            <span>It fails when text looks similar but token IDs, chat template markers, system prompt, or cache boundary differ.</span>
+          </div>
+          <div class="row">
+            <b>Quantization proof sketch</b>
+            <span>A matrix product uses stored numbers. Quantization replaces each high-precision value with a lower-byte code plus scale information, approximating the original matrix.</span>
+            <span>It works when memory bandwidth or fit is limiting and the approximation keeps logits close enough. It fails when dequantization overhead or numerical error outweighs the byte savings.</span>
+          </div>
+          <div class="row">
+            <b>Speculative decoding proof sketch</b>
+            <span>The target model defines the final distribution. A draft model proposes a short suffix. The target model checks that suffix in fewer expensive passes than independent target decode steps.</span>
+            <span>It works when expected accepted tokens per target pass is high. It fails when the draft model is too slow or often proposes tokens the target rejects.</span>
+          </div>
+          <div class="row">
+            <b>Continuous batching proof sketch</b>
+            <span>GPU matrix operations are efficient when shapes are large enough to occupy parallel hardware. Batching collects token work from many requests into fewer, fuller steps.</span>
+            <span>It works until batch growth increases queue wait, KV memory, or tail latency more than it increases useful throughput.</span>
+          </div>
+          <div class="row">
+            <b>TensorRT-LLM proof sketch</b>
+            <span>An engine can specialize graph execution around model shape, precision, kernels, and hardware. It reduces overhead and improves kernel selection for repeated production workloads.</span>
+            <span>It fails as a practical choice when build time, operational complexity, or model-change frequency is larger than the runtime savings.</span>
+          </div>
+          <div class="row">
+            <b>Overload control proof sketch</b>
+            <span>A server with service rate mu cannot sustain arrival rate lambda above mu. Once lambda exceeds mu for long enough, queue length and waiting time grow.</span>
+            <span>It works by shaping arrivals to stay below measured capacity. It fails when retries ignore backoff and create more arrivals than the system can serve.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="training" class="panel wrap">
+        <div class="bug">adapter math</div>
+        <h2>Unsloth belongs in this study because changing behavior is also a constrained linear-algebra problem.</h2>
+        <p class="lead">
+          Serving uses fixed weights. Fine-tuning changes the function. The
+          mathematical question is how to change behavior without updating every
+          parameter of a large model. LoRA answers by restricting the update to
+          a low-rank direction.
+        </p>
+        <div class="formula">full fine-tune:       y = x W'       where W' has all weights trainable
+LoRA fine-tune:       y = x (W + A B)
+trainable params:     rank * (input_dim + output_dim), not input_dim * output_dim</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Why LoRA can work</b>
+            <span>If the needed behavior change lies near a low-dimensional direction, a low-rank update can move the model enough without rewriting the whole matrix.</span>
+          </div>
+          <div class="card trade">
+            <b>Why tiny SFT is bounded</b>
+            <span>A few steps can prove the training path, adapter files, reload, and inference contract. It cannot prove robust quality across tasks.</span>
+          </div>
+          <div class="card warn">
+            <b>Why GRPO is fragile in tiny runs</b>
+            <span>Reward optimization depends on comparing grouped completions. If the reward is narrow or the run is tiny, the model can learn the probe shape more than the general skill.</span>
           </div>
         </div>
       </section>
@@ -464,6 +575,43 @@ layers * 2(K and V) * positions * KV_heads * head_dim * active_sequences * bytes
           <div class="card trade">
             <b>Next after host proof</b>
             <span>Prompt-shape pressure, quantized serving variant, TensorRT-LLM build payback, JetStream cloud gate, and overload controls anchored to measured capacity.</span>
+          </div>
+        </div>
+        <div class="table" style="margin-top:14px">
+          <div class="row">
+            <b>Tokenizer and template runs</b>
+            <span>Question: how does text become a token bill before any model math runs?</span>
+            <span>Learning: prompt engineering is also cost engineering because templates, roles, tool text, and RAG chunks change prefill length and cache reuse.</span>
+          </div>
+          <div class="row">
+            <b>Cache strategy runs</b>
+            <span>Question: when does storing past attention state beat recomputing it?</span>
+            <span>Learning: cache moves cost from arithmetic into memory. That is good until KV memory controls capacity.</span>
+          </div>
+          <div class="row">
+            <b>Quantization-fit runs</b>
+            <span>Question: does fewer bytes per number let the model or workload fit?</span>
+            <span>Learning: fit is a separate claim from speed. A quantized model can fit without being faster for a given workload.</span>
+          </div>
+          <div class="row">
+            <b>Speculative-decoding runs</b>
+            <span>Question: can cheap draft computation replace enough expensive target decode steps?</span>
+            <span>Learning: acceptance rate is the center. Draft speed alone is not enough.</span>
+          </div>
+          <div class="row">
+            <b>vLLM pressure runs</b>
+            <span>Question: which serving resource hits first under concurrency?</span>
+            <span>Learning: active sequences, prompt tokens, output length, batch-token budget, and KV blocks are different pressure sources.</span>
+          </div>
+          <div class="row">
+            <b>Unsloth adapter runs</b>
+            <span>Question: can Colab create, save, reload, and probe LoRA artifacts?</span>
+            <span>Learning: yes for workflow proof. General quality needs longer held-out evaluation and must not be confused with setup success.</span>
+          </div>
+          <div class="row">
+            <b>Matched TGI/vLLM host run</b>
+            <span>Question: on the same host and workload, how do the runtimes differ in TTFT, ITL, throughput, queue wait, and failure behavior?</span>
+            <span>Learning: this is the locked capstone because runtime speed claims require same-hardware evidence.</span>
           </div>
         </div>
       </section>
