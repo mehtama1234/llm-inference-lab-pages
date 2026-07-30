@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Source-Driven Run Backlog: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1080px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 124px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card strong {
+        display: block;
+        color: var(--ink);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .run {
+        display: grid;
+        grid-template-columns: 220px 1fr 1fr 1fr 1fr;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .run b { color: var(--ink); }
+      .run span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .run .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .run.ready { border-color: rgba(121, 212, 147, .45); }
+      .run.post { border-color: rgba(232, 166, 75, .45); }
+      .run.locked { border-color: rgba(219, 101, 85, .45); }
+      @media (max-width: 1150px) {
+        .grid, .run { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">source-driven run backlog</div>
+        <h1>The sources agree on the next runs: finish the host proof, then reanchor the second-order experiments.</h1>
+        <p>
+          This page answers what the identified inference references collectively
+          suggest we should run. The answer is not a longer random Colab list.
+          The shared pattern is a ladder: request shape, model-level knobs, KV
+          memory, scheduler pressure, runtime health, deployment overhead, and
+          overload controls tied to one workload.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="current-status.html">current status</a>
+        <a href="experiment-learning-synthesis.html">learning synthesis</a>
+        <a href="next-runs-board.html">next runs</a>
+        <a href="capstone-finish-line.html">finish line</a>
+        <a href="host-replay-runbook.html">host replay</a>
+        <a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>
+        <a href="paper-mechanism-atlas.html">paper atlas</a>
+        <a href="mechanism-derivation-workbook.html">derivation workbook</a>
+        <a href="#state">state</a>
+        <a href="#primary">primary</a>
+        <a href="#covered">covered</a>
+        <a href="#posthost">post-host</a>
+        <a href="#external">external</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="state" class="panel wrap">
+        <div class="bug">source state</div>
+        <h2>The reference set is broad and currently healthy.</h2>
+        <p class="lead">
+          The local source audit checked 56 URLs across nine source families:
+          Hugging Face Transformers, Hugging Face TGI, Hugging Face model/blog
+          material, vLLM, NVIDIA/TensorRT-LLM, Google/JetStream, LMCache,
+          Modular, and research papers. All 56 checked URLs were reachable in
+          the latest audit.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>URLs checked</b><strong>56 / 56</strong><span>All source references reachable in the audit snapshot.</span></div>
+          <div class="card measure"><b>Source families</b><strong>9</strong><span>The backlog is cross-source, not one vendor path.</span></div>
+          <div class="card trade"><b>Backlog rows</b><strong>8</strong><span>Cross-source experiments ranked by evidence value.</span></div>
+          <div class="card warn"><b>Uncovered top gate</b><strong>host</strong><span>The matched TGI/vLLM runtime proof is still first.</span></div>
+        </div>
+        <div class="formula">shared source lesson:
+defensible inference optimization is a chain:
+request shape
+-> model-level knobs
+-> KV/cache memory pressure
+-> serving scheduler behavior
+-> runtime health and overload controls
+-> bounded production decision</div>
+      </section>
+
+      <section id="primary" class="panel wrap">
+        <div class="bug">primary run</div>
+        <h2>The first source-driven run is still the matched TGI/vLLM same-workload proof.</h2>
+        <div class="run locked">
+          <b>Matched serving-runtime proof</b>
+          <span><span class="tag">source families</span><br />Hugging Face TGI, vLLM, OpenAI-compatible clients, production overload controls.</span>
+          <span><span class="tag">question</span><br />On the same host, model, workload, client, GPU inventory, and campaign ID, which runtime behaves better and where?</span>
+          <span><span class="tag">command</span><br /><code>bash run_complete_gpu_host_campaign.sh</code></span>
+          <span><span class="tag">unlocks</span><br />Bounded TGI/vLLM decision for TTFT, completion latency, token rate, and operational evidence.</span>
+        </div>
+        <p>
+          This run has priority because it is the first missing artifact that
+          can turn the capstone from a locked comparison into a measured runtime
+          recommendation. Colab cannot substitute for it because TGI requires a
+          Docker-capable NVIDIA host for the fair comparison lane.
+        </p>
+      </section>
+
+      <section id="covered" class="panel wrap">
+        <div class="bug">covered by current artifacts</div>
+        <h2>Several source ideas are already covered enough for learning, but should be reanchored after host proof.</h2>
+        <div class="run ready">
+          <b>Observability trace</b>
+          <span><span class="tag">theme</span><br />Logs, health, queue state, token counters, and latency histograms are part of the result.</span>
+          <span><span class="tag">current state</span><br />Local observability trace artifacts are present.</span>
+          <span><span class="tag">claim</span><br />A speed number without health and queue evidence is weak.</span>
+          <span><span class="tag">reanchor</span><br />Require TGI and vLLM host returns to include metrics snapshots.</span>
+        </div>
+        <div class="run ready">
+          <b>Model cache reproducibility</b>
+          <span><span class="tag">theme</span><br />Model ID, revision, cache path, storage, and cold download state affect reproducibility.</span>
+          <span><span class="tag">current state</span><br />Local model-download/cache planning artifacts are present.</span>
+          <span><span class="tag">claim</span><br />Cold setup is a separate operational cost from steady-state inference.</span>
+          <span><span class="tag">reanchor</span><br />Host result must record model ID, revision, and cache/download state.</span>
+        </div>
+        <div class="run ready">
+          <b>Topology planner</b>
+          <span><span class="tag">theme</span><br />Tensor parallelism and placement add communication terms.</span>
+          <span><span class="tag">current state</span><br />Topology, pipeline, and shard-flow planners are present.</span>
+          <span><span class="tag">claim</span><br />Single-GPU results do not automatically predict multi-GPU behavior.</span>
+          <span><span class="tag">reanchor</span><br />Run after single-host proof unless the chosen model cannot fit on one GPU.</span>
+        </div>
+        <div class="run ready">
+          <b>Cost and payback accounting</b>
+          <span><span class="tag">theme</span><br />Setup cost, warmup cost, memory cost, and capacity headroom decide whether an optimization is worth using.</span>
+          <span><span class="tag">current state</span><br />Compile payback, cost headroom, and capacity planner artifacts are present.</span>
+          <span><span class="tag">claim</span><br />The fastest steady state can still be wrong if payback never arrives.</span>
+          <span><span class="tag">reanchor</span><br />Use returned host throughput and TensorRT build time when available.</span>
+        </div>
+      </section>
+
+      <section id="posthost" class="panel wrap">
+        <div class="bug">post-host followups</div>
+        <h2>These runs are meaningful after the main host comparison gives a baseline.</h2>
+        <div class="run post">
+          <b>Prompt shape under pressure</b>
+          <span><span class="tag">shared theme</span><br />Chat templates, tool fields, and RAG context consume tokens and change prefix-cache reuse.</span>
+          <span><span class="tag">current evidence</span><br />Prompt traces and vLLM prefix-cache probes are present.</span>
+          <span><span class="tag">next run</span><br />Extend shared workload with prompt-shape variants, then rerun host campaign.</span>
+          <span><span class="tag">why later</span><br />Cross-runtime prompt-shape claims need the TGI/vLLM host baseline first.</span>
+        </div>
+        <div class="run post">
+          <b>Quantization as fit-vs-speed policy</b>
+          <span><span class="tag">shared theme</span><br />Lower precision can solve memory fit while not necessarily improving latency.</span>
+          <span><span class="tag">current evidence</span><br />HF quantization fit and memory ledger artifacts are present.</span>
+          <span><span class="tag">next run</span><br />Add quantized runtime launch variants after host proof.</span>
+          <span><span class="tag">why later</span><br />Serving-speed claims need the runtime boundary, not only model-loading proof.</span>
+        </div>
+        <div class="run post">
+          <b>Streaming UX vs completion time</b>
+          <span><span class="tag">shared theme</span><br />Streaming changes perceived latency before it changes total compute.</span>
+          <span><span class="tag">current evidence</span><br />HF/vLLM streaming and client load-control artifacts are present.</span>
+          <span><span class="tag">next run</span><br />Compare host TGI/vLLM streaming rows after return.</span>
+          <span><span class="tag">why later</span><br />TTFT and full completion tradeoffs are runtime-specific.</span>
+        </div>
+        <div class="run post">
+          <b>Overload controls</b>
+          <span><span class="tag">shared theme</span><br />Admission, retries, cancellation, breakers, rate limits, and autoscaling turn raw capacity into service behavior.</span>
+          <span><span class="tag">current evidence</span><br />Local control simulations are present.</span>
+          <span><span class="tag">next run</span><br />Rerun control simulations with returned host capacity anchors.</span>
+          <span><span class="tag">why later</span><br />Controls need a measured capacity knee to be concrete.</span>
+        </div>
+      </section>
+
+      <section id="external" class="panel wrap">
+        <div class="bug">external gated runs</div>
+        <h2>TensorRT-LLM and JetStream are valuable, but they should not distract from the host proof.</h2>
+        <div class="run locked">
+          <b>TensorRT-LLM build payback</b>
+          <span><span class="tag">surface</span><br />NVIDIA Docker host with TensorRT-LLM container support.</span>
+          <span><span class="tag">command</span><br /><code>bash run_tensorrt_llm_container_benchmark.sh</code></span>
+          <span><span class="tag">question</span><br />At what request volume does engine build/setup pay back?</span>
+          <span><span class="tag">order</span><br />Run after TGI/vLLM baseline, because payback needs a baseline.</span>
+        </div>
+        <div class="run locked">
+          <b>JetStream/GKE deployment gate</b>
+          <span><span class="tag">surface</span><br />Authenticated GCP project, quota, cluster, service, endpoint, and model bucket.</span>
+          <span><span class="tag">command</span><br /><code>PROJECT_ID=&lt;project&gt; MODEL_BUCKET=&lt;bucket&gt; bash run_jetstream_gke_handoff.sh</code></span>
+          <span><span class="tag">question</span><br />What extra operational work appears when moving from GPU VM to managed cloud serving?</span>
+          <span><span class="tag">order</span><br />Run as a cloud portability proof after the local/VM runtime claim is bounded.</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
