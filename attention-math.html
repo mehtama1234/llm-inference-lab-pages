@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Attention Math: LLM Inference</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 980px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 900px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 920px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .step {
+        display: grid;
+        grid-template-columns: 200px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .step b { color: var(--ink); }
+      .step span { color: var(--muted); font-size: 14px; }
+      .diagram {
+        min-height: 340px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        overflow: hidden;
+      }
+      svg { width: 100%; height: 100%; display: block; }
+      .node { fill: #132126; stroke: #31484e; stroke-width: 1.5; }
+      .node2 { fill: #10272b; stroke: #3c6a72; stroke-width: 1.5; }
+      .wire { fill: none; stroke: #45676f; stroke-width: 2; }
+      .label { fill: var(--ink); font: 13px var(--mono); }
+      .tiny { fill: var(--muted); font: 11px var(--mono); }
+      .cyan { fill: var(--cyan); }
+      .green { fill: var(--green); }
+      .amber { fill: var(--amber); }
+      .red { fill: var(--red); }
+      @media (max-width: 900px) {
+        .grid, .two, .step { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">attention math deep dive</div>
+        <h1>Attention is a learned routing table built from dot products.</h1>
+        <p>
+          This page slows down the core transformer calculation. It explains
+          what Q, K, V, masks, softmax, heads, logits, sampling, prefill, decode,
+          and KV cache mean mathematically, then connects that math to the
+          serving experiments.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="big-picture-inference.html">big picture</a>
+        <a href="mechanisms.html">mechanisms</a>
+        <a href="production-systems.html">production</a>
+        <a href="#frame">frame</a>
+        <a href="#vectors">vectors</a>
+        <a href="#qkv">QKV</a>
+        <a href="#softmax">softmax</a>
+        <a href="#heads">heads</a>
+        <a href="#decode">decode</a>
+        <a href="#sampling">sampling</a>
+        <a href="#sources">sources</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="frame" class="panel wrap">
+        <div class="bug">core idea</div>
+        <h2>A transformer layer lets each token choose what previous tokens to read.</h2>
+        <p class="lead">
+          The model does not store grammar rules as text. It stores matrices.
+          Those matrices turn each token vector into questions, labels, and
+          content. A token asks a question with its query vector. Every visible
+          token answers with a key vector. The dot product decides how strongly
+          the current token reads each value vector.
+        </p>
+        <div class="formula">Attention(Q, K, V) = softmax((Q K^T + mask) / sqrt(d_head)) V</div>
+        <div class="grid">
+          <div class="card measure">
+            <b>Q is the read request</b>
+            <span>For the current position, Q says what pattern this position is looking for.</span>
+          </div>
+          <div class="card measure">
+            <b>K is the address label</b>
+            <span>For each visible position, K says what kind of information that position can offer.</span>
+          </div>
+          <div class="card measure">
+            <b>V is the payload</b>
+            <span>V is the vector content that gets mixed into the current position after the weights are computed.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="vectors" class="panel wrap">
+        <div class="bug">vector basis</div>
+        <h2>Before attention, every token is just a vector plus position information.</h2>
+        <div class="two">
+          <div>
+            <p>
+              Tokenization turns text into integer IDs. The embedding table maps
+              each ID to a vector. Position information tells the model where
+              that token sits in the sequence. After that, each layer updates
+              every position's vector.
+            </p>
+            <div class="formula">x_t = token id at position t
+h_t = E[x_t] + position(t)</div>
+            <p>
+              The vector is not a human-readable meaning. It is a list of
+              learned coordinates. Matrix multiplication rotates, stretches, and
+              combines those coordinates into new coordinate systems where the
+              next operation becomes easier.
+            </p>
+          </div>
+          <div class="diagram" aria-label="Token to vector diagram">
+            <svg viewBox="0 0 720 340" role="img">
+              <path class="wire" d="M80 95 H620" />
+              <rect class="node2" x="35" y="58" width="96" height="74" rx="8" />
+              <text class="label" x="62" y="90">text</text>
+              <text class="tiny" x="50" y="110">"cache"</text>
+              <rect class="node" x="170" y="58" width="112" height="74" rx="8" />
+              <text class="label" x="198" y="90">token id</text>
+              <text class="tiny" x="202" y="110">1838</text>
+              <rect class="node" x="322" y="58" width="120" height="74" rx="8" />
+              <text class="label" x="350" y="90">lookup</text>
+              <text class="tiny" x="348" y="110">E[1838]</text>
+              <rect class="node2" x="490" y="58" width="130" height="74" rx="8" />
+              <text class="label" x="518" y="90">vector</text>
+              <text class="tiny" x="512" y="110">h_t in R^d</text>
+              <text class="tiny cyan" x="64" y="185">All later work is arithmetic on these vectors.</text>
+              <text class="tiny" x="64" y="210">The serving system measures how many such positions exist and how often they are recomputed.</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section id="qkv" class="panel wrap">
+        <div class="bug">Q K V</div>
+        <h2>Q, K, and V are three learned projections of the same hidden states.</h2>
+        <div class="formula">H has shape: tokens x model_dim
+Q = H W_Q
+K = H W_K
+V = H W_V
+scores = Q K^T / sqrt(d_head)</div>
+        <div class="step">
+          <b>Projection</b>
+          <span>Each matrix creates a different view of the same token states.</span>
+          <span>This lets the model separate "what I need", "what I contain", and "what content I should pass forward".</span>
+        </div>
+        <div class="step">
+          <b>Similarity</b>
+          <span>For query i and key j, the score is <code>q_i . k_j</code>.</span>
+          <span>A large score means the learned coordinates line up. The current token will read more from that prior token after softmax.</span>
+        </div>
+        <div class="step">
+          <b>Scaling</b>
+          <span>The division by <code>sqrt(d_head)</code> keeps dot products from growing too large as vector width increases.</span>
+          <span>Without scaling, softmax can become too sharp early, making gradients and probabilities harder to control.</span>
+        </div>
+        <div class="step">
+          <b>Causal mask</b>
+          <span>For generation, position i cannot read j if j is in the future.</span>
+          <span>The mask changes illegal scores to a very negative value before softmax, so future positions get almost no probability mass.</span>
+        </div>
+      </section>
+
+      <section id="softmax" class="panel wrap">
+        <div class="bug">normalization</div>
+        <h2>Softmax turns scores into a distribution over readable positions.</h2>
+        <p class="lead">
+          Scores can be any real numbers. Attention needs nonnegative weights
+          that sum to one so it can make a weighted average of value vectors.
+          Softmax performs that conversion.
+        </p>
+        <div class="formula">stable_softmax(s_i) = exp(s_i - max(s)) / sum_j exp(s_j - max(s))
+attention_output_i = sum_j stable_softmax(score_ij) * v_j</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Why exponentials</b>
+            <span>Exponentials make every readable score positive and amplify differences between scores.</span>
+          </div>
+          <div class="card trade">
+            <b>Why subtract max</b>
+            <span>Subtracting the largest score leaves probabilities unchanged but avoids huge exponentials.</span>
+          </div>
+          <div class="card warn">
+            <b>Failure to watch</b>
+            <span>If scores are too sharp, one token dominates; if too flat, the model mixes too much weakly relevant context.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="heads" class="panel wrap">
+        <div class="bug">multi-head attention</div>
+        <h2>Multiple heads are parallel read patterns, not multiple minds.</h2>
+        <p class="lead">
+          A layer splits the hidden dimension into heads. Each head has its own
+          Q/K/V projections and its own attention weights. The head outputs are
+          concatenated and mixed back into the model dimension.
+        </p>
+        <div class="formula">head_h = softmax(Q_h K_h^T / sqrt(d_head)) V_h
+multi_head = concat(head_1, ..., head_H) W_O</div>
+        <div class="step">
+          <b>Why heads help</b>
+          <span>Different projections let the same token position read different kinds of relationships at once.</span>
+          <span>One head can route nearby syntax, another can route earlier entities, another can route formatting boundaries.</span>
+        </div>
+        <div class="step">
+          <b>Why GQA/MQA matter</b>
+          <span>Grouped-query and multi-query attention reduce the number of K/V heads stored.</span>
+          <span>The query side can stay expressive while KV cache bytes shrink, changing the serving memory bill.</span>
+        </div>
+      </section>
+
+      <section id="decode" class="panel wrap">
+        <div class="bug">prefill and decode</div>
+        <h2>The same attention equation has two very different runtime shapes.</h2>
+        <div class="grid">
+          <div class="card measure">
+            <b>Prefill shape</b>
+            <span>Many prompt tokens enter together. The model computes Q, K, V, scores, and outputs for the prompt positions.</span>
+          </div>
+          <div class="card measure">
+            <b>Decode shape</b>
+            <span>One new token enters. Its query reads cached K/V rows for all visible previous positions.</span>
+          </div>
+          <div class="card method">
+            <b>Cache reason</b>
+            <span>Past K/V rows are deterministic once computed, so storing them avoids repeating old projection work.</span>
+          </div>
+        </div>
+        <div class="formula">without cache over T generated tokens:
+prompt work + growing-prefix recomputation at each decode step
+
+with cache over T generated tokens:
+prompt prefill once + T one-token decode steps + KV memory growth</div>
+        <div class="step">
+          <b>Why TTFT rises with prompt length</b>
+          <span>The first output token cannot appear until prompt prefill has built the hidden state and initial KV cache.</span>
+          <span>Long chat history, tools, and RAG chunks all increase this front-loaded work.</span>
+        </div>
+        <div class="step">
+          <b>Why ITL is a decode metric</b>
+          <span>After the first token, each later streamed token waits for another one-token decode step.</span>
+          <span>That step reads weights and cached K/V, so it is often limited by memory movement and scheduler pressure.</span>
+        </div>
+      </section>
+
+      <section id="sampling" class="panel wrap">
+        <div class="bug">next token choice</div>
+        <h2>Logits are scores; decoding policy decides how scores become text.</h2>
+        <p class="lead">
+          The model ends a step with one score per vocabulary token. Softmax
+          converts those logits into probabilities. The decoding policy decides
+          whether to take the largest probability or sample from a shaped
+          distribution.
+        </p>
+        <div class="formula">p_i = exp(z_i / temperature) / sum_j exp(z_j / temperature)
+top-k: keep only k candidate tokens before renormalizing
+top-p: keep the smallest set whose cumulative probability reaches p</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Greedy</b>
+            <span>Always choose the largest probability. Repeatable, but can be brittle or dull.</span>
+          </div>
+          <div class="card trade">
+            <b>Temperature</b>
+            <span>Lower temperature sharpens choices. Higher temperature spreads probability across more candidates.</span>
+          </div>
+          <div class="card warn">
+            <b>Stop condition</b>
+            <span>The loop ends by stop token, stop string, max token limit, timeout, cancellation, or server policy.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="sources" class="panel wrap">
+        <div class="bug">sources and experiment tie-in</div>
+        <h2>This page is the mathematical base layer under the runtime pages.</h2>
+        <div class="step">
+          <b>Transformer paper</b>
+          <span><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a> gives the scaled dot-product attention formula and the multi-head structure.</span>
+          <span>Our page uses that formula to explain why attention can be parallel in prefill but sequential at the output-token loop.</span>
+        </div>
+        <div class="step">
+          <b>HF cache docs</b>
+          <span><a href="https://huggingface.co/docs/transformers/main/cache_explanation">Hugging Face caching docs</a> explain why autoregressive generation repeats prior-token information unless K/V is stored.</span>
+          <span>Our cache experiments test that mechanism boundary: less recomputation, more memory.</span>
+        </div>
+        <div class="step">
+          <b>HF generation docs</b>
+          <span><a href="https://huggingface.co/docs/transformers/main/generation_strategies">Hugging Face generation strategy docs</a> connect logits, sampling, assisted decoding, and generation policy.</span>
+          <span>Our speculative and sampling probes should be read as decoding-policy experiments, not model-quality proof.</span>
+        </div>
+        <div class="step">
+          <b>Serving pages</b>
+          <span><a href="production-systems.html">production-systems.html</a> and <a href="paper-math-map.html">paper-math-map.html</a> build on this math.</span>
+          <span>TGI, vLLM, TensorRT-LLM, and JetStream change storage, scheduling, kernels, deployment, and evidence boundaries around the same token loop.</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
