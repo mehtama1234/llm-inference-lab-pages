@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Proof Sketches: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1220px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1040px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .proof {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .proof b {
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .proof span { color: var(--muted); font-size: 14px; }
+      @media (max-width: 1000px) {
+        .grid, .proof { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">proof sketches</div>
+        <h1>The mechanisms work only when their mathematical assumptions hold.</h1>
+        <p>
+          This page gives compact proof sketches for the lab's core mechanisms.
+          A proof sketch is not a formal theorem. It is the minimum reasoning
+          needed to know why a method should work, what metric should move, and
+          what condition would make the method fail.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="source-math-deep-dives.html">source math deep dives</a>
+        <a href="formula-sheet.html">formula sheet</a>
+        <a href="experiment-design-calculus.html">experiment design calculus</a>
+        <a href="worked-examples-math.html">worked examples</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="#softmax">softmax</a>
+        <a href="#kv">KV reuse</a>
+        <a href="#paging">paging</a>
+        <a href="#queue">queue</a>
+        <a href="#quant">quantization</a>
+        <a href="#lora">LoRA</a>
+        <a href="#grpo">GRPO</a>
+        <a href="#spec">speculative</a>
+      </div>
+    </div>
+
+    <main>
+      <section class="panel wrap">
+        <div class="bug">reading rule</div>
+        <h2>Every optimization has a conserved object.</h2>
+        <p class="lead">
+          The trick is to find what does not change. KV caching keeps the same
+          keys and values while avoiding recomputation. Paging keeps logical
+          token order while changing physical memory layout. Quantization keeps a
+          close approximation of weights while changing storage. LoRA keeps the
+          base model fixed while changing a low-rank slice of the function.
+        </p>
+        <div class="formula">optimization proof pattern:
+1. name the original computation
+2. name the transformed computation
+3. show which output, order, or decision is preserved
+4. identify the resource term that shrinks
+5. state the assumption required for preservation</div>
+        <div class="grid">
+          <div class="card"><b>Equivalence</b><span>The transformed computation gives the same result, as with exact KV cache reuse.</span></div>
+          <div class="card"><b>Approximation</b><span>The transformed computation is close enough, as with quantized weights.</span></div>
+          <div class="card"><b>Tradeoff</b><span>The transformed system improves one metric while worsening another, as with batching and queue wait.</span></div>
+        </div>
+      </section>
+
+      <section id="softmax" class="panel wrap">
+        <div class="bug">attention scaling</div>
+        <h2>Scaled dot-product attention prevents dimension from controlling softmax sharpness.</h2>
+        <div class="formula">If q_i and k_i have mean 0 and variance 1:
+score = q dot k = sum_i q_i k_i
+Var(score) = d_k
+standard deviation(score) = sqrt(d_k)
+
+scaled score = score / sqrt(d_k)
+standard deviation(scaled score) = 1</div>
+        <div class="proof"><b>why it works</b><span>Without scaling, larger head dimension makes raw scores spread out. Softmax then becomes too sharp, so one token can dominate before the model has learned useful routing. Scaling keeps score magnitude in a range where probabilities can still move.</span></div>
+        <div class="proof"><b>what should move</b><span>The distribution over visible tokens should avoid accidental saturation from dimension alone. The model can still learn sharp attention when useful.</span></div>
+        <div class="proof"><b>break condition</b><span>If the assumed score distribution is already normalized by architecture or training dynamics, the simple variance argument is incomplete; the empirical check is attention entropy and stability, not the formula alone.</span></div>
+      </section>
+
+      <section id="kv" class="panel wrap">
+        <div class="bug">KV cache equivalence</div>
+        <h2>KV caching is exact because previous token hidden states do not change during autoregressive decode.</h2>
+        <div class="formula">At decode step t:
+K_past = [k_1, ..., k_{t-1}]
+V_past = [v_1, ..., v_{t-1}]
+
+recompute path:
+K_all = f_K(h_1, ..., h_t)
+V_all = f_V(h_1, ..., h_t)
+
+cache path:
+K_all = concat(K_past, f_K(h_t))
+V_all = concat(V_past, f_V(h_t))</div>
+        <div class="proof"><b>why it works</b><span>Causal masking means later tokens cannot change the hidden states already computed for earlier positions. If the model weights and prompt prefix are unchanged, the old K/V vectors are identical to what recomputation would produce.</span></div>
+        <div class="proof"><b>resource shift</b><span>Compute shrinks because old K/V projections are not recomputed. Memory grows because old K/V tensors must be retained for every active layer and token.</span></div>
+        <div class="proof"><b>break condition</b><span>Cache reuse is invalid if the prefix, tokenizer, template, weights, adapter, position scheme, or attention mask changes. It is also not a free speedup when memory bandwidth becomes the bottleneck.</span></div>
+      </section>
+
+      <section id="paging" class="panel wrap">
+        <div class="bug">paged memory equivalence</div>
+        <h2>PagedAttention preserves attention inputs by replacing address arithmetic with lookup arithmetic.</h2>
+        <div class="formula">contiguous KV lookup:
+address(token_i) = base + i * stride
+
+paged KV lookup:
+block = floor(i / block_size)
+offset = i mod block_size
+address(token_i) = block_table[block] + offset * stride</div>
+        <div class="proof"><b>why it works</b><span>Attention consumes a sequence of K/V vectors in logical token order. That logical order can be reconstructed from a block table even when physical memory is non-contiguous.</span></div>
+        <div class="proof"><b>resource shift</b><span>Internal fragmentation shrinks because the server allocates blocks closer to actual sequence growth instead of reserving one large future slab.</span></div>
+        <div class="proof"><b>break condition</b><span>The lookup table adds metadata and indirection. Paging helps most when fragmentation, shared prefixes, or variable-length requests are the binding constraint; it is less decisive when compute kernels or client overhead dominate.</span></div>
+      </section>
+
+      <section id="queue" class="panel wrap">
+        <div class="bug">queue stability</div>
+        <h2>Batching helps throughput only while arrival work stays below service capacity.</h2>
+        <div class="formula">Let lambda = request arrival rate
+Let E[S] = average service work per request
+Let mu = available service work per second
+
+stable if:
+lambda * E[S] < mu
+
+waiting grows sharply as utilization rho = lambda * E[S] / mu approaches 1</div>
+        <div class="proof"><b>why it works</b><span>Batching increases effective service capacity by giving the GPU more parallel work per step. That lowers average service time only if batching overhead and memory pressure do not erase the gain.</span></div>
+        <div class="proof"><b>what should move</b><span>Throughput and occupancy should rise. TTFT or tail ITL may rise if prefill bursts and decode streams compete in the same queue.</span></div>
+        <div class="proof"><b>break condition</b><span>At high utilization, small increases in arrivals create large increases in waiting. A system can have impressive tokens/sec and still violate user latency goals.</span></div>
+      </section>
+
+      <section id="quant" class="panel wrap">
+        <div class="bug">quantization error</div>
+        <h2>Quantization is safe only when output error stays smaller than the decision margin.</h2>
+        <div class="formula">quantized layer:
+y = x W
+y_hat = x W_hat
+error_y = y - y_hat = x (W - W_hat)
+
+logit order is preserved between tokens a and b if:
+|error_logit_a - error_logit_b| < original_margin(a, b)</div>
+        <div class="proof"><b>why it works</b><span>If the quantized matrix is close to the original in the directions the activation vector uses, the downstream logits stay close. The likely next token often remains the likely next token.</span></div>
+        <div class="proof"><b>resource shift</b><span>Weight bytes and sometimes bandwidth shrink. Dequantization or less efficient kernels can add compute overhead, so fit improvement is not automatically latency improvement.</span></div>
+        <div class="proof"><b>break condition</b><span>When the model is choosing between tokens with tiny logit margins, small reconstruction errors can flip the decision. Quality must be measured on task prompts, not inferred from byte savings.</span></div>
+      </section>
+
+      <section id="lora" class="panel wrap">
+        <div class="bug">low-rank adaptation</div>
+        <h2>LoRA works when the needed parameter change is low rank or well-approximated by low rank.</h2>
+        <div class="formula">full fine-tune:
+y = x(W + Delta W)
+
+LoRA:
+Delta W = B A
+B shape: output_dim x r
+A shape: r x input_dim
+rank(Delta W) <= r
+
+trainable parameters:
+r * (input_dim + output_dim)</div>
+        <div class="proof"><b>why it works</b><span>If task adaptation mainly needs a small number of directions in activation space, low-rank factors can express the useful movement without updating every weight independently.</span></div>
+        <div class="proof"><b>resource shift</b><span>Optimizer state and gradients shrink because training touches adapter matrices rather than the full base model.</span></div>
+        <div class="proof"><b>break condition</b><span>If the task requires many independent changes across the full matrix, a small rank cannot express the needed update. Raising rank, target modules, or data quality becomes part of the experiment.</span></div>
+      </section>
+
+      <section id="grpo" class="panel wrap">
+        <div class="bug">group-relative reward</div>
+        <h2>GRPO-style training depends on reward differences inside a completion group.</h2>
+        <div class="formula">For prompt x, sample completions y_1 ... y_g
+reward r_i = R(x, y_i)
+group baseline b = mean(r_1 ... r_g)
+advantage A_i = r_i - b
+
+updates increase probability of completions with A_i > 0
+and decrease probability of completions with A_i < 0</div>
+        <div class="proof"><b>why it works</b><span>The group baseline removes prompt-level difficulty and keeps the signal focused on which completion was better relative to siblings for the same prompt.</span></div>
+        <div class="proof"><b>what should move</b><span>Reward distribution, format adherence, and invalid reward rate should move before any broad reasoning claim is made.</span></div>
+        <div class="proof"><b>break condition</b><span>If the reward function is brittle, hackable, or mostly constant within groups, the advantage signal is weak or misleading. Then training optimizes the reward artifact, not the intended behavior.</span></div>
+      </section>
+
+      <section id="spec" class="panel wrap">
+        <div class="bug">speculative decoding</div>
+        <h2>Speculative decoding helps only when accepted draft work replaces enough target work.</h2>
+        <div class="formula">expected useful saving:
+E[accepted_tokens] * target_step_cost
+
+extra cost:
+draft_cost + target_verification_cost + coordination_overhead
+
+speedup condition:
+E[accepted_tokens] * target_step_cost > extra cost</div>
+        <div class="proof"><b>why it works</b><span>A cheaper draft model proposes several future tokens. The target model verifies them in a way that preserves the target distribution when the algorithm is implemented correctly.</span></div>
+        <div class="proof"><b>what should move</b><span>Target decode calls per emitted token should fall enough to beat draft and verification overhead. Acceptance rate is the central metric.</span></div>
+        <div class="proof"><b>break condition</b><span>If the draft is too inaccurate, too slow, or expensive to coordinate, accepted tokens do not cover the added work. Long prompts and small output caps can also leave too little decode phase to recover overhead.</span></div>
+      </section>
+    </main>
+  </body>
+</html>
