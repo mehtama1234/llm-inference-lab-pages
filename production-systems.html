@@ -123,6 +123,7 @@
         <a href="experiment-claim-matrix.html">experiment claim matrix</a>
         <a href="first-principles-study-path.html">study path</a>
         <a href="worked-examples-math.html">worked examples</a>
+        <a href="formula-sheet.html">formula sheet</a>
         <a href="mechanisms.html">mechanisms</a>
         <a href="scale-concepts.html">scale concepts</a>
         <a href="practical-experiments.html">experiments</a>
@@ -171,7 +172,6 @@
         <a href="#tenantfairness">tenant fairness</a>
         <a href="#replicarouting">replica routing</a>
         <a href="#weightprecision">weight precision</a>
-        <a href="#unsloth">Unsloth</a>
         <a href="#kvprecision">KV precision</a>
         <a href="#modelfamily">model size</a>
         <a href="#multigpu">multi-GPU</a>
@@ -521,9 +521,6 @@
           <div class="card warn"><b>proof limit</b><span>This page is a runbook until `tensorrt_llm_container_results.json` is produced on the actual NVIDIA GPU host.</span></div>
         </div>
         <div id="tensorrtSummary" class="runbox" style="margin-top:14px">loading tensorrt_llm_container_runbook_results.json</div>
-        <div id="tensorrtHandoffSummary" class="runbox" style="margin-top:14px">loading tensorrt_llm_handoff_verification_results.json</div>
-        <div id="tensorrtHandoffCharts" class="chart-grid"></div>
-        <div id="tensorrtHandoffRows" class="result-table"></div>
         <div id="tensorrtCharts" class="chart-grid"></div>
         <div id="tensorrtDiagram" class="diagram" style="margin-top:14px"></div>
         <div id="tensorrtRows" class="result-table"></div>
@@ -548,9 +545,6 @@
           <div class="card warn"><b>proof limit</b><span>This page is a runbook until `jetstream_gke_results.json` is produced by a real GKE deployment.</span></div>
         </div>
         <div id="jetstreamSummary" class="runbox" style="margin-top:14px">loading jetstream_gke_runbook_results.json</div>
-        <div id="jetstreamHandoffSummary" class="runbox" style="margin-top:14px">loading jetstream_gke_handoff_verification_results.json</div>
-        <div id="jetstreamHandoffCharts" class="chart-grid"></div>
-        <div id="jetstreamHandoffRows" class="result-table"></div>
         <div id="jetstreamCharts" class="chart-grid"></div>
         <div id="jetstreamDiagram" class="diagram" style="margin-top:14px"></div>
         <div id="jetstreamRows" class="result-table"></div>
@@ -987,7 +981,6 @@
           <div class="card"><b>verify</b><span>The target model checks the draft run and accepts the matching prefix.</span></div>
           <div class="card warn"><b>reject</b><span>After the first wrong draft token, the remaining proposed tokens do not help.</span></div>
         </div>
-        <div id="hfSpecDecodeSummary" class="runbox" style="margin-top:14px">loading hf_speculative_decoding_results.json</div>
         <div id="specDecodeSummary" class="runbox" style="margin-top:14px">loading speculative_decoding_results.json</div>
         <div id="specDecodeCharts" class="chart-grid"></div>
         <div id="specDecodeDiagram" class="diagram" style="margin-top:14px"></div>
@@ -1164,30 +1157,10 @@ Simulate arrivals and compare static batching with continuous batching using the
         <div id="vllmPrecisionPressureSummary" class="runbox" style="margin-top:14px">loading vllm_precision_pressure_results.json</div>
         <div id="vllmPrecisionPressureCharts" class="chart-grid"></div>
         <div id="vllmPrecisionPressureDiagram" class="diagram" style="margin-top:14px"></div>
-        <div id="hfQuantizationSummary" class="runbox" style="margin-top:14px">loading hf_quantization_fit_results.json</div>
         <div id="weightPrecisionSummary" class="runbox" style="margin-top:14px">loading weight_precision_fit_results.json</div>
         <div id="weightPrecisionCharts" class="chart-grid"></div>
         <div id="weightPrecisionDiagram" class="diagram" style="margin-top:14px"></div>
         <div id="weightPrecisionRows" class="result-table"></div>
-      </section>
-
-      <section id="unsloth" class="panel">
-        <div class="bug">real Colab L4 fine-tune proof</div>
-        <h2>Unsloth turns the notebook GPU into a reproducible adapter artifact.</h2>
-        <p>
-          This lane uses the Colab CLI for Unsloth setup and a short LoRA SFT
-          campaign. The result proves setup, training steps, adapter files, and
-          after-training inference, while keeping GRPO quality and production
-          serving claims locked.
-        </p>
-        <div class="grid">
-          <div class="card method"><b>setup</b><span>Install/import Unsloth on a real Colab GPU and record package/GPU metadata.</span></div>
-          <div class="card"><b>adapter</b><span>Train a small LoRA adapter and hash every saved adapter/tokenizer file.</span></div>
-          <div class="card warn"><b>locked</b><span>Do not read this as GRPO improvement, GGUF export, vLLM serving, or TGI/vLLM runtime speed.</span></div>
-        </div>
-        <div id="unslothSummary" class="runbox" style="margin-top:14px">loading unsloth_sft_mini_results.json</div>
-        <div id="unslothCharts" class="chart-grid"></div>
-        <div id="unslothRows" class="result-table"></div>
       </section>
 
       <section id="kvprecision" class="panel">
@@ -1695,77 +1668,20 @@ Simulate arrivals and compare static batching with continuous batching using the
 
       <section id="labs" class="panel">
         <div class="bug">runtime execution plan</div>
-        <h2>The capstone proves the path from request shape to runtime choice.</h2>
+        <h2>Run order from practical to heavy, with proof limits.</h2>
         <p>
-          The end-to-end experiment starts with one formatted request, follows
-          prompt and model-level knobs, adds Unsloth adapter evidence, then
-          tests serving pressure before making any production runtime claim.
-          Setup evidence, adapter evidence, quality evidence, and benchmark
-          evidence stay separate.
+          A production runtime experiment has to separate setup evidence from
+          benchmark evidence. The plan below says what to run, what to hold
+          constant, what to measure, and what each run is allowed to prove.
         </p>
-        <div class="grid">
-          <div class="card method"><b>request and model</b><span>Prompt shape, cache strategy, quantization, speculative decoding, and context pressure explain the work before serving begins.</span></div>
-          <div class="card trade"><b>adaptation lane</b><span>Unsloth proves portable SFT and tiny GRPO LoRA artifacts, while held-out quality and serving speed remain bounded claims.</span></div>
-          <div class="card warn"><b>serving proof</b><span>The final speed comparison stays locked until TGI and vLLM return matched results from the same NVIDIA Docker host.</span></div>
-        </div>
-        <div class="grid">
-          <div class="card method"><b>report contract</b><span>Every run must become a question, changed variable, constant, proof artifact, chart, diagram, table, allowed claim, locked claim, and next action.</span></div>
-          <div class="card trade"><b>HTML path</b><span>hf-practical.html, gpu-experiments.html, practical-experiments.html, production-systems.html, and result-provenance.html carry the final learning record.</span></div>
-          <div class="card warn"><b>winner boundary</b><span>No production winner is allowed before the matched TGI/vLLM host archive returns and passes fair-comparison contracts.</span></div>
-        </div>
         <div id="runtimePlanSummary" class="runbox" style="margin-top:14px">loading runtime_execution_plan_results.json</div>
         <div id="runtimePlanCharts" class="chart-grid"></div>
         <div id="runtimePlanDiagram" class="diagram" style="margin-top:14px"></div>
         <div id="runtimePlanRows" class="result-table"></div>
-        <div id="currentLabStatusSummary" class="runbox" style="margin-top:14px">loading current_lab_status_results.json</div>
-        <div id="currentLabStatusCharts" class="chart-grid"></div>
-        <div id="currentLabStatusRows" class="result-table"></div>
-        <div id="externalExperimentStatusSummary" class="runbox" style="margin-top:14px">loading external_experiment_status_results.json</div>
-        <div id="externalExperimentStatusCharts" class="chart-grid"></div>
-        <div id="externalExperimentStatusRows" class="result-table"></div>
-        <div id="externalPrereqAuditSummary" class="runbox" style="margin-top:14px">loading external_prerequisite_audit_results.json</div>
-        <div id="externalPrereqAuditCharts" class="chart-grid"></div>
-        <div id="externalPrereqAuditRows" class="result-table"></div>
-        <div id="colabCoverageSummary" class="runbox" style="margin-top:14px">loading colab_experiment_coverage_results.json</div>
-        <div id="colabCoverageCharts" class="chart-grid"></div>
-        <div id="colabCoverageRows" class="result-table"></div>
         <div id="capstoneMapSummary" class="runbox" style="margin-top:14px">loading capstone_learning_map_results.json</div>
         <div id="capstoneMapCharts" class="chart-grid"></div>
         <div id="capstoneMapDiagram" class="diagram" style="margin-top:14px"></div>
         <div id="capstoneMapRows" class="result-table"></div>
-        <div id="experimentStatusSummary" class="runbox" style="margin-top:14px">loading experiment_status_synthesis_results.json</div>
-        <div id="experimentStatusCharts" class="chart-grid"></div>
-        <div id="experimentStatusDiagram" class="diagram" style="margin-top:14px"></div>
-        <div id="experimentStatusRows" class="result-table"></div>
-        <div id="sourceSharedLadderSummary" class="runbox" style="margin-top:14px">loading source_shared_experiment_ladder_verification_results.json</div>
-        <div id="sourceSharedLadderCharts" class="chart-grid"></div>
-        <div id="sourceSharedLadderDiagram" class="diagram" style="margin-top:14px"></div>
-        <div id="sourceSharedLadderRows" class="result-table"></div>
-        <div id="sourceSharedCandidatesSummary" class="runbox" style="margin-top:14px">loading source_shared_run_candidates_results.json</div>
-        <div id="sourceSharedCandidatesCharts" class="chart-grid"></div>
-        <div id="sourceSharedCandidatesRows" class="result-table"></div>
-        <div id="sourceReferenceStatusSummary" class="runbox" style="margin-top:14px">loading source_reference_status_results.json</div>
-        <div id="sourceReferenceStatusCharts" class="chart-grid"></div>
-        <div id="sourceReferenceStatusRows" class="result-table"></div>
-        <div id="experimentDecisionRegisterSummary" class="runbox" style="margin-top:14px">loading experiment_decision_register_results.json</div>
-        <div id="experimentDecisionRegisterCharts" class="chart-grid"></div>
-        <div id="experimentDecisionRegisterRows" class="result-table"></div>
-        <div id="endToEndProofContractSummary" class="runbox" style="margin-top:14px">loading end_to_end_proof_contract_results.json</div>
-        <div id="endToEndProofContractCharts" class="chart-grid"></div>
-        <div id="endToEndProofContractRows" class="result-table"></div>
-        <div id="hostProofAuditSummary" class="runbox" style="margin-top:14px">loading host_proof_completion_audit_results.json</div>
-        <div id="hostProofAuditCharts" class="chart-grid"></div>
-        <div id="hostProofAuditDiagram" class="diagram" style="margin-top:14px"></div>
-        <div id="hostProofAuditRows" class="result-table"></div>
-        <div id="gpuHostProvisionSummary" class="runbox" style="margin-top:14px">loading gpu_host_provisioning_worksheet_results.json</div>
-        <div id="gpuHostProvisionCharts" class="chart-grid"></div>
-        <div id="gpuHostProvisionRows" class="result-table"></div>
-        <div id="startHereVerifySummary" class="runbox" style="margin-top:14px">loading start_here_next_run_verification_results.json</div>
-        <div id="startHereVerifyCharts" class="chart-grid"></div>
-        <div id="startHereVerifyRows" class="result-table"></div>
-        <div id="currentReviewVerifySummary" class="runbox" style="margin-top:14px">loading current_experiment_review_verification_results.json</div>
-        <div id="currentReviewVerifyCharts" class="chart-grid"></div>
-        <div id="currentReviewVerifyRows" class="result-table"></div>
         <div id="nextRunBoardSummary" class="runbox" style="margin-top:14px">loading next_run_readiness_board_results.json</div>
         <div id="nextRunBoardCharts" class="chart-grid"></div>
         <div id="nextRunBoardDiagram" class="diagram" style="margin-top:14px"></div>
@@ -1798,9 +1714,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         <div id="gpuHostPacketCharts" class="chart-grid"></div>
         <div id="gpuHostPacketDiagram" class="diagram" style="margin-top:14px"></div>
         <div id="gpuHostPacketRows" class="result-table"></div>
-        <div id="gpuHostPreflightSummary" class="runbox" style="margin-top:14px">loading gpu_host_preflight_verification_results.json</div>
-        <div id="gpuHostPreflightCharts" class="chart-grid"></div>
-        <div id="gpuHostPreflightRows" class="result-table"></div>
         <div id="firstHostRunSummary" class="runbox" style="margin-top:14px">loading first_host_run_guide_results.json</div>
         <div id="firstHostRunCharts" class="chart-grid"></div>
         <div id="firstHostRunDiagram" class="diagram" style="margin-top:14px"></div>
@@ -1840,49 +1753,13 @@ Simulate arrivals and compare static batching with continuous batching using the
         <div id="gpuHostBundleSelfTestSummary" class="runbox" style="margin-top:14px">loading gpu_host_bundle_self_test_results.json</div>
         <div id="gpuHostBundleSelfTestCharts" class="chart-grid"></div>
         <div id="gpuHostBundleSelfTestRows" class="result-table"></div>
-        <div id="completeHostWrapperSummary" class="runbox" style="margin-top:14px">loading complete_gpu_host_campaign_wrapper_verification_results.json</div>
-        <div id="completeHostWrapperCharts" class="chart-grid"></div>
-        <div id="completeHostWrapperRows" class="result-table"></div>
-        <div id="gpuHostBundleReproSummary" class="runbox" style="margin-top:14px">loading gpu_host_bundle_reproducibility_results.json</div>
-        <div id="gpuHostBundleReproCharts" class="chart-grid"></div>
-        <div id="gpuHostBundleReproRows" class="result-table"></div>
-        <div id="gpuHostTransferAuditSummary" class="runbox" style="margin-top:14px">loading gpu_host_transfer_audit_results.json</div>
-        <div id="gpuHostTransferAuditCharts" class="chart-grid"></div>
-        <div id="gpuHostTransferAuditRows" class="result-table"></div>
-        <div id="gpuHostHandoffCliSummary" class="runbox" style="margin-top:14px">loading gpu_host_handoff_cli_verification_results.json</div>
-        <div id="gpuHostHandoffCliCharts" class="chart-grid"></div>
-        <div id="gpuHostHandoffCliRows" class="result-table"></div>
         <div id="gpuHostReturnSummary" class="runbox" style="margin-top:14px">loading gpu_host_return_packet_results.json</div>
         <div id="gpuHostReturnCharts" class="chart-grid"></div>
         <div id="gpuHostReturnDiagram" class="diagram" style="margin-top:14px"></div>
         <div id="gpuHostReturnRows" class="result-table"></div>
-        <div id="gpuHostReturnCollectionSummary" class="runbox" style="margin-top:14px">loading gpu_host_return_collection_verification_results.json</div>
-        <div id="gpuHostReturnCollectionCharts" class="chart-grid"></div>
-        <div id="gpuHostReturnCollectionRows" class="result-table"></div>
-        <div id="gpuHostReturnImportSummary" class="runbox" style="margin-top:14px">loading gpu_host_return_import_results.json</div>
-        <div id="gpuHostReturnImportCharts" class="chart-grid"></div>
-        <div id="gpuHostReturnImportRows" class="result-table"></div>
-        <div id="gpuHostReturnReceiveSummary" class="runbox" style="margin-top:14px">loading gpu_host_return_receive_verification_results.json</div>
-        <div id="gpuHostReturnReceiveCharts" class="chart-grid"></div>
-        <div id="gpuHostReturnReceiveRows" class="result-table"></div>
-        <div id="gpuHostReturnImportSafetySummary" class="runbox" style="margin-top:14px">loading gpu_host_return_import_safety_verification_results.json</div>
-        <div id="gpuHostReturnImportSafetyCharts" class="chart-grid"></div>
-        <div id="gpuHostReturnImportSafetyRows" class="result-table"></div>
-        <div id="hostReturnTriageSummary" class="runbox" style="margin-top:14px">loading host_return_triage_results.json</div>
-        <div id="hostReturnTriageCharts" class="chart-grid"></div>
-        <div id="hostReturnTriageRows" class="result-table"></div>
-        <div id="returnToFollowupSummary" class="runbox" style="margin-top:14px">loading return_to_followup_audit_results.json</div>
-        <div id="returnToFollowupCharts" class="chart-grid"></div>
-        <div id="returnToFollowupRows" class="result-table"></div>
         <div id="gpuHostReturnVerifySummary" class="runbox" style="margin-top:14px">loading gpu_host_return_packet_verification_results.json</div>
         <div id="gpuHostReturnVerifyCharts" class="chart-grid"></div>
         <div id="gpuHostReturnVerifyRows" class="result-table"></div>
-        <div id="gpuHostFailureCaptureSummary" class="runbox" style="margin-top:14px">loading gpu_host_failure_capture_verification_results.json</div>
-        <div id="gpuHostFailureCaptureCharts" class="chart-grid"></div>
-        <div id="gpuHostFailureCaptureRows" class="result-table"></div>
-        <div id="failedHostLockSummary" class="runbox" style="margin-top:14px">loading failed_host_results_lock_verification_results.json</div>
-        <div id="failedHostLockCharts" class="chart-grid"></div>
-        <div id="failedHostLockRows" class="result-table"></div>
         <div id="preflightContractStatesSummary" class="runbox" style="margin-top:14px">loading preflight_contract_states_results.json</div>
         <div id="preflightContractStatesCharts" class="chart-grid"></div>
         <div id="preflightContractStatesDiagram" class="diagram" style="margin-top:14px"></div>
@@ -3318,33 +3195,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("tensorrt_llm_container_runbook_results.json not found")))
         .then(renderTensorRT)
         .catch((error) => { $("tensorrtSummary").textContent = error.message; });
-      function renderTensorRTHandoff(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        $("tensorrtHandoffSummary").textContent = [
-          `evidence: ${payload.evidence_type || "TensorRT-LLM handoff verification"}`,
-          `required files present: ${summary.required_files_present || 0}/${summary.required_files || 0}`,
-          `checks ok: ${summary.checks_ok || 0}/${summary.checks || checks.length}`,
-          `blocking gates: ${(summary.blocking_gates || []).join(", ") || "none"}`,
-          `ready for TensorRT container run: ${summary.ready_for_tensorrt_container_run ? "yes" : "no"}`,
-          `next host requirement: ${payload.next_host_requirement || "run on a Docker-capable NVIDIA host"}`,
-          `lesson: ${payload.lesson || "container-host contract before speed result"}`
-        ].join("\n");
-        $("tensorrtHandoffCharts").innerHTML = [
-          chart("TensorRT handoff gates", checks.map((row) => ({ policy: row.gate, value: row.ok ? 1 : 0 })), "value", "", "#e8a64b")
-        ].join("");
-        $("tensorrtHandoffRows").innerHTML = checks.map((row) => `
-          <div class="result-row">
-            <b>${esc(row.gate)} · ${row.ok ? "pass" : "fail"}</b>
-            <span>${esc(row.why || "")}</span>
-            <span>${esc(row.diagnostic_tail || "")}</span>
-          </div>
-        `).join("");
-      }
-      fetch("tensorrt_llm_handoff_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("tensorrt_llm_handoff_verification_results.json not found")))
-        .then(renderTensorRTHandoff)
-        .catch((error) => { $("tensorrtHandoffSummary").textContent = error.message; });
       function renderJetStream(payload) {
         const summary = payload.summary || {};
         $("jetstreamSummary").textContent = [
@@ -3440,33 +3290,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("jetstream_gke_runbook_results.json not found")))
         .then(renderJetStream)
         .catch((error) => { $("jetstreamSummary").textContent = error.message; });
-      function renderJetStreamHandoff(payload) {
-        const summary = payload.summary || {};
-        const rows = payload.rows || [];
-        $("jetstreamHandoffSummary").textContent = [
-          `evidence: ${payload.evidence_type || "JetStream/GKE handoff verification"}`,
-          `status: ${payload.status || "unknown"}`,
-          `gates ok: ${summary.gates_ok || 0}/${summary.required_gates || rows.length}`,
-          `blocking gates: ${(summary.blocking_gates || []).join(", ") || "none"}`,
-          `ready for GKE handoff: ${summary.ready_for_gke_handoff ? "yes" : "no"}`,
-          `next cloud requirement: ${payload.next_cloud_requirement || "configure Google Cloud project, auth, and model bucket"}`,
-          `lesson: ${payload.lesson || "cloud identity and storage gates come before serving measurements"}`
-        ].join("\n");
-        $("jetstreamHandoffCharts").innerHTML = [
-          chart("cloud handoff gates", rows.map((row) => ({ policy: row.gate, value: row.ok ? 1 : 0 })), "value", "", "#e8a64b")
-        ].join("");
-        $("jetstreamHandoffRows").innerHTML = rows.map((row) => `
-          <div class="result-row">
-            <b>${esc(row.gate)} · ${row.ok ? "pass" : "fail"}</b>
-            <span>present: ${row.present ? "yes" : "no"}</span>
-            <span>${esc(row.why || "")}</span>
-          </div>
-        `).join("");
-      }
-      fetch("jetstream_gke_handoff_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("jetstream_gke_handoff_verification_results.json not found")))
-        .then(renderJetStreamHandoff)
-        .catch((error) => { $("jetstreamHandoffSummary").textContent = error.message; });
       function renderTfMicro(payload) {
         const rows = payload.policies || [];
         const first = rows[0];
@@ -5182,21 +5005,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("speculative_decoding_results.json not found")))
         .then(renderSpecDecode)
         .catch((error) => { $("specDecodeSummary").textContent = error.message; });
-      function renderHfSpecDecode(payload) {
-        const summary = payload.summary || {};
-        $("hfSpecDecodeSummary").textContent = [
-          `real HF assisted generation: ${payload.target_model_id || "target"} with assistant ${payload.assistant_model_id || "assistant"} on ${payload.gpu || "unknown GPU"}`,
-          `prompts: ${summary.prompts || 0}; assisted faster: ${summary.assisted_faster_count || 0}`,
-          `mean speedup: ${fmt(summary.mean_speedup, 4)}x; p95 baseline ${fmt(summary.p95_baseline_ms, 1)} ms; p95 assisted ${fmt(summary.p95_assisted_ms, 1)} ms`,
-          `mean target forward-call reduction: ${fmt(summary.mean_target_forward_call_reduction_percent, 1)}%`,
-          `evidence: ${payload.evidence_type || "real returned measurement"}`,
-          `lesson: ${payload.lesson || "speculation must reduce enough target work to beat assistant overhead"}`
-        ].join("\n");
-      }
-      fetch("hf_speculative_decoding_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_speculative_decoding_results.json not found")))
-        .then(renderHfSpecDecode)
-        .catch((error) => { $("hfSpecDecodeSummary").textContent = error.message; });
       function renderStructuredDecode(payload) {
         const policies = payload.policies || [];
         const summary = payload.summary || {};
@@ -5681,204 +5489,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("vllm_precision_pressure_results.json not found")))
         .then(renderVllmPrecisionPressure)
         .catch((error) => { $("vllmPrecisionPressureSummary").textContent = error.message; });
-      function renderHfQuantization(payload) {
-        const summary = payload.summary || {};
-        const rows = payload.rows || [];
-        const ranRows = rows.filter((row) => row.status === "ran");
-        const rowText = ranRows.map((row) => {
-          const meanMs = row.summary?.mean_generation_ms;
-          const tps = row.summary?.mean_tokens_per_second;
-          return `${row.mode}: load delta ${fmt(row.load_memory_delta_mb, 0)} MB, mean generation ${fmt(meanMs, 1)} ms, ${fmt(tps, 1)} tok/s`;
-        }).join("\n");
-        $("hfQuantizationSummary").textContent = [
-          `real HF bitsandbytes run: ${payload.model_id || "model"} on ${payload.gpu || "unknown GPU"}`,
-          `modes ran: ${(summary.ran_modes || []).join(", ") || "none"}; failed: ${(summary.failed_modes || []).join(", ") || "none"}`,
-          `best memory mode: ${summary.best_memory_mode || "n/a"}; fastest generation mode: ${summary.fastest_generation_mode || "n/a"}`,
-          rowText || "no measured rows returned yet",
-          `evidence: ${payload.evidence_type || "real returned measurement"}`,
-          `lesson: ${payload.lesson || "quantization must be measured for fit, latency, and support"}`
-        ].join("\n");
-      }
-      fetch("hf_quantization_fit_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_quantization_fit_results.json not returned yet")))
-        .then(renderHfQuantization)
-        .catch((error) => { $("hfQuantizationSummary").textContent = error.message; });
-      function renderUnsloth([setup, sft, manifest, verification, reload, reloadVerification, grpo, grpoVerification, grpoMini, grpoMiniManifest, grpoMiniVerification, grpoReload, grpoReloadVerification, grpoQuality, grpoQualityVerification]) {
-        const setupSummary = setup.summary || {};
-        const summary = sft.summary || {};
-        const manifestSummary = manifest.summary || {};
-        const verifySummary = verification.summary || {};
-        const reloadSummary = reload.summary || {};
-        const reloadVerifySummary = reloadVerification.summary || {};
-        const grpoSummary = grpo.summary || {};
-        const grpoVerifySummary = grpoVerification.summary || {};
-        const grpoMiniSummary = grpoMini.summary || {};
-        const grpoMiniManifestSummary = grpoMiniManifest.summary || {};
-        const grpoMiniVerifySummary = grpoMiniVerification.summary || {};
-        const grpoReloadSummary = grpoReload.summary || {};
-        const grpoReloadVerifySummary = grpoReloadVerification.summary || {};
-        const grpoQualitySummary = grpoQuality.summary || {};
-        const grpoQualityVerifySummary = grpoQualityVerification.summary || {};
-        const memoryRows = [
-          { policy: "before load", value: sft.setup?.gpu_before_load?.allocated_gb || 0 },
-          { policy: "after load", value: sft.memory?.after_load?.allocated_gb || 0 },
-          { policy: "after train", value: sft.memory?.after_train?.allocated_gb || 0 },
-          { policy: "peak train", value: sft.memory?.after_train?.max_allocated_gb || 0 }
-        ];
-        const inferenceRows = sft.inference || [];
-        $("unslothSummary").textContent = [
-          `setup evidence: ${setup.evidence_type || "Unsloth setup result"}`,
-          `setup GPU: ${setupSummary.gpu_name || "unknown"}; Unsloth import: ${setupSummary.unsloth_import_ok ? "yes" : "no"}`,
-          `SFT evidence: ${sft.evidence_type || "Unsloth SFT result"}`,
-          `model: ${summary.model_id || sft.model_id || "unknown"}`,
-          `steps: ${summary.completed_steps || 0}/${summary.max_steps || 0}; train time: ${fmt(summary.train_elapsed_s, 1)} s`,
-          `adapter: ${manifestSummary.files || summary.adapter_files || 0} files, ${fmt((manifestSummary.total_bytes || summary.adapter_total_bytes || 0) / 1024 / 1024, 2)} MB`,
-          `archive: ${fmt((summary.adapter_archive_bytes || manifestSummary.archive_bytes || 0) / 1024 / 1024, 2)} MB; sha256 ${(summary.adapter_archive_sha256 || manifestSummary.archive_sha256 || "").slice(0, 16) || "n/a"}`,
-          `reload: ${reloadVerifySummary.unsloth_adapter_reload_verified ? "verified" : "locked"} on ${reloadSummary.gpu_name || reloadVerifySummary.gpu_name || "unknown"}; output changed: ${reloadSummary.output_changed ? "yes" : "no"}`,
-          `GRPO contract: ${grpoVerifySummary.unsloth_grpo_reward_contract_verified ? "verified" : "locked"}; reward margin ${fmt(grpoSummary.reward_margin, 1)}; vLLM import ${grpoSummary.vllm_import_ok ? "yes" : "no"}`,
-          `GRPO mini: ${grpoMiniVerifySummary.unsloth_grpo_mini_verified ? "verified" : "locked"}; steps ${grpoMiniSummary.completed_steps || 0}/${grpoMiniSummary.max_steps || 0}; reward keys ${(grpoMiniSummary.reward_keys || []).length}`,
-          `GRPO reload: ${grpoReloadVerifySummary.unsloth_grpo_adapter_reload_verified ? "verified" : "locked"} on ${grpoReloadSummary.gpu_name || "unknown"}; output changed: ${grpoReloadSummary.output_changed ? "yes" : "no"}`,
-          `GRPO quality: ${grpoQualityVerifySummary.unsloth_grpo_quality_probe_verified ? "verified" : "locked"}; base ${grpoQualitySummary.base_correct || 0}/${grpoQualitySummary.heldout_rows || 0}; adapter ${grpoQualitySummary.adapter_correct || 0}/${grpoQualitySummary.heldout_rows || 0}; delta ${grpoQualitySummary.quality_delta || 0}`,
-          `adapter claim: ${summary.ready_for_adapter_claim ? "ready" : "locked"}; production serving: ${summary.ready_for_production_serving_claim ? "ready" : "locked"}`,
-          `verified: SFT ${verifySummary.unsloth_sft_mini_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || 0}); reload ${reloadVerifySummary.unsloth_adapter_reload_verified ? "yes" : "no"} (${reloadVerifySummary.passed_checks || 0}/${reloadVerifySummary.checks || 0}); GRPO contract ${grpoVerifySummary.unsloth_grpo_reward_contract_verified ? "yes" : "no"} (${grpoVerifySummary.passed_checks || 0}/${grpoVerifySummary.checks || 0}); GRPO mini ${grpoMiniVerifySummary.unsloth_grpo_mini_verified ? "yes" : "no"} (${grpoMiniVerifySummary.passed_checks || 0}/${grpoMiniVerifySummary.checks || 0}); GRPO reload ${grpoReloadVerifySummary.unsloth_grpo_adapter_reload_verified ? "yes" : "no"} (${grpoReloadVerifySummary.passed_checks || 0}/${grpoReloadVerifySummary.checks || 0}); GRPO quality ${grpoQualityVerifySummary.unsloth_grpo_quality_probe_verified ? "yes" : "no"} (${grpoQualityVerifySummary.passed_checks || 0}/${grpoQualityVerifySummary.checks || 0})`,
-          `lesson: ${sft.lesson || "Unsloth fine-tune results need adapter manifests and proof limits"}`
-        ].join("\n");
-        $("unslothCharts").innerHTML = [
-          chart("Unsloth gates", [
-            { policy: "setup", value: setupSummary.ready_for_short_unsloth_training ? 1 : 0 },
-            { policy: "SFT", value: verifySummary.unsloth_sft_mini_verified ? 1 : 0 },
-            { policy: "adapter", value: summary.ready_for_adapter_claim ? 1 : 0 },
-            { policy: "reload", value: reloadSummary.ready_for_reload_claim ? 1 : 0 },
-            { policy: "GRPO contract", value: grpoSummary.ready_for_grpo_training_window ? 1 : 0 },
-            { policy: "GRPO mini", value: grpoMiniSummary.ready_for_grpo_training_claim ? 1 : 0 },
-            { policy: "GRPO reload", value: grpoReloadSummary.ready_for_grpo_reload_claim ? 1 : 0 },
-            { policy: "GRPO quality", value: grpoQualitySummary.ready_for_grpo_quality_claim ? 1 : 0 },
-            { policy: "serving", value: summary.ready_for_production_serving_claim ? 1 : 0 }
-          ], "value", "", "#79d493"),
-          chart("GPU allocation", memoryRows, "value", " GB", "#58d8e6"),
-          chart("adapter files", (manifest.files || []).map((row) => ({ policy: row.path, value: row.bytes / 1024 / 1024 })), "value", " MB", "#e8a64b"),
-          chart("reload tokens", [
-            { policy: "base", value: reloadSummary.base_generated_tokens || 0 },
-            { policy: "adapter", value: reloadSummary.adapter_generated_tokens || 0 }
-          ], "value", " tokens", "#f36f7c"),
-          chart("GRPO reward contract", [
-            { policy: "good", value: grpoSummary.good_total_reward || 0 },
-            { policy: "bad", value: grpoSummary.bad_total_reward || 0 },
-            { policy: "margin", value: grpoSummary.reward_margin || 0 }
-          ], "value", "", "#b88cff"),
-          chart("GRPO mini artifacts", [
-            { policy: "steps", value: grpoMiniSummary.completed_steps || 0 },
-            { policy: "reward keys", value: (grpoMiniSummary.reward_keys || []).length },
-            { policy: "adapter files", value: grpoMiniManifestSummary.files || grpoMiniSummary.adapter_files || 0 }
-          ], "value", "", "#f1c65b"),
-          chart("GRPO reload tokens", [
-            { policy: "base", value: grpoReloadSummary.base_generated_tokens || 0 },
-            { policy: "adapter", value: grpoReloadSummary.adapter_generated_tokens || 0 }
-          ], "value", " tokens", "#9ad46f"),
-          chart("GRPO held-out score", [
-            { policy: "base", value: grpoQualitySummary.base_correct || 0 },
-            { policy: "adapter", value: grpoQualitySummary.adapter_correct || 0 },
-            { policy: "delta", value: grpoQualitySummary.quality_delta || 0 }
-          ], "value", "", "#ff9f6e")
-        ].join("");
-        $("unslothRows").innerHTML = [
-          `<div class="result-row">
-            <b>training result</b>
-            <span>${summary.completed_steps || 0}/${summary.max_steps || 0} steps on ${summary.gpu_name || setupSummary.gpu_name || "GPU"}; loss ${fmt(sft.training?.train_loss, 3)}</span>
-            <span>proof limit: ${sft.proof_limit || "short SFT only"}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>fresh-session adapter reload</b>
-            <span>checksum ${reloadSummary.archive_checksum_ok ? "ok" : "missing"}; reload ${fmt(reloadSummary.adapter_reload_elapsed_s, 3)} s; output changed ${reloadSummary.output_changed ? "yes" : "no"}</span>
-            <span>proof limit: ${reload.proof_limit || "reload only; not production serving"}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>base vs adapter prompt</b>
-            <span>${reload.inference?.prompt || "n/a"}</span>
-            <span>base: ${(reload.inference?.base?.output_preview || "").slice(0, 220)}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>GRPO reward/API contract</b>
-            <span>${grpoSummary.dataset_rows || 0} prompts; ${grpoSummary.reward_functions || 0} reward functions; margin ${fmt(grpoSummary.reward_margin, 1)}</span>
-            <span>quality claim ${grpoSummary.ready_for_grpo_quality_claim ? "ready" : "locked"}; vLLM import ${grpoSummary.vllm_import_ok ? "yes" : "no"}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>GRPO source pins</b>
-            <span>TRL ${grpo.setup?.packages?.trl || "n/a"}; Transformers ${grpo.setup?.packages?.transformers || "n/a"}</span>
-            <span>proof limit: ${grpo.proof_limit || "reward/API contract only"}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>GRPO tiny training window</b>
-            <span>${grpoMiniSummary.completed_steps || 0}/${grpoMiniSummary.max_steps || 0} steps on ${grpoMiniSummary.gpu_name || "GPU"}; ${grpoMiniSummary.num_generations || 0} generations</span>
-            <span>training claim ${grpoMiniSummary.ready_for_grpo_training_claim ? "ready" : "locked"}; quality claim ${grpoMiniSummary.ready_for_grpo_quality_claim ? "ready" : "locked"}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>GRPO reward logs and adapter</b>
-            <span>${(grpoMiniSummary.reward_keys || []).join(", ") || "no reward keys"}</span>
-            <span>${grpoMiniManifestSummary.files || grpoMiniSummary.adapter_files || 0} files; archive ${fmt((grpoMiniSummary.adapter_archive_bytes || 0) / 1024 / 1024, 2)} MB; sha256 ${(grpoMiniSummary.adapter_archive_sha256 || "").slice(0, 16) || "n/a"}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>GRPO fresh-session adapter reload</b>
-            <span>checksum ${grpoReloadSummary.archive_checksum_ok ? "ok" : "missing"}; reload ${fmt(grpoReloadSummary.adapter_reload_elapsed_s, 3)} s; output changed ${grpoReloadSummary.output_changed ? "yes" : "no"}</span>
-            <span>quality claim ${grpoReloadSummary.ready_for_grpo_quality_claim ? "ready" : "locked"}; proof limit: ${grpoReload.proof_limit || "reload only"}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>GRPO reload prompt</b>
-            <span>${grpoReload.inference?.prompt || "n/a"}</span>
-            <span>adapter: ${(grpoReload.inference?.adapter?.output_preview || "").slice(0, 260)}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>GRPO held-out quality probe</b>
-            <span>base ${grpoQualitySummary.base_correct || 0}/${grpoQualitySummary.heldout_rows || 0}; adapter ${grpoQualitySummary.adapter_correct || 0}/${grpoQualitySummary.heldout_rows || 0}; delta ${grpoQualitySummary.quality_delta || 0}; changed outputs ${grpoQualitySummary.changed_outputs || 0}</span>
-            <span>quality claim ${grpoQualitySummary.ready_for_grpo_quality_claim ? "ready" : "locked"}; proof limit: ${grpoQuality.proof_limit || "tiny held-out probe only"}</span>
-          </div>`,
-          ...((grpoQuality.heldout_rows || []).slice(0, 4).map((row) => `
-            <div class="result-row">
-              <b>held-out: ${row.expected_answer}</b>
-              <span>${row.question}</span>
-              <span>base ${row.base?.extracted_answer || "n/a"} (${row.base_correct ? "ok" : "miss"}); adapter ${row.adapter?.extracted_answer || "n/a"} (${row.adapter_correct ? "ok" : "miss"})</span>
-            </div>
-          `)),
-          `<div class="result-row">
-            <b>adapter output preview</b>
-            <span>${(reload.inference?.adapter?.output_preview || "").slice(0, 300)}</span>
-            <span>archive sha256 ${reload.archive?.sha256 || summary.adapter_archive_sha256 || "n/a"}</span>
-          </div>`,
-          ...inferenceRows.map((row) => `
-            <div class="result-row">
-              <b>after-training inference: ${row.prompt}</b>
-              <span>${row.generated_tokens || 0} tokens in ${fmt(row.elapsed_ms, 1)} ms; ${fmt(row.tokens_per_second, 2)} tok/s</span>
-              <span>${row.output_preview || ""}</span>
-            </div>
-          `),
-          ...((manifest.files || []).filter((row) => row.path.includes("adapter")).map((row) => `
-            <div class="result-row">
-              <b>${row.path}</b>
-              <span>${fmt(row.bytes / 1024 / 1024, 2)} MB</span>
-              <span>sha256 ${row.sha256}</span>
-            </div>
-          `))
-        ].join("");
-      }
-      Promise.all([
-        fetch("unsloth_colab_setup_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_colab_setup_results.json not found"))),
-        fetch("unsloth_sft_mini_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_sft_mini_results.json not found"))),
-        fetch("unsloth_adapter_manifest.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_adapter_manifest.json not found"))),
-        fetch("unsloth_sft_mini_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_sft_mini_verification_results.json not found"))),
-        fetch("unsloth_adapter_reload_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_adapter_reload_results.json not found"))),
-        fetch("unsloth_adapter_reload_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_adapter_reload_verification_results.json not found"))),
-        fetch("unsloth_grpo_reward_contract_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_reward_contract_results.json not found"))),
-        fetch("unsloth_grpo_reward_contract_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_reward_contract_verification_results.json not found"))),
-        fetch("unsloth_grpo_mini_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_mini_results.json not found"))),
-        fetch("unsloth_grpo_adapter_manifest.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_adapter_manifest.json not found"))),
-        fetch("unsloth_grpo_mini_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_mini_verification_results.json not found"))),
-        fetch("unsloth_grpo_adapter_reload_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_adapter_reload_results.json not found"))),
-        fetch("unsloth_grpo_adapter_reload_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_adapter_reload_verification_results.json not found"))),
-        fetch("unsloth_grpo_quality_probe_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_quality_probe_results.json not found"))),
-        fetch("unsloth_grpo_quality_probe_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("unsloth_grpo_quality_probe_verification_results.json not found")))
-      ])
-        .then(renderUnsloth)
-        .catch((error) => { $("unslothSummary").textContent = error.message; });
       function renderWeightPrecision(payload) {
         const rows = payload.rows || [];
         const fp32 = rows.find((row) => row.policy === "fp32_weights") || rows[0] || {};
@@ -6845,10 +6455,9 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("readiness_gate_results.json not found")))
         .then(renderReadinessGate)
         .catch((error) => { $("readinessGateSummary").textContent = error.message; });
-      function renderObservability([payload, verification]) {
+      function renderObservability(payload) {
         const signals = payload.signals || [];
         const summary = payload.summary || {};
-        const verifySummary = verification.summary || {};
         $("observabilitySummary").textContent = [
           `evidence: ${payload.evidence_type || "simulation"}`,
           `source: ${payload.source || "unknown"}`,
@@ -6856,7 +6465,6 @@ Simulate arrivals and compare static batching with continuous batching using the
           `first warning: ${summary.first_warning_rate_per_minute || "n/a"} requests/min`,
           `first overload: ${summary.first_overload_rate_per_minute || "n/a"} requests/min`,
           `overload p95 queue wait: ${fmt(summary.first_overload_p95_queue_wait_ms, 0)} ms`,
-          `verified: ${verifySummary.observability_trace_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || 0})`,
           `lesson: ${payload.lesson || "observability links signals to action"}`
         ].join("\n");
         const chartRows = signals.map((row) => ({
@@ -6870,8 +6478,7 @@ Simulate arrivals and compare static batching with continuous batching using the
           chart("safe utilization", chartRows, "utilization", "%", "#e8a64b"),
           chart("p95 queue wait", chartRows, "p95_queue_wait_ms", " ms", "#db6555"),
           chart("p95 latency", chartRows, "p95_latency_ms", " ms", "#58d8e6"),
-          chart("token demand", chartRows, "demand_tokens_per_second", " tok/s", "#79d493"),
-          chart("observability verifier", (verification.checks || []).map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493")
+          chart("token demand", chartRows, "demand_tokens_per_second", " tok/s", "#79d493")
         ].join("");
         const maxLatency = Math.max(1, ...signals.map((row) => row.p95_latency_ms || 0));
         const points = signals.map((row) => {
@@ -6910,10 +6517,8 @@ Simulate arrivals and compare static batching with continuous batching using the
           </div>
         `).join("");
       }
-      Promise.all([
-        fetch("observability_trace_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("observability_trace_results.json not found"))),
-        fetch("observability_trace_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("observability_trace_verification_results.json not found")))
-      ])
+      fetch("observability_trace_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("observability_trace_results.json not found")))
         .then(renderObservability)
         .catch((error) => { $("observabilitySummary").textContent = error.message; });
       function renderAutoscaling(payload) {
@@ -7745,36 +7350,19 @@ Simulate arrivals and compare static batching with continuous batching using the
           `present results: ${summary.present_results || 0}/${summary.required_results || 2}`,
           `metadata-ready results: ${summary.metadata_ready_results || 0}/${summary.required_results || 2}`,
           `stream-ready results: ${summary.stream_ready_results || 0}/${summary.required_results || 2}`,
-          `request-id-ready results: ${summary.request_id_ready_results || 0}/${summary.required_results || 2}`,
-          `workload-hash-ready results: ${summary.workload_hash_ready_results || 0}/${summary.required_results || 2}`,
-          `client-hash-ready results: ${summary.client_hash_ready_results || 0}/${summary.required_results || 2}`,
-          `host-identity-ready results: ${summary.host_identity_ready_results || 0}/${summary.required_results || 2}`,
-          `GPU-inventory-ready results: ${summary.gpu_inventory_ready_results || 0}/${summary.required_results || 2}`,
-          `GPU-host-run-ID-ready results: ${summary.gpu_host_run_id_ready_results || 0}/${summary.required_results || 2}`,
-          `runtime-label-ready results: ${summary.runtime_system_ready_results || 0}/${summary.required_results || 2}`,
-          `same model/workload/client/host/GPU/run: ${summary.same_model ? "model pass" : "model locked"}; ${summary.same_workload ? "workload pass" : "workload locked"}; ${summary.same_client ? "client pass" : "client locked"}; ${summary.same_host ? "host pass" : "host locked"}; ${summary.same_gpu_inventory ? "GPU pass" : "GPU locked"}; ${summary.same_gpu_host_run_id ? "run pass" : "run locked"}`,
-          `fair gate passed: ${summary.fair_gate_passed ? "yes" : "no"}`,
           `metrics prepared: ${summary.metrics_compared || rows.length}`,
           `allowed conclusion: ${payload.allowed_conclusion || "locked until matched results exist"}`
         ].join("\n");
         $("tgiVllmFinalCharts").innerHTML = [
           chart("TGI metric values", rows.map((row) => ({ policy: row.metric, value: row.tgi_value || 0 })), "value", "", "#e8a64b"),
           chart("vLLM metric values", rows.map((row) => ({ policy: row.metric, value: row.vllm_value || 0 })), "value", "", "#79d493"),
-          chart("result readiness", Object.entries(states).map(([system, state]) => ({ policy: system, ready: state.present && state.runtime_system_ok && state.metadata_ok && state.rows_ok && state.workload_sha256_ok && state.request_ids_ok && state.client_sha256_ok && state.host_identity_ok && state.gpu_inventory_ok && state.gpu_host_run_id_ok && state.stream_ok && state.proof_limit_ok ? 1 : 0 })), "ready", "", "#58d8e6"),
-          chart("match gates", [
-            { policy: "same model", value: summary.same_model ? 1 : 0 },
-            { policy: "same workload", value: summary.same_workload ? 1 : 0 },
-            { policy: "same client", value: summary.same_client ? 1 : 0 },
-            { policy: "same host", value: summary.same_host ? 1 : 0 },
-            { policy: "same GPU", value: summary.same_gpu_inventory ? 1 : 0 },
-            { policy: "same run", value: summary.same_gpu_host_run_id ? 1 : 0 },
-            { policy: "fair gate", value: summary.fair_gate_passed ? 1 : 0 }
-          ], "value", "", "#db6555")
+          chart("result readiness", Object.entries(states).map(([system, state]) => ({ policy: system, ready: state.present && state.metadata_ok && state.rows_ok && state.stream_ok ? 1 : 0 })), "ready", "", "#58d8e6"),
+          chart("row readiness", Object.entries(states).map(([system, state]) => ({ policy: system, rows: state.rows_ok ? 1 : 0 })), "rows", "", "#db6555")
         ].join("");
         const lockColor = summary.ready_for_speed_claim ? "#79d493" : "#db6555";
         const stateNodes = Object.entries(states).map(([system, state], idx) => {
           const y = 98 + idx * 78;
-          const ok = state.present && state.runtime_system_ok && state.metadata_ok && state.rows_ok && state.workload_sha256_ok && state.request_ids_ok && state.client_sha256_ok && state.host_identity_ok && state.gpu_inventory_ok && state.gpu_host_run_id_ok && state.stream_ok && state.proof_limit_ok;
+          const ok = state.present && state.metadata_ok && state.rows_ok && state.stream_ok;
           const color = ok ? "#79d493" : "#db6555";
           return `<g>
             <rect class="node" x="74" y="${y}" width="116" height="48" rx="8"></rect>
@@ -7801,8 +7389,7 @@ Simulate arrivals and compare static batching with continuous batching using the
             <div class="result-row">
               <b>${system} result: ${state.present ? "present" : "missing"}</b>
               <span>artifact: ${state.artifact}</span>
-              <span>runtime ${state.runtime_system_ok ? "pass" : "not ready"}; metadata ${state.metadata_ok ? "pass" : "not ready"}; rows ${state.rows_ok ? "pass" : "not ready"}; request IDs ${state.request_ids_ok ? "pass" : "not ready"}</span>
-              <span>workload ${state.workload_ok ? "pass" : "not ready"}; workload hash ${state.workload_sha256_ok ? "pass" : "not ready"}; client hash ${state.client_sha256_ok ? "pass" : "not ready"}; host identity ${state.host_identity_ok ? "pass" : "not ready"}; GPU inventory ${state.gpu_inventory_ok ? "pass" : "not ready"}; run ID ${state.gpu_host_run_id_ok ? "pass" : "not ready"}; stream ${state.stream_ok ? "pass" : "not ready"}; proof limit ${state.proof_limit_ok ? "pass" : "not ready"}</span>
+              <span>metadata ${state.metadata_ok ? "pass" : "not ready"}; rows ${state.rows_ok ? "pass" : "not ready"}; stream ${state.stream_ok ? "pass" : "not ready"}</span>
               <span>${state.reason}</span>
             </div>
           `),
@@ -7830,12 +7417,6 @@ Simulate arrivals and compare static batching with continuous batching using the
           `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
           `locked fixture ready: ${summary.locked_ready_for_speed_claim ? "yes" : "no"}`,
           `unlocked fixture ready: ${summary.unlocked_ready_for_speed_claim ? "yes" : "no"}`,
-          `mismatched-model fixture ready: ${summary.mismatch_ready_for_speed_claim ? "yes" : "no"}`,
-          `mismatched-workload-hash fixture ready: ${summary.workload_hash_mismatch_ready_for_speed_claim ? "yes" : "no"}`,
-          `mismatched-client-hash fixture ready: ${summary.client_hash_mismatch_ready_for_speed_claim ? "yes" : "no"}`,
-          `mismatched-host fixture ready: ${summary.host_mismatch_ready_for_speed_claim ? "yes" : "no"}`,
-          `mismatched-GPU-inventory fixture ready: ${summary.gpu_inventory_mismatch_ready_for_speed_claim ? "yes" : "no"}`,
-          `mismatched-GPU-host-run-ID fixture ready: ${summary.gpu_host_run_id_mismatch_ready_for_speed_claim ? "yes" : "no"}`,
           `metrics compared in fixture: ${summary.metrics_compared || 0}`,
           `lesson: ${payload.lesson || "verify locked and unlocked paths before real runtime rows arrive"}`
         ].join("\n");
@@ -8207,235 +7788,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("runtime_execution_plan_results.json not found")))
         .then(renderRuntimePlan)
         .catch((error) => { $("runtimePlanSummary").textContent = error.message; });
-      function renderCurrentLabStatus(payload) {
-        const summary = payload.summary || {};
-        const commands = payload.next_commands || [];
-        const locked = payload.locked_gates || [];
-        $("currentLabStatusSummary").textContent = [
-          `evidence: ${payload.evidence_type || "current lab status"}`,
-          `top next action: ${summary.top_next_action || "unknown"}`,
-          `local nvidia-smi: ${summary.local_nvidia_smi_ok ? "ok" : "not available"}`,
-          `Docker daemon: ${summary.docker_daemon_ok ? "ok" : "not ready"}; containers: ${summary.docker_running_containers || 0}`,
-          `Colab active sessions visible: ${summary.colab_active_sessions_visible ? "yes" : "no"}`,
-          `local machine is GPU proof host: ${summary.local_machine_is_gpu_proof_host ? "yes" : "no"}`,
-          `external prerequisites: ${summary.external_prerequisite_gates_ready || 0}/${summary.external_prerequisite_gates || 0} ready; verified: ${summary.external_prerequisite_audit_verified ? "yes" : "no"}`,
-          `NVIDIA host gates: ${summary.nvidia_host_gates_ready || 0}/${summary.nvidia_host_gates || 0}; Docker GPU access proven locally: ${summary.docker_gpu_access_proven_locally ? "yes" : "no"}`,
-          `GCP/JetStream gates: ${summary.gcp_gates_ready || 0}/${summary.gcp_gates || 0}; gcloud available: ${summary.gcloud_cli_available ? "yes" : "no"}`,
-          `source coverage: ${summary.source_families_covered || 0}/${summary.source_families_ranked || 0}`,
-          `source-shared ladder: ${summary.source_shared_ladder_verified ? "verified" : "not verified"} (${summary.source_shared_ladder_experiments_documented || 0}/${summary.source_shared_ladder_experiments_expected || 0})`,
-          `return-to-follow-up: ${summary.return_to_followup_stages_passed || 0}/${summary.return_to_followup_stages || 0}; diagnostic triage ready: ${summary.return_to_followup_diagnostic_triage_ready ? "yes" : "no"}; campaign logs: ${summary.return_to_followup_optional_campaign_logs || 0}`,
-          `handoff ready: ${summary.handoff_ready ? "yes" : "no"}`,
-          `bundle self-test: ${summary.host_bundle_self_test_passed ? "pass" : "not ready"}`,
-          `transfer audit: ${summary.gpu_host_transfer_ready ? "ready" : "not ready"}`,
-          `transfer optional diagnostics contract: ${summary.gpu_host_transfer_optional_diagnostic_contract_verified ? "verified" : "not verified"} (${summary.gpu_host_transfer_optional_diagnostic_files || 0} files)`,
-          `complete wrapper repackages status: ${summary.complete_gpu_host_wrapper_repackages_status ? "yes" : "no"}`,
-          `return collection: ${summary.gpu_host_return_collection_verified ? "verified" : "not verified"}; missing-state checksum: ${summary.gpu_host_return_collection_missing_archive_sha256_present ? "yes" : "no"}; optional diagnostics: ${summary.gpu_host_return_collection_ready_optional_present || 0}/${summary.gpu_host_return_collection_ready_optional_expected || 0}; campaign logs: ${summary.gpu_host_return_collection_ready_campaign_logs_present || 0}/${summary.gpu_host_return_collection_ready_campaign_logs_expected || 0}`,
-          `receive manifest mismatch rc: ${summary.gpu_host_return_receive_manifest_mismatch_returncode ?? "n/a"}`,
-          `return import safety: ${summary.gpu_host_return_import_safety_verified ? "verified" : "not verified"}; manifest SHA match: ${summary.gpu_host_return_import_manifest_sha_matches ? "yes" : "no"}`,
-          `start-here doc verified: ${summary.start_here_doc_verified ? "yes" : "no"}`,
-          `current review doc verified: ${summary.current_review_doc_verified ? "yes" : "no"}`,
-          `production report verified: ${summary.production_systems_html_verified ? "yes" : "no"}`,
-          `README start contract verified: ${summary.readme_start_contract_verified ? "yes" : "no"}`,
-          `return files: ${summary.present_return_files || 0}/${summary.expected_return_files || 0}`,
-          `return triage optional diagnostics doc: ${summary.return_triage_doc_mentions_optional_diagnostics ? "verified" : "not verified"} (${summary.return_triage_optional_diagnostic_files || 0} files; ${summary.return_triage_optional_campaign_logs || 0} campaign logs)`,
-          `final speed claim ready: ${summary.final_speed_claim_ready ? "yes" : "no"}`,
-          `lesson: ${payload.lesson || "status is a gate summary, not a benchmark"}`
-        ].join("\n");
-        $("currentLabStatusCharts").innerHTML = [
-          chart("current gates", [
-            { policy: "handoff", value: summary.handoff_ready ? 1 : 0 },
-            { policy: "bundle", value: summary.host_bundle_self_test_passed ? 1 : 0 },
-            { policy: "transfer", value: summary.gpu_host_transfer_ready ? 1 : 0 },
-            { policy: "repackage", value: summary.complete_gpu_host_wrapper_repackages_status ? 1 : 0 },
-            { policy: "collect", value: summary.gpu_host_return_collection_verified ? 1 : 0 },
-            { policy: "import safety", value: summary.gpu_host_return_import_safety_verified ? 1 : 0 },
-            { policy: "doc", value: summary.start_here_doc_verified ? 1 : 0 },
-            { policy: "review", value: summary.current_review_doc_verified ? 1 : 0 },
-            { policy: "report", value: summary.production_systems_html_verified ? 1 : 0 },
-            { policy: "README", value: summary.readme_start_contract_verified ? 1 : 0 },
-            { policy: "return", value: summary.return_archive_present ? 1 : 0 },
-            { policy: "contracts", value: summary.return_contracts_ready ? 1 : 0 },
-            { policy: "speed", value: summary.final_speed_claim_ready ? 1 : 0 }
-          ], "value", "", "#79d493"),
-          chart("current resources", [
-            { policy: "nvidia-smi", value: summary.local_nvidia_smi_ok ? 1 : 0 },
-            { policy: "Docker", value: summary.docker_daemon_ok ? 1 : 0 },
-            { policy: "Colab active", value: summary.colab_active_sessions_visible ? 1 : 0 },
-            { policy: "proof host", value: summary.local_machine_is_gpu_proof_host ? 1 : 0 },
-            { policy: "Docker GPU", value: summary.docker_gpu_access_proven_locally ? 1 : 0 },
-            { policy: "gcloud", value: summary.gcloud_cli_available ? 1 : 0 }
-          ], "value", "", "#e8a64b"),
-          chart("source ladder", [
-            { policy: "verified", value: summary.source_shared_ladder_verified ? 1 : 0 },
-            { policy: "documented", value: summary.source_shared_ladder_experiments_documented || 0 },
-            { policy: "expected", value: summary.source_shared_ladder_experiments_expected || 0 }
-          ], "value", "", "#58d8e6"),
-          chart("return files", [
-            { policy: "present", value: summary.present_return_files || 0 },
-            { policy: "expected", value: summary.expected_return_files || 0 }
-          ], "value", "", "#58d8e6")
-        ].join("");
-        $("currentLabStatusRows").innerHTML = [
-          `<div class="result-row">
-            <b>recommended host</b>
-            <span>${summary.recommended_host_shape || "Linux NVIDIA GPU host with Docker GPU access"}</span>
-          </div>`,
-          `<div class="result-row">
-            <b>current resource status</b>
-            <span>nvidia-smi ${summary.local_nvidia_smi_ok ? "ok" : "not available"}; Docker ${summary.docker_daemon_ok ? "ok" : "not ready"}; Colab active sessions ${summary.colab_active_sessions_visible ? "visible" : "not visible"}</span>
-            <span>local proof host: ${summary.local_machine_is_gpu_proof_host ? "yes" : "no"}</span>
-          </div>`,
-          ...commands.map((cmd) => `
-            <div class="result-row">
-              <b>next command</b>
-              <span><code>${cmd}</code></span>
-            </div>
-          `),
-          ...locked.map((row) => `
-            <div class="result-row">
-              <b>locked: ${row.gate}</b>
-              <span>evidence: ${row.evidence}</span>
-              <span>next: ${row.next_step}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("current_lab_status_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("current_lab_status_results.json not found")))
-        .then(renderCurrentLabStatus)
-        .catch((error) => { $("currentLabStatusSummary").textContent = error.message; });
-      function renderExternalExperimentStatus([status, verification]) {
-        const summary = status.summary || {};
-        const verifySummary = verification.summary || {};
-        const surfaces = status.surfaces || [];
-        $("externalExperimentStatusSummary").textContent = [
-          `evidence: ${status.evidence_type || "external experiment status"}`,
-          `external run state: ${summary.external_run_state || "unknown"}`,
-          `local GPU available: ${summary.local_gpu_available ? "yes" : "no"}`,
-          `Docker daemon: ${summary.docker_daemon_ok ? "ok" : "not ready"}; running containers: ${summary.docker_running_containers || 0}`,
-          `inference containers visible: ${summary.inference_containers_visible || 0}`,
-          `Colab active sessions visible: ${summary.colab_active_sessions_visible ? "yes" : "no"}`,
-          `handoff ready: ${summary.handoff_ready ? "yes" : "no"}`,
-          `return archive present: ${summary.return_archive_present ? "yes" : "no"}`,
-          `verified: ${verifySummary.external_status_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || 0})`,
-          `next required surface: ${summary.next_required_surface || "NVIDIA Docker host"}`,
-          `lesson: ${status.lesson || "external status is operational visibility, not a benchmark"}`
-        ].join("\n");
-        $("externalExperimentStatusCharts").innerHTML = [
-          chart("external surfaces", surfaces.map((row) => ({ policy: row.surface, ready: row.can_run_next_proof ? 1 : 0 })), "ready", "", "#79d493"),
-          chart("visibility gates", [
-            { policy: "local GPU", value: summary.local_gpu_available ? 1 : 0 },
-            { policy: "Docker", value: summary.docker_daemon_ok ? 1 : 0 },
-            { policy: "Colab active", value: summary.colab_active_sessions_visible ? 1 : 0 },
-            { policy: "handoff", value: summary.handoff_ready ? 1 : 0 },
-            { policy: "return archive", value: summary.return_archive_present ? 1 : 0 },
-            { policy: "speed claim", value: summary.final_speed_claim_ready ? 1 : 0 }
-          ], "value", "", "#e8a64b"),
-          chart("external verifier", (verification.checks || []).map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#58d8e6")
-        ].join("");
-        $("externalExperimentStatusRows").innerHTML = surfaces.map((row) => `
-          <div class="result-row">
-            <b>${row.surface}: ${row.state}</b>
-            <span>${row.evidence}</span>
-            <span>can run next proof: ${row.can_run_next_proof ? "yes" : "no"}</span>
-            <span>next: ${row.next_action}</span>
-          </div>
-        `).join("");
-      }
-      Promise.all([
-        fetch("external_experiment_status_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("external_experiment_status_results.json not found"))),
-        fetch("external_experiment_status_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("external_experiment_status_verification_results.json not found")))
-      ])
-        .then(renderExternalExperimentStatus)
-        .catch((error) => { $("externalExperimentStatusSummary").textContent = error.message; });
-      function renderExternalPrereqAudit([audit, verification]) {
-        const summary = audit.summary || {};
-        const verifySummary = verification.summary || {};
-        const surfaces = audit.surfaces || [];
-        const gates = audit.gates || [];
-        $("externalPrereqAuditSummary").textContent = [
-          `evidence: ${audit.evidence_type || "external prerequisite audit"}`,
-          `gates ready: ${summary.ready_gates || 0}/${summary.gates || 0}`,
-          `NVIDIA host gates: ${summary.nvidia_host_gates_ready || 0}/${summary.nvidia_host_gates || 0}; bundle ready: ${summary.nvidia_host_bundle_ready ? "yes" : "no"}`,
-          `Docker GPU access proven locally: ${summary.docker_gpu_access_proven_locally ? "yes" : "no"}`,
-          `GCP/JetStream gates: ${summary.gcp_gates_ready || 0}/${summary.gcp_gates || 0}; gcloud: ${summary.gcloud_cli_available ? "yes" : "no"}`,
-          `JetStream measured evidence: ${summary.jetstream_speed_evidence_present ? "present" : "missing"}`,
-          `final speed claim ready: ${summary.final_speed_claim_ready ? "yes" : "no"}`,
-          `verified: ${verifySummary.external_prerequisite_audit_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || 0})`,
-          `lesson: ${audit.lesson || "external setup is a prerequisite gate, not a benchmark"}`
-        ].join("\n");
-        $("externalPrereqAuditCharts").innerHTML = [
-          chart("external gate counts", [
-            { policy: "ready", value: summary.ready_gates || 0 },
-            { policy: "blocked", value: Math.max((summary.gates || 0) - (summary.ready_gates || 0), 0) }
-          ], "value", "", "#79d493"),
-          chart("surface readiness", surfaces.map((row) => ({ policy: row.surface, ready: row.ready_to_attempt ? 1 : 0 })), "ready", "", "#e8a64b"),
-          chart("prereq verifier", (verification.checks || []).map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#58d8e6")
-        ].join("");
-        $("externalPrereqAuditRows").innerHTML = [
-          ...surfaces.map((row) => `
-            <div class="result-row">
-              <b>${row.surface}</b>
-              <span>ready gates: ${row.ready_gates}/${row.total_gates}; ready to attempt: ${row.ready_to_attempt ? "yes" : "no"}</span>
-              <span>primary blocker: ${row.primary_blocker || "none"}</span>
-            </div>
-          `),
-          ...gates.filter((row) => !row.ok).map((row) => `
-            <div class="result-row">
-              <b>blocked: ${row.gate}</b>
-              <span>${row.surface}</span>
-              <span>${row.evidence}</span>
-              <span>next: ${row.next_action}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      Promise.all([
-        fetch("external_prerequisite_audit_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("external_prerequisite_audit_results.json not found"))),
-        fetch("external_prerequisite_audit_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("external_prerequisite_audit_verification_results.json not found")))
-      ])
-        .then(renderExternalPrereqAudit)
-        .catch((error) => { $("externalPrereqAuditSummary").textContent = error.message; });
-      function renderColabCoverage([coverage, verification]) {
-        const summary = coverage.summary || {};
-        const verifySummary = verification.summary || {};
-        const rows = coverage.rows || [];
-        const missing = coverage.missing_result_rows || [];
-        const familyCounts = summary.family_counts || {};
-        const returnedCounts = summary.returned_counts || {};
-        const families = Object.keys(familyCounts).sort();
-        $("colabCoverageSummary").textContent = [
-          `evidence: ${coverage.evidence_type || "Colab script-to-result coverage"}`,
-          `scripts: ${summary.colab_scripts || 0}`,
-          `result handoffs: ${summary.result_handoffs || 0}`,
-          `returned results: ${summary.returned_results || 0}`,
-          `missing results: ${summary.missing_results || 0}`,
-          `active Colab needed for missing results: ${summary.colab_active_session_required_for_missing ? "yes" : "no"}`,
-          `verified: ${verifySummary.colab_coverage_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || 0})`,
-          `primary external run: ${summary.current_primary_external_run || "host proof still required"}`,
-          `lesson: ${coverage.lesson || "returned JSON files are the Colab evidence"}`
-        ].join("\n");
-        $("colabCoverageCharts").innerHTML = [
-          chart("Colab scripts by family", families.map((name) => ({ policy: name, count: familyCounts[name] || 0 })), "count", "", "#58d8e6"),
-          chart("returned by family", families.map((name) => ({ policy: name, count: returnedCounts[name] || 0 })), "count", "", "#79d493"),
-          chart("coverage verifier", (verification.checks || []).map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#e8a64b")
-        ].join("");
-        const visibleRows = missing.length ? missing : rows.slice(0, 12);
-        $("colabCoverageRows").innerHTML = visibleRows.map((row) => `
-          <div class="result-row">
-            <b>${row.script}: ${row.status.replaceAll("_", " ")}</b>
-            <span>family: ${row.family}</span>
-            <span>result: ${row.expected_result || "helper/status only"}</span>
-            <span>download: ${row.download_command || "none"}</span>
-          </div>
-        `).join("");
-      }
-      Promise.all([
-        fetch("colab_experiment_coverage_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("colab_experiment_coverage_results.json not found"))),
-        fetch("colab_experiment_coverage_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("colab_experiment_coverage_verification_results.json not found")))
-      ])
-        .then(renderColabCoverage)
-        .catch((error) => { $("colabCoverageSummary").textContent = error.message; });
       function renderCapstoneMap(payload) {
         const clusters = payload.clusters || [];
         const nextRuns = payload.next_runs || [];
@@ -8510,582 +7862,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("capstone_learning_map_results.json not found")))
         .then(renderCapstoneMap)
         .catch((error) => { $("capstoneMapSummary").textContent = error.message; });
-      function renderExperimentStatus(payload) {
-        const summary = payload.summary || {};
-        const completed = payload.completed_recent || [];
-        const locked = payload.locked_external_proofs || [];
-        const sourceNext = payload.source_next_experiments || [];
-        const crossSource = payload.cross_source_experiments || [];
-        const postHost = payload.post_host_followups || [];
-        const returnToFollowup = payload.return_to_followup_audit || {};
-        const hostReadiness = payload.gpu_host_readiness || {};
-        const hostReadySummary = hostReadiness.summary || {};
-        const path = payload.learning_path || [];
-        $("experimentStatusSummary").textContent = [
-          `evidence: ${payload.evidence_type || "status synthesis"}`,
-          `recent completed experiments: ${summary.recent_completed_experiments || completed.length}`,
-          `locked external proofs: ${summary.locked_external_proofs || locked.length}`,
-          `runtime speed claim locked: ${summary.locked_speed_claim ? "yes" : "no"}`,
-          `resources: nvidia-smi ${summary.local_nvidia_smi_ok ? "ok" : "not available"}; Docker ${summary.docker_daemon_ok ? "ok" : "not ready"}; Colab active ${summary.colab_active_sessions_visible ? "yes" : "no"}`,
-          `provenance artifacts checked: ${summary.provenance_artifacts_checked || 0}`,
-          `real or mixed GPU artifacts: ${summary.real_or_mixed_gpu_artifacts || 0}`,
-          `source families covered: ${summary.source_families_covered || 0}/${summary.source_families_ranked || 0}`,
-          `cross-source backlog: ${summary.cross_source_experiments || crossSource.length}; post-host follow-ups: ${summary.cross_source_post_host_followups || 0}`,
-          `source-shared ladder verified: ${summary.source_shared_ladder_verified ? "yes" : "no"} (${summary.source_shared_ladder_experiments_documented || 0}/${summary.source_shared_ladder_experiments_expected || 0})`,
-          `post-host planner: waiting ${summary.post_host_followups_waiting || 0}; external ready ${summary.post_host_external_runs_ready || 0}`,
-          `return-to-follow-up: ${summary.return_to_followup_stages_passed || 0}/${summary.return_to_followup_stages || 0}; blocked at ${summary.return_to_followup_first_blocked_stage || "none"}`,
-          `GPU-host readiness files: ${summary.gpu_host_readiness_bundle_files_present || hostReadySummary.required_bundle_files_present || 0}/${summary.gpu_host_readiness_bundle_files || hostReadySummary.required_bundle_files || 0}`,
-          `top next action: ${summary.top_next_action || "unknown"}`,
-          `top source-ranked action: ${summary.top_source_next_action || "unknown"}`,
-          `top cross-source action: ${summary.top_cross_source_action || "unknown"}`,
-          `top post-host action: ${summary.top_post_host_action || "unknown"}`,
-          `lesson: ${payload.lesson || "measured learning is separate from locked runtime claims"}`
-        ].join("\n");
-        $("experimentStatusCharts").innerHTML = [
-          chart("current status", [
-            { policy: "completed", value: summary.recent_completed_experiments || 0 },
-            { policy: "locked", value: summary.locked_external_proofs || 0 },
-            { policy: "checked blockers", value: summary.queue_host_or_cloud_checked || 0 },
-            { policy: "queue results", value: summary.queue_result_files_present || 0 },
-          ], "value", "", "#79d493"),
-          chart("resource status", [
-            { policy: "nvidia-smi", value: summary.local_nvidia_smi_ok ? 1 : 0 },
-            { policy: "Docker", value: summary.docker_daemon_ok ? 1 : 0 },
-            { policy: "Colab active", value: summary.colab_active_sessions_visible ? 1 : 0 },
-            { policy: "proof host", value: summary.local_machine_is_gpu_proof_host ? 1 : 0 },
-          ], "value", "", "#e8a64b"),
-          chart("source coverage", [
-            { policy: "covered", value: summary.source_families_covered || 0 },
-            { policy: "uncovered", value: summary.source_families_uncovered || 0 },
-          ], "value", "", "#f0b85a"),
-          chart("cross-source backlog", [
-            { policy: "all", value: summary.cross_source_experiments || crossSource.length },
-            { policy: "post-host", value: summary.cross_source_post_host_followups || 0 },
-          ], "value", "", "#e8a64b"),
-          chart("source-shared ladder", [
-            { policy: "verified", value: summary.source_shared_ladder_verified ? 1 : 0 },
-            { policy: "documented", value: summary.source_shared_ladder_experiments_documented || 0 },
-            { policy: "expected", value: summary.source_shared_ladder_experiments_expected || 0 },
-          ], "value", "", "#58d8e6"),
-          chart("post-host planner", [
-            { policy: "waiting", value: summary.post_host_followups_waiting || 0 },
-            { policy: "external", value: summary.post_host_external_runs_ready || 0 },
-          ], "value", "", "#d88ef5"),
-          chart("return-to-follow-up", [
-            { policy: "passed", value: summary.return_to_followup_stages_passed || 0 },
-            { policy: "total", value: summary.return_to_followup_stages || 0 },
-          ], "value", "", "#db6555"),
-          chart("host readiness", [
-            { policy: "bundle files", value: hostReadySummary.required_bundle_files_present || 0 },
-            { policy: "host gates", value: hostReadySummary.host_prerequisites || 0 },
-            { policy: "commands", value: hostReadySummary.commands || 0 },
-            { policy: "return files", value: hostReadySummary.expected_return_files || 0 },
-          ], "value", "", "#58d8e6"),
-          chart("learning path", path.map((row) => ({ policy: row.theme, value: row.step })), "value", "", "#58d8e6"),
-          chart("locked proof count", locked.map((row) => ({ policy: row.area, value: row.blocking_gates.length })), "value", " gates", "#db6555")
-        ].join("");
-        const completedNodes = completed.map((row, idx) => {
-          const x = 50 + idx * 154;
-          return `<rect class="node" x="${x}" y="76" width="128" height="52" rx="8"></rect>
-            <text class="tiny" x="${x + 10}" y="100">${row.area.slice(0, 18)}</text>
-            <text class="tiny" x="${x + 10}" y="118">measured/trace</text>`;
-        }).join("");
-        const lockedNodes = locked.map((row, idx) => {
-          const x = 92 + idx * 190;
-          return `<rect class="node" x="${x}" y="218" width="154" height="58" rx="8"></rect>
-            <text class="tiny" x="${x + 10}" y="240">${row.area.slice(0, 22)}</text>
-            <text class="tiny" x="${x + 10}" y="260">${row.status}: ${row.blocking_gates.length} gates</text>`;
-        }).join("");
-        $("experimentStatusDiagram").innerHTML = `
-          <svg viewBox="0 0 720 330" role="img">
-            <text class="label" x="54" y="42">current lab state: measured lessons above, external proof gates below</text>
-            ${completedNodes}
-            <path class="wire" d="M104 158 H618"></path><circle class="cyan packet" cx="114" cy="158" r="7"></circle>
-            <text class="tiny" x="226" y="168">speed comparison remains locked until host-correct result contracts return</text>
-            ${lockedNodes}
-          </svg>
-        `;
-        $("experimentStatusRows").innerHTML = [
-          ...completed.map((row) => `
-            <div class="result-row">
-              <b>${row.area}</b>
-              <span>${row.what_we_learned}</span>
-              <span>artifact: ${row.artifact}; evidence: ${row.evidence}</span>
-              <span>proof limit: ${row.proof_limit}</span>
-            </div>
-          `),
-          ...locked.map((row) => `
-            <div class="result-row">
-              <b>${row.area}: ${row.status}</b>
-              <span>expected artifact: ${row.expected_artifact}; current evidence: ${row.current_evidence}</span>
-              <span>blocking gates: ${row.blocking_gates.join(", ")}</span>
-              <span>unlock: ${row.unlock_environment}</span>
-            </div>
-          `),
-          ...sourceNext.slice(0, 5).map((row) => `
-            <div class="result-row">
-              <b>source rank ${row.rank}: ${row.experiment} (${row.status})</b>
-              <span>${row.source_family}: ${row.shared_claim}</span>
-              <span>why run: ${row.why_run}</span>
-              <span>command: ${row.command}</span>
-            </div>
-          `),
-          ...crossSource.slice(0, 5).map((row) => `
-            <div class="result-row">
-              <b>cross-source ${row.rank}: ${row.experiment} (${row.status})</b>
-              <span>${row.shared_theme}</span>
-              <span>question: ${row.first_principle_question}</span>
-              <span>decision unlocked: ${row.decision_unlocked}</span>
-              <span>command: ${row.command}</span>
-            </div>
-          `),
-          ...postHost.slice(0, 5).map((row) => `
-            <div class="result-row">
-              <b>post-host ${row.rank}: ${row.experiment} (${row.phase})</b>
-              <span>ready now: ${row.ready_now ? "yes" : "no"}; missing: ${(row.missing_artifacts || []).join(", ") || "none"}</span>
-              <span>${row.reason}</span>
-              <span>next: ${row.action}</span>
-            </div>
-          `),
-          ...((returnToFollowup.stages || []).map((row) => `
-            <div class="result-row">
-              <b>return gate ${row.order}: ${row.stage} (${row.passed ? "pass" : "locked"})</b>
-              <span>artifact: ${row.artifact}</span>
-              <span>next if blocked: ${row.next_if_blocked}</span>
-            </div>
-          `)),
-          ...(hostReadiness.command_sequence || []).map((row) => `
-            <div class="result-row">
-              <b>GPU-host command ${row.order}</b>
-              <span><code>${row.command}</code></span>
-              <span>${row.purpose}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("experiment_status_synthesis_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("experiment_status_synthesis_results.json not found")))
-        .then(renderExperimentStatus)
-        .catch((error) => { $("experimentStatusSummary").textContent = error.message; });
-      function renderSourceSharedLadder([verification, backlog]) {
-        const verifySummary = verification.summary || {};
-        const backlogSummary = backlog.summary || {};
-        const rows = backlog.rows || [];
-        const checks = verification.checks || [];
-        const statusCounts = rows.reduce((acc, row) => {
-          acc[row.status] = (acc[row.status] || 0) + 1;
-          return acc;
-        }, {});
-        $("sourceSharedLadderSummary").textContent = [
-          `evidence: ${verification.evidence_type || "source-shared ladder verification"}`,
-          `doc matches backlog: ${verifySummary.doc_matches_backlog ? "yes" : "no"}`,
-          `checks passed: ${verifySummary.passed_checks || 0}/${verifySummary.checks || checks.length}`,
-          `experiments documented: ${verifySummary.experiments_documented || 0}/${verifySummary.experiments_expected || rows.length}`,
-          `post-host follow-ups waiting: ${verifySummary.post_host_followups_waiting || 0}`,
-          `top next experiment: ${verifySummary.top_next_experiment || backlogSummary.top_next_experiment || "unknown"}`,
-          `top next command: ${backlogSummary.top_next_command || "not set"}`,
-          `lesson: ${backlog.lesson || verification.lesson || "source-shared experiments stay ordered by evidence"}`
-        ].join("\n");
-        $("sourceSharedLadderCharts").innerHTML = [
-          chart("ladder verification", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("experiment status", Object.keys(statusCounts).map((status) => ({ policy: status.replaceAll("_", " "), value: statusCounts[status] })), "value", "", "#58d8e6"),
-          chart("artifact coverage", rows.map((row) => ({
-            policy: row.experiment,
-            present: (row.artifacts_present || []).length,
-            expected: (row.expected_artifacts || []).length
-          })), "present", "", "#e8a64b")
-        ].join("");
-        const nodes = rows.map((row, idx) => {
-          const x = 44 + (idx % 4) * 166;
-          const y = 76 + Math.floor(idx / 4) * 96;
-          const color = row.status === "covered" ? "#79d493" : row.status === "host_required" ? "#db6555" : row.status === "post_host_followup" ? "#e8a64b" : "#58d8e6";
-          return `<g>
-            <rect class="node" x="${x}" y="${y}" width="138" height="58" rx="8"></rect>
-            <circle cx="${x + 17}" cy="${y + 20}" r="7" fill="${color}" opacity=".86"></circle>
-            <text class="tiny" x="${x + 31}" y="${y + 20}">${row.status.replaceAll("_", " ").slice(0, 18)}</text>
-            <text class="tiny" x="${x + 12}" y="${y + 41}">${row.rank}. ${row.experiment.slice(0, 20)}</text>
-          </g>`;
-        }).join("");
-        $("sourceSharedLadderDiagram").innerHTML = `
-          <svg viewBox="0 0 720 270" role="img">
-            <text class="label" x="54" y="42">source-shared ladder: one workload through model knobs, runtimes, and controls</text>
-            ${nodes}
-          </svg>
-        `;
-        $("sourceSharedLadderRows").innerHTML = [
-          ...checks.map((row) => `
-            <div class="result-row">
-              <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-              <span>missing: ${(row.missing || []).join(", ") || "none"}</span>
-              <span>${row.passed ? "ladder aligned" : "review SOURCE_SHARED_EXPERIMENT_LADDER.md"}</span>
-            </div>
-          `),
-          ...rows.map((row) => `
-            <div class="result-row">
-              <b>${row.rank}. ${row.experiment} (${row.status.replaceAll("_", " ")})</b>
-              <span>${row.shared_theme}</span>
-              <span>question: ${row.first_principle_question}</span>
-              <span>command: ${row.command}</span>
-              <span>unlocks: ${row.decision_unlocked}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      Promise.all([
-        fetch("source_shared_experiment_ladder_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("source_shared_experiment_ladder_verification_results.json not found"))),
-        fetch("cross_source_experiment_backlog_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("cross_source_experiment_backlog_results.json not found")))
-      ])
-        .then(renderSourceSharedLadder)
-        .catch((error) => { $("sourceSharedLadderSummary").textContent = error.message; });
-      function renderSourceSharedCandidates([candidates, verification]) {
-        const summary = candidates.summary || {};
-        const verifySummary = verification.summary || {};
-        const rows = candidates.rows || [];
-        const checks = verification.checks || [];
-        $("sourceSharedCandidatesSummary").textContent = [
-          `evidence: ${candidates.evidence_type || "source-shared secondary run candidates"}`,
-          `candidates: ${summary.candidates || rows.length}`,
-          `covered now: ${summary.covered_now || 0}`,
-          `need reanchor after host: ${summary.needs_reanchor_after_host || 0}`,
-          `verified: ${verifySummary.secondary_candidates_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || checks.length})`,
-          `primary gate ready: ${summary.primary_gate_ready ? "yes" : "no"}`,
-          `top immediate command: ${summary.top_immediate_command || "not set"}`,
-          `lesson: ${candidates.lesson || "secondary runs should not weaken the primary host-proof gate"}`
-        ].join("\n");
-        $("sourceSharedCandidatesCharts").innerHTML = [
-          chart("secondary candidate coverage", rows.map((row) => ({ policy: row.candidate, covered: row.covered_now ? 1 : 0 })), "covered", "", "#79d493"),
-          chart("secondary verifier", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#58d8e6"),
-          chart("expected artifacts", rows.map((row) => ({ policy: row.candidate, count: (row.expected_artifacts || []).length })), "count", "", "#e8a64b")
-        ].join("");
-        $("sourceSharedCandidatesRows").innerHTML = rows.map((row) => `
-          <div class="result-row">
-            <b>${row.rank}. ${row.candidate} (${row.status.replaceAll("_", " ")})</b>
-            <span>${row.shared_theme}</span>
-            <span>first run: <code>${row.first_command}</code></span>
-            <span>relation to primary gate: ${row.relation_to_primary_gate}</span>
-            <span>unlocks: ${row.decision_unlocked}</span>
-          </div>
-        `).join("");
-      }
-      Promise.all([
-        fetch("source_shared_run_candidates_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("source_shared_run_candidates_results.json not found"))),
-        fetch("source_shared_run_candidates_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("source_shared_run_candidates_verification_results.json not found")))
-      ])
-        .then(renderSourceSharedCandidates)
-        .catch((error) => { $("sourceSharedCandidatesSummary").textContent = error.message; });
-      function renderSourceReferenceStatus([status, verification]) {
-        const summary = status.summary || {};
-        const verifySummary = verification.summary || {};
-        const rows = status.rows || [];
-        const unreachable = status.unreachable || [];
-        const rateLimited = unreachable.filter((row) => row.status_code === 429);
-        const blockingUnreachable = unreachable.filter((row) => row.status_code !== 429);
-        const familyCounts = summary.family_counts || {};
-        const reachableCounts = summary.reachable_counts || {};
-        const families = Object.keys(familyCounts).sort();
-        $("sourceReferenceStatusSummary").textContent = [
-          `evidence: ${status.evidence_type || "source/reference URL status"}`,
-          `URLs checked: ${summary.urls_checked || rows.length}`,
-          `reachable: ${summary.reachable_urls || 0}`,
-          `unreachable: ${summary.unreachable_urls || unreachable.length}`,
-          `rate-limited: ${rateLimited.length}`,
-          `blocking unreachable: ${blockingUnreachable.length}`,
-          `source families: ${summary.source_families || families.length}`,
-          `verified: ${verifySummary.source_reference_status_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || 0})`,
-          `lesson: ${status.lesson || "source status is source hygiene, not runtime evidence"}`
-        ].join("\n");
-        $("sourceReferenceStatusCharts").innerHTML = [
-          chart("source family URLs", families.map((name) => ({ policy: name, count: familyCounts[name] || 0 })), "count", "", "#58d8e6"),
-          chart("reachable by family", families.map((name) => ({ policy: name, count: reachableCounts[name] || 0 })), "count", "", "#79d493"),
-          chart("source verifier", (verification.checks || []).map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#e8a64b")
-        ].join("");
-        const rowSet = unreachable.length ? unreachable : rows.slice(0, 8);
-        $("sourceReferenceStatusRows").innerHTML = rowSet.map((row) => `
-          <div class="result-row">
-            <b>${row.family}: ${row.ok ? "reachable" : row.status_code === 429 ? "rate-limited" : "review"}</b>
-            <span>${row.url}</span>
-            <span>status: ${row.status_code || "n/a"}; method: ${row.method || "n/a"}</span>
-            <span>files: ${(row.source_files || []).join(", ")}</span>
-          </div>
-        `).join("");
-      }
-      Promise.all([
-        fetch("source_reference_status_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("source_reference_status_results.json not found"))),
-        fetch("source_reference_status_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("source_reference_status_verification_results.json not found")))
-      ])
-        .then(renderSourceReferenceStatus)
-        .catch((error) => { $("sourceReferenceStatusSummary").textContent = error.message; });
-      function renderExperimentDecisionRegister([register, verification]) {
-        const summary = register.summary || {};
-        const verifySummary = verification.summary || {};
-        const allowed = register.allowed || [];
-        const locked = register.locked || [];
-        $("experimentDecisionRegisterSummary").textContent = [
-          `evidence: ${register.evidence_type || "experiment decision register"}`,
-          `allowed decisions: ${summary.allowed_decisions || allowed.length}`,
-          `locked decisions: ${summary.locked_decisions || locked.length}`,
-          `final speed claim ready: ${summary.final_speed_claim_ready ? "yes" : "no"}`,
-          `return archive present: ${summary.return_archive_present ? "yes" : "no"}`,
-          `external run state: ${summary.external_run_state || "unknown"}`,
-          `first blocked stage: ${summary.first_blocked_stage || "unknown"}`,
-          `top locked decision: ${summary.top_locked_decision || "unknown"}`,
-          `verified: ${verifySummary.decision_register_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || 0})`,
-          `lesson: ${register.lesson || "allowed claims need scope; locked claims need unlock contracts"}`
-        ].join("\n");
-        $("experimentDecisionRegisterCharts").innerHTML = [
-          chart("decision counts", [
-            { policy: "allowed", value: summary.allowed_decisions || allowed.length },
-            { policy: "locked", value: summary.locked_decisions || locked.length },
-            { policy: "speed ready", value: summary.final_speed_claim_ready ? 1 : 0 }
-          ], "value", "", "#e8a64b"),
-          chart("allowed claim artifacts", allowed.map((row) => ({ policy: row.decision_area, count: (row.evidence_artifacts || []).length })), "count", "", "#79d493"),
-          chart("locked missing artifacts", locked.map((row) => ({ policy: row.decision_area, count: (row.missing_artifacts || []).length })), "count", "", "#db6555"),
-          chart("decision verifier", (verification.checks || []).map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#58d8e6")
-        ].join("");
-        $("experimentDecisionRegisterRows").innerHTML = [
-          ...allowed.map((row) => `
-            <div class="result-row">
-              <b>allowed: ${row.decision_area}</b>
-              <span>${row.claim}</span>
-              <span>scope: ${row.allowed_scope}</span>
-              <span>must not claim: ${row.must_not_claim}</span>
-            </div>
-          `),
-          ...locked.map((row) => `
-            <div class="result-row">
-              <b>locked: ${row.decision_area}</b>
-              <span>${row.blocked_claim}</span>
-              <span>missing: ${(row.missing_artifacts || []).join(", ")}</span>
-              <span>unlock: ${row.unlock_condition}</span>
-              <span>next: ${row.next_command}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      Promise.all([
-        fetch("experiment_decision_register_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("experiment_decision_register_results.json not found"))),
-        fetch("experiment_decision_register_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("experiment_decision_register_verification_results.json not found")))
-      ])
-        .then(renderExperimentDecisionRegister)
-        .catch((error) => { $("experimentDecisionRegisterSummary").textContent = error.message; });
-      function renderEndToEndProofContract([contract, verification]) {
-        const summary = contract.summary || {};
-        const verifySummary = verification.summary || {};
-        const criteria = contract.criteria || [];
-        const statusCounts = criteria.reduce((acc, row) => {
-          acc[row.status] = (acc[row.status] || 0) + 1;
-          return acc;
-        }, {});
-        $("endToEndProofContractSummary").textContent = [
-          `evidence: ${contract.evidence_type || "end-to-end proof contract"}`,
-          `meaty goal: ${summary.meaty_goal || "prove the optimization ladder to a defensible runtime choice"}`,
-          `criteria: ${summary.criteria || criteria.length}`,
-          `satisfied: ${summary.satisfied || 0}`,
-          `ready: ${summary.ready || 0}`,
-          `locked: ${summary.locked || 0}`,
-          `final speed claim ready: ${summary.final_speed_claim_ready ? "yes" : "no"}`,
-          `return archive present: ${summary.return_archive_present ? "yes" : "no"}`,
-          `top unmet criterion: ${summary.top_unmet_criterion || "none"}`,
-          `top next command: ${summary.top_next_command || "not set"}`,
-          `verified: ${verifySummary.end_to_end_contract_verified ? "yes" : "no"} (${verifySummary.passed_checks || 0}/${verifySummary.checks || 0})`,
-          `lesson: ${contract.lesson || "the proof is complete only when acceptance criteria are satisfied"}`
-        ].join("\n");
-        $("endToEndProofContractCharts").innerHTML = [
-          chart("proof criteria status", Object.keys(statusCounts).sort().map((status) => ({ policy: status, value: statusCounts[status] })), "value", "", "#e8a64b"),
-          chart("criterion artifact counts", criteria.map((row) => ({ policy: row.criterion, count: (row.evidence_artifacts || []).length })), "count", "", "#58d8e6"),
-          chart("criterion missing artifacts", criteria.map((row) => ({ policy: row.criterion, count: (row.missing_artifacts || []).length })), "count", "", "#db6555"),
-          chart("proof verifier", (verification.checks || []).map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493")
-        ].join("");
-        $("endToEndProofContractRows").innerHTML = criteria.map((row) => `
-          <div class="result-row">
-            <b>${row.order}. ${row.criterion}: ${row.status}</b>
-            <span>${row.proves}</span>
-            <span>missing: ${(row.missing_artifacts || []).join(", ") || "none"}</span>
-            <span>remaining: ${row.remaining_work}</span>
-            <span>unlocks: ${row.unlocks}</span>
-          </div>
-        `).join("");
-      }
-      Promise.all([
-        fetch("end_to_end_proof_contract_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("end_to_end_proof_contract_results.json not found"))),
-        fetch("end_to_end_proof_contract_verification_results.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject(new Error("end_to_end_proof_contract_verification_results.json not found")))
-      ])
-        .then(renderEndToEndProofContract)
-        .catch((error) => { $("endToEndProofContractSummary").textContent = error.message; });
-      function renderHostProofAudit(payload) {
-        const summary = payload.summary || {};
-        const gates = payload.gates || [];
-        $("hostProofAuditSummary").textContent = [
-          `evidence: ${payload.evidence_type || "host proof audit"}`,
-          `gates passed: ${summary.passed_gates || 0}/${summary.gates || gates.length}`,
-          `locked gates: ${summary.locked_gates || 0}`,
-          `handoff ready: ${summary.handoff_ready ? "yes" : "no"}`,
-          `return archive present: ${summary.return_archive_present ? "yes" : "no"}`,
-          `return contracts ready: ${summary.return_contracts_ready ? "yes" : "no"}`,
-          `final speed claim ready: ${summary.final_speed_claim_ready ? "yes" : "no"}`,
-          `top next action: ${summary.top_next_action || "unknown"}`,
-          `lesson: ${payload.lesson || "handoff readiness is not the same as a completed host proof"}`
-        ].join("\n");
-        $("hostProofAuditCharts").innerHTML = [
-          chart("gate status", [
-            { policy: "passed", value: summary.passed_gates || 0 },
-            { policy: "locked", value: summary.locked_gates || 0 },
-            { policy: "review", value: summary.missing_or_review_gates || 0 }
-          ], "value", "", "#79d493"),
-          chart("source coverage", [
-            { policy: "covered", value: summary.source_families_covered || 0 },
-            { policy: "ranked", value: summary.source_families_ranked || 0 }
-          ], "value", "", "#58d8e6")
-        ].join("");
-        const nodes = gates.map((row, idx) => {
-          const x = 54 + (idx % 4) * 164;
-          const y = 76 + Math.floor(idx / 4) * 96;
-          const fill = row.status === "pass" ? "#79d493" : row.status === "locked" ? "#db6555" : "#e8a64b";
-          return `<g>
-            <rect class="node" x="${x}" y="${y}" width="132" height="52" rx="8"></rect>
-            <circle cx="${x + 16}" cy="${y + 20}" r="7" fill="${fill}" opacity=".84"></circle>
-            <text class="tiny" x="${x + 30}" y="${y + 19}">${row.status}</text>
-            <text class="tiny" x="${x + 12}" y="${y + 39}">${row.gate.slice(0, 20)}</text>
-          </g>`;
-        }).join("");
-        $("hostProofAuditDiagram").innerHTML = `
-          <svg viewBox="0 0 720 270" role="img">
-            <text class="label" x="54" y="42">host proof audit: local handoff passes, external return gates stay locked</text>
-            ${nodes}
-          </svg>
-        `;
-        $("hostProofAuditRows").innerHTML = gates.map((row) => `
-          <div class="result-row">
-            <b>${row.gate}: ${row.status}</b>
-            <span>evidence: ${row.evidence}</span>
-            <span>proves: ${row.proves}</span>
-            <span>next: ${row.next_step}</span>
-          </div>
-        `).join("");
-      }
-      fetch("host_proof_completion_audit_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("host_proof_completion_audit_results.json not found")))
-        .then(renderHostProofAudit)
-        .catch((error) => { $("hostProofAuditSummary").textContent = error.message; });
-      function renderGpuHostProvision(payload) {
-        const summary = payload.summary || {};
-        const requirements = payload.requirements || [];
-        const options = payload.provider_options || [];
-        const steps = payload.run_sequence || [];
-        $("gpuHostProvisionSummary").textContent = [
-          `evidence: ${payload.evidence_type || "GPU-host provisioning worksheet"}`,
-          `recommended host shape: ${summary.recommended_host_shape || "Linux NVIDIA GPU host with Docker GPU access"}`,
-          `avoid: ${summary.avoid_host_shape || "GPU runtimes without Docker --gpus all"}`,
-          `requirements: ${summary.requirements || requirements.length}`,
-          `provider options: ${summary.provider_options || options.length}`,
-          `run steps: ${summary.run_steps || steps.length}`,
-          `local artifacts missing: ${summary.local_artifacts_missing || 0}`,
-          `ready to attempt host proof: ${summary.ready_to_attempt_host_proof ? "yes" : "no"}`,
-          `lesson: ${payload.lesson || "buy the host contract, not a vague GPU"}`
-        ].join("\n");
-        $("gpuHostProvisionCharts").innerHTML = [
-          chart("requirement readiness", requirements.map((row) => ({
-            policy: row.requirement,
-            ready: row.current_local_state === "pass" ? 1 : 0
-          })), "ready", "", "#79d493"),
-          chart("run sequence", steps.map((row) => ({ policy: `${row.order}. ${row.where}`, value: row.order })), "value", "", "#58d8e6")
-        ].join("");
-        $("gpuHostProvisionRows").innerHTML = [
-          ...requirements.map((row) => `
-            <div class="result-row">
-              <b>${row.requirement}: ${row.current_local_state}</b>
-              <span>${row.why}</span>
-              <span>preflight signal: ${row.preflight_signal}; source: ${row.source}</span>
-            </div>
-          `),
-          ...options.map((row) => `
-            <div class="result-row">
-              <b>${row.option}: ${row.fit}</b>
-              <span>${row.why}</span>
-              <span>avoid if: ${row.avoid_if}</span>
-            </div>
-          `),
-          ...steps.map((row) => `
-            <div class="result-row">
-              <b>${row.order}. ${row.where}</b>
-              <span><code>${row.command}</code></span>
-              <span>proves: ${row.proves}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("gpu_host_provisioning_worksheet_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_provisioning_worksheet_results.json not found")))
-        .then(renderGpuHostProvision)
-        .catch((error) => { $("gpuHostProvisionSummary").textContent = error.message; });
-      function renderStartHereVerify(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        $("startHereVerifySummary").textContent = [
-          `evidence: ${payload.evidence_type || "start-here verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `required return files documented: ${summary.required_return_files || 0}`,
-          `required commands documented: ${summary.required_commands || 0}`,
-          `required artifacts documented: ${summary.required_artifacts || 0}`,
-          `doc matches packet: ${summary.doc_matches_packet ? "yes" : "no"}`,
-          `bundle: ${summary.bundle_archive || "gpu_host_run_bundle.tar.gz"}`,
-          `lesson: ${payload.lesson || "verify the human handoff before running the host campaign"}`
-        ].join("\n");
-        $("startHereVerifyCharts").innerHTML = [
-          chart("handoff doc checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("documented contract", [
-            { policy: "return files", value: summary.required_return_files || 0 },
-            { policy: "commands", value: summary.required_commands || 0 },
-            { policy: "artifacts", value: summary.required_artifacts || 0 },
-            { policy: "phrases", value: summary.required_phrases || 0 }
-          ], "value", "", "#58d8e6")
-        ].join("");
-        $("startHereVerifyRows").innerHTML = checks.map((row) => `
-          <div class="result-row">
-            <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-            <span>missing: ${(row.missing || []).join(", ") || "none"}</span>
-          </div>
-        `).join("");
-      }
-      fetch("start_here_next_run_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("start_here_next_run_verification_results.json not found")))
-        .then(renderStartHereVerify)
-        .catch((error) => { $("startHereVerifySummary").textContent = error.message; });
-      function renderCurrentReviewVerify(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        const copyFiles = summary.copy_files || [];
-        $("currentReviewVerifySummary").textContent = [
-          `evidence: ${payload.evidence_type || "current experiment review verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `review matches current state: ${summary.review_matches_current_state ? "yes" : "no"}`,
-          `copy files: ${copyFiles.join(", ") || "none"}`,
-          `return files: ${summary.present_return_files || 0}/${summary.expected_return_files || 0}`,
-          `final speed claim ready: ${summary.final_speed_claim_ready ? "yes" : "no"}`,
-          `bundle: ${summary.bundle_archive || "gpu_host_run_bundle.tar.gz"}`,
-          `sha256: ${summary.bundle_sha256 || "n/a"}`,
-          `lesson: ${payload.lesson || "verify the human review before following its run path"}`
-        ].join("\n");
-        $("currentReviewVerifyCharts").innerHTML = [
-          chart("review doc checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("review contract", [
-            { policy: "copy files", value: copyFiles.length },
-            { policy: "return present", value: summary.present_return_files || 0 },
-            { policy: "return expected", value: summary.expected_return_files || 0 },
-            { policy: "speed ready", value: summary.final_speed_claim_ready ? 1 : 0 }
-          ], "value", "", "#58d8e6")
-        ].join("");
-        $("currentReviewVerifyRows").innerHTML = checks.map((row) => `
-          <div class="result-row">
-            <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-            <span>missing: ${(row.missing || []).join(", ") || "none"}</span>
-          </div>
-        `).join("");
-      }
-      fetch("current_experiment_review_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("current_experiment_review_verification_results.json not found")))
-        .then(renderCurrentReviewVerify)
-        .catch((error) => { $("currentReviewVerifySummary").textContent = error.message; });
       function renderNextRunBoard(payload) {
         const rows = payload.rows || [];
         const summary = payload.summary || {};
@@ -9690,39 +8466,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_run_packet_results.json not found")))
         .then(renderGpuHostPacket)
         .catch((error) => { $("gpuHostPacketSummary").textContent = error.message; });
-      function renderGpuHostPreflight(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        $("gpuHostPreflightSummary").textContent = [
-          `evidence: ${payload.evidence_type || "GPU-host preflight verification"}`,
-          `status: ${payload.status || "unknown"}`,
-          `required files ok: ${summary.required_files_ok ? "yes" : "no"}`,
-          `checks ok: ${summary.checks_ok || 0}/${summary.checks_present || checks.length}`,
-          `blocking checks: ${(summary.blocking_checks || []).join(", ") || "none"}`,
-          `ready for TGI Docker run: ${summary.ready_for_tgi_docker_run ? "yes" : "no"}`,
-          `next host requirement: ${payload.next_host_requirement || "run on a Docker-capable NVIDIA host"}`,
-          `lesson: ${payload.lesson || "Docker GPU access is a separate host gate"}`
-        ].join("\n");
-        $("gpuHostPreflightCharts").innerHTML = [
-          chart("preflight gates", [
-            { policy: "files", value: summary.required_files_ok ? 1 : 0 },
-            { policy: "docker", value: summary.docker_daemon_available ? 1 : 0 },
-            { policy: "nvidia-smi", value: summary.local_nvidia_driver_visible ? 1 : 0 },
-            { policy: "docker gpu", value: summary.docker_gpu_access_available ? 1 : 0 },
-          ], "value", "", "#e8a64b")
-        ].join("");
-        $("gpuHostPreflightRows").innerHTML = checks.map((row) => `
-          <div class="result-row">
-            <b>${esc(row.check)} · ${row.ok ? "pass" : "fail"}</b>
-            <span>present: ${row.present ? "yes" : "no"}; return code: ${row.returncode ?? "n/a"}</span>
-            <span>${esc(row.diagnostic_tail || "")}</span>
-          </div>
-        `).join("");
-      }
-      fetch("gpu_host_preflight_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_preflight_verification_results.json not found")))
-        .then(renderGpuHostPreflight)
-        .catch((error) => { $("gpuHostPreflightSummary").textContent = error.message; });
       function renderFirstHostRun(payload) {
         const steps = payload.steps || [];
         const checks = payload.checks || [];
@@ -10431,167 +9174,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_bundle_self_test_results.json not found")))
         .then(renderGpuHostBundleSelfTest)
         .catch((error) => { $("gpuHostBundleSelfTestSummary").textContent = error.message; });
-      function renderCompleteHostWrapper(payload) {
-        const summary = payload.summary || {};
-        const cases = payload.cases || [];
-        const checks = payload.checks || [];
-        $("completeHostWrapperSummary").textContent = [
-          `evidence: ${payload.evidence_type || "complete GPU-host wrapper verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `wrapper verified: ${summary.wrapper_verified ? "yes" : "no"}`,
-          `campaign failure still collects returns: ${summary.campaign_failure_still_collects_returns ? "yes" : "no"}`,
-          `collect failure preserves nonzero: ${summary.collect_failure_preserves_nonzero ? "yes" : "no"}`,
-          `successful repackage includes wrapper status: ${summary.successful_repackage_includes_wrapper_status ? "yes" : "no"}`,
-          `lesson: ${payload.lesson || "the complete wrapper should package evidence even when the campaign fails"}`
-        ].join("\n");
-        $("completeHostWrapperCharts").innerHTML = [
-          chart("wrapper fixture cases", cases.map((row) => ({
-            policy: `campaign ${row.campaign_rc} / collect ${row.collect_rc}`,
-            value: row.wrapper_returncode
-          })), "value", "", "#e8a64b"),
-          chart("artifact collection", cases.map((row) => ({
-            policy: `campaign ${row.campaign_rc} / collect ${row.collect_rc}`,
-            collected: row.collect_ran && row.archive_present && row.sha256_present && row.manifest_present ? 1 : 0
-          })), "collected", "", "#79d493"),
-          chart("wrapper checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#58d8e6")
-        ].join("");
-        $("completeHostWrapperRows").innerHTML = [
-          `<div class="result-row">
-            <b>host wrapper command</b>
-            <span><code>bash run_complete_gpu_host_campaign.sh</code></span>
-            <span>runs campaign, then always attempts return packaging</span>
-          </div>`,
-          ...cases.map((row) => `
-            <div class="result-row">
-              <b>campaign rc ${row.campaign_rc}, collect rc ${row.collect_rc}</b>
-              <span>wrapper rc: ${row.wrapper_returncode}; campaign ran: ${row.campaign_ran ? "yes" : "no"}; collect ran: ${row.collect_ran ? "yes" : "no"}</span>
-              <span>archive: ${row.archive_present ? "yes" : "no"}; sha256: ${row.sha256_present ? "yes" : "no"}; manifest: ${row.manifest_present ? "yes" : "no"}</span>
-              <span>first failed stage: ${(row.status_summary || {}).first_failed_stage || "none"}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("complete_gpu_host_campaign_wrapper_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("complete_gpu_host_campaign_wrapper_verification_results.json not found")))
-        .then(renderCompleteHostWrapper)
-        .catch((error) => { $("completeHostWrapperSummary").textContent = error.message; });
-      function renderGpuHostBundleRepro(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        $("gpuHostBundleReproSummary").textContent = [
-          `evidence: ${payload.evidence_type || "bundle reproducibility verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `reproducible: ${summary.reproducible ? "yes" : "no"}`,
-          `archive bytes: ${summary.archive_bytes || 0}`,
-          `bundle inputs: ${summary.bundle_inputs || 0}`,
-          `sha256: ${summary.second_archive_sha256 || summary.first_archive_sha256 || "n/a"}`,
-          `lesson: ${payload.lesson || "stable archive hashes make handoff audit easier"}`
-        ].join("\n");
-        $("gpuHostBundleReproCharts").innerHTML = [
-          chart("repro checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("bundle shape", [
-            { policy: "inputs", value: summary.bundle_inputs || 0 },
-            { policy: "checks", value: summary.passed_checks || 0 }
-          ], "value", "", "#58d8e6")
-        ].join("");
-        $("gpuHostBundleReproRows").innerHTML = checks.map((row) => `
-          <div class="result-row">
-            <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-            <span>first: ${summary.first_archive_sha256 || "n/a"}</span>
-            <span>second: ${summary.second_archive_sha256 || "n/a"}</span>
-          </div>
-        `).join("");
-      }
-      fetch("gpu_host_bundle_reproducibility_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_bundle_reproducibility_results.json not found")))
-        .then(renderGpuHostBundleRepro)
-        .catch((error) => { $("gpuHostBundleReproSummary").textContent = error.message; });
-      function renderGpuHostTransferAudit(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        const copyFiles = summary.copy_files || [];
-        $("gpuHostTransferAuditSummary").textContent = [
-          `evidence: ${payload.evidence_type || "GPU-host transfer audit"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `ready to copy to GPU host: ${summary.ready_to_copy_to_gpu_host ? "yes" : "no"}`,
-          `archive: ${summary.archive || "n/a"}; bytes: ${summary.archive_bytes || 0}; members: ${summary.archive_members || 0}`,
-          `sha256: ${summary.archive_sha256 || "n/a"}`,
-          `optional diagnostics contract: ${summary.optional_diagnostic_contract_verified ? "verified" : "not verified"} (${summary.optional_diagnostic_files || 0} files)`,
-          `copy files: ${copyFiles.join(", ") || "none"}`,
-          `first host command: ${summary.first_host_command || "not set"}`,
-          `lesson: ${payload.lesson || "transfer readiness is a local gate, not benchmark evidence"}`
-        ].join("\n");
-        $("gpuHostTransferAuditCharts").innerHTML = [
-          chart("transfer checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("transfer packet", [
-            { policy: "copy files", value: copyFiles.length },
-            { policy: "members", value: summary.archive_members || 0 },
-            { policy: "optional diagnostics", value: summary.optional_diagnostic_files || 0 },
-            { policy: "checks", value: summary.passed_checks || 0 },
-          ], "value", "", "#58d8e6")
-        ].join("");
-        $("gpuHostTransferAuditRows").innerHTML = [
-          `<div class="result-row">
-            <b>copy packet</b>
-            <span>${copyFiles.join(" and ") || "no copy files recorded"}</span>
-            <span><code>${summary.first_host_command || "first host command missing"}</code></span>
-          </div>`,
-          ...checks.map((row) => `
-            <div class="result-row">
-              <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-              <span>evidence: ${Array.isArray(row.evidence) ? row.evidence.join(", ") : row.evidence}</span>
-              <span>${row.passed ? "ready" : "review before transfer"}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("gpu_host_transfer_audit_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_transfer_audit_results.json not found")))
-        .then(renderGpuHostTransferAudit)
-        .catch((error) => { $("gpuHostTransferAuditSummary").textContent = error.message; });
-      function renderGpuHostHandoffCli(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        $("gpuHostHandoffCliSummary").textContent = [
-          `evidence: ${payload.evidence_type || "GPU-host handoff CLI verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `JSON mode ok: ${summary.json_mode_ok ? "yes" : "no"}`,
-          `text mode ok: ${summary.text_mode_ok ? "yes" : "no"}`,
-          `ready to copy to GPU host: ${summary.ready_to_copy_to_gpu_host ? "yes" : "no"}`,
-          `sha256: ${summary.archive_sha256 || "n/a"}`,
-          `first host command: ${summary.first_host_command || "not set"}`,
-          `lesson: ${payload.lesson || "handoff CLI output must agree with transfer and status artifacts"}`
-        ].join("\n");
-        $("gpuHostHandoffCliCharts").innerHTML = [
-          chart("handoff CLI checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("CLI modes", [
-            { policy: "json", value: summary.json_mode_ok ? 1 : 0 },
-            { policy: "text", value: summary.text_mode_ok ? 1 : 0 },
-            { policy: "ready", value: summary.ready_to_copy_to_gpu_host ? 1 : 0 },
-          ], "value", "", "#58d8e6")
-        ].join("");
-        $("gpuHostHandoffCliRows").innerHTML = [
-          `<div class="result-row">
-            <b>host command</b>
-            <span><code>${summary.first_host_command || "first host command missing"}</code></span>
-            <span>${summary.ready_to_copy_to_gpu_host ? "ready to run on the NVIDIA Docker host" : "review handoff before transfer"}</span>
-          </div>`,
-          ...checks.map((row) => {
-            const evidence = typeof row.evidence === "string" ? row.evidence : JSON.stringify(row.evidence || "");
-            return `
-              <div class="result-row">
-                <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-                <span>evidence: ${evidence || "none"}</span>
-                <span>${row.passed ? "verified" : "needs attention"}</span>
-              </div>
-            `;
-          })
-        ].join("");
-      }
-      fetch("gpu_host_handoff_cli_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_handoff_cli_verification_results.json not found")))
-        .then(renderGpuHostHandoffCli)
-        .catch((error) => { $("gpuHostHandoffCliSummary").textContent = error.message; });
       function renderGpuHostReturn(payload) {
         const summary = payload.summary || {};
         const runs = payload.runs || [];
@@ -10673,267 +9255,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_return_packet_results.json not found")))
         .then(renderGpuHostReturn)
         .catch((error) => { $("gpuHostReturnSummary").textContent = error.message; });
-      function renderGpuHostReturnCollection(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        $("gpuHostReturnCollectionSummary").textContent = [
-          `evidence: ${payload.evidence_type || "return collection verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `expected required files: ${summary.expected_required_files || 0}`,
-          `missing-state required present: ${summary.missing_state_required_present || 0}`,
-          `missing-state checksum present: ${summary.missing_archive_sha256_present ? "yes" : "no"}`,
-          `ready-state required present: ${summary.ready_state_required_present || 0}`,
-          `ready archive members: ${summary.ready_archive_members || 0}`,
-          `ready optional diagnostics: ${summary.ready_optional_present || 0}/${summary.ready_optional_expected || 0}`,
-          `ready campaign logs: ${summary.ready_campaign_logs_present || 0}/${summary.ready_campaign_logs_expected || 0}`,
-          `ready archive checksum: ${summary.ready_archive_sha256_present ? "yes" : "no"}`,
-          `return collection verified: ${summary.return_collection_verified ? "yes" : "no"}`,
-          `custom output/archive overrides: ${summary.custom_out_and_archive_supported ? "pass" : "not ready"}`,
-          `lesson: ${payload.lesson || "verify host-side return archive collection before copy-back"}`
-        ].join("\n");
-        $("gpuHostReturnCollectionCharts").innerHTML = [
-          chart("collection checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("collector states", [
-            { policy: "missing present", value: summary.missing_state_required_present || 0 },
-            { policy: "missing checksum", value: summary.missing_archive_sha256_present ? 1 : 0 },
-            { policy: "ready present", value: summary.ready_state_required_present || 0 },
-            { policy: "archive members", value: summary.ready_archive_members || 0 },
-            { policy: "optional diagnostics", value: summary.ready_optional_present || 0 },
-            { policy: "campaign logs", value: summary.ready_campaign_logs_present || 0 },
-            { policy: "verified", value: summary.return_collection_verified ? 1 : 0 }
-          ], "value", "", "#58d8e6")
-        ].join("");
-        $("gpuHostReturnCollectionRows").innerHTML = checks.map((row) => `
-          <div class="result-row">
-            <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-            <span>This uses synthetic host-return files to verify packaging behavior, not runtime speed.</span>
-          </div>
-        `).join("");
-      }
-      fetch("gpu_host_return_collection_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_return_collection_verification_results.json not found")))
-        .then(renderGpuHostReturnCollection)
-        .catch((error) => { $("gpuHostReturnCollectionSummary").textContent = error.message; });
-      function renderGpuHostReturnImport(payload) {
-        const summary = payload.summary || {};
-        const members = payload.archive_members || [];
-        $("gpuHostReturnImportSummary").textContent = [
-          `evidence: ${payload.evidence_type || "return import state"}`,
-          `archive: ${summary.archive || "gpu_host_return_files.tar.gz"}`,
-          `archive present: ${summary.archive_present ? "yes" : "no"}`,
-          `archive valid: ${summary.archive_valid || summary.ready_for_import_script ? "yes" : "no"}`,
-          `archive members: ${summary.archive_members || members.length}`,
-          `manifest present: ${summary.manifest_present ? "yes" : "no"}`,
-          `manifest valid: ${summary.manifest_valid ? "yes" : "no"}`,
-          `ready for import script: ${summary.ready_for_import_script ? "yes" : "no"}`,
-          `ready for return verifier: ${summary.ready_for_return_packet_verifier ? "yes" : "no"}`,
-          `lesson: ${payload.lesson || "wait for the returned GPU-host archive before importing"}`
-        ].join("\n");
-        $("gpuHostReturnImportCharts").innerHTML = [
-          chart("import gates", [
-            { policy: "archive", value: summary.archive_present ? 1 : 0 },
-            { policy: "valid archive", value: summary.archive_valid ? 1 : 0 },
-            { policy: "manifest", value: summary.manifest_present ? 1 : 0 },
-            { policy: "valid manifest", value: summary.manifest_valid ? 1 : 0 },
-            { policy: "ready", value: summary.ready_for_import_script ? 1 : 0 }
-          ], "value", "", "#e8a64b")
-        ].join("");
-        $("gpuHostReturnImportRows").innerHTML = [
-          `<div class="result-row">
-            <b>import command</b>
-            <span><code>${payload.next_command || "bash receive_gpu_host_returns.sh"}</code></span>
-            <span>current state: ${summary.ready_for_import_script ? "ready" : "locked until archive arrives"}</span>
-          </div>`,
-          ...members.map((name) => `
-            <div class="result-row">
-              <b>archive member</b>
-              <span>${name}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("gpu_host_return_import_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_return_import_results.json not found")))
-        .then(renderGpuHostReturnImport)
-        .catch((error) => { $("gpuHostReturnImportSummary").textContent = error.message; });
-      function renderGpuHostReturnReceive(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        $("gpuHostReturnReceiveSummary").textContent = [
-          `evidence: ${payload.evidence_type || "return receive wrapper verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `receive wrapper verified: ${summary.receive_wrapper_verified ? "yes" : "no"}`,
-          `missing archive return code: ${summary.missing_archive_returncode ?? "n/a"}`,
-          `present archive return code: ${summary.present_archive_returncode ?? "n/a"}`,
-          `manifest mismatch return code: ${summary.manifest_mismatch_returncode ?? "n/a"}`,
-          `lesson: ${payload.lesson || "the friendly receive command should fail closed and delegate to the safe importer"}`
-        ].join("\n");
-        $("gpuHostReturnReceiveCharts").innerHTML = [
-          chart("receive checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("receive fixture return codes", [
-            { policy: "missing archive", value: summary.missing_archive_returncode ?? 0 },
-            { policy: "present archive", value: summary.present_archive_returncode ?? 0 },
-            { policy: "manifest mismatch", value: summary.manifest_mismatch_returncode ?? 0 },
-            { policy: "verified", value: summary.receive_wrapper_verified ? 1 : 0 }
-          ], "value", "", "#58d8e6")
-        ].join("");
-        $("gpuHostReturnReceiveRows").innerHTML = [
-          `<div class="result-row">
-            <b>local receive command</b>
-            <span><code>bash receive_gpu_host_returns.sh</code></span>
-            <span>delegates to <code>import_gpu_host_return_archive.sh</code> after confirming the archive exists</span>
-          </div>`,
-          ...checks.map((row) => `
-            <div class="result-row">
-              <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-              <span>This is a local fixture check for the receive wrapper, not runtime speed evidence.</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("gpu_host_return_receive_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_return_receive_verification_results.json not found")))
-        .then(renderGpuHostReturnReceive)
-        .catch((error) => { $("gpuHostReturnReceiveSummary").textContent = error.message; });
-      function renderGpuHostReturnImportSafety(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        $("gpuHostReturnImportSafetySummary").textContent = [
-          `evidence: ${payload.evidence_type || "return import safety verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `valid import return code: ${summary.valid_import_returncode ?? "n/a"}`,
-          `valid import copied marker: ${summary.valid_import_marker_copied ? "yes" : "no"}`,
-          `valid import manifest valid: ${summary.valid_import_manifest_valid ? "yes" : "no"}`,
-          `valid import manifest SHA match: ${summary.valid_import_manifest_archive_sha256_matches ? "yes" : "no"}`,
-          `post-import gates ran: ${summary.valid_import_post_gates_ran ? "yes" : "no"}`,
-          `checksum mismatch return code: ${summary.checksum_mismatch_returncode ?? "n/a"}`,
-          `unsafe member return code: ${summary.unsafe_member_returncode ?? "n/a"}`,
-          `import safety verified: ${summary.import_safety_verified ? "yes" : "no"}`,
-          `lesson: ${payload.lesson || "verify archive integrity and path safety before importing returned host files"}`
-        ].join("\n");
-        $("gpuHostReturnImportSafetyCharts").innerHTML = [
-          chart("import safety checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("failure return codes", [
-            { policy: "valid import", value: summary.valid_import_returncode || 0 },
-            { policy: "checksum mismatch", value: summary.checksum_mismatch_returncode || 0 },
-            { policy: "manifest mismatch", value: summary.manifest_mismatch_returncode || 0 },
-            { policy: "unsafe tar member", value: summary.unsafe_member_returncode || 0 },
-            { policy: "safety verified", value: summary.import_safety_verified ? 1 : 0 }
-          ], "value", "", "#e8a64b")
-        ].join("");
-        $("gpuHostReturnImportSafetyRows").innerHTML = checks.map((row) => `
-          <div class="result-row">
-            <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-            <span>This is a local intake guard for copied-back archives, not a runtime benchmark.</span>
-          </div>
-        `).join("");
-      }
-      fetch("gpu_host_return_import_safety_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_return_import_safety_verification_results.json not found")))
-        .then(renderGpuHostReturnImportSafety)
-        .catch((error) => { $("gpuHostReturnImportSafetySummary").textContent = error.message; });
-      function renderHostReturnTriage(payload) {
-        const summary = payload.summary || {};
-        const current = payload.current || {};
-        const runtimes = payload.runtime_states || [];
-        const branches = payload.branches || [];
-        $("hostReturnTriageSummary").textContent = [
-          `evidence: ${payload.evidence_type || "host return triage"}`,
-          `current branch: ${summary.current_branch || current.branch || "unknown"}`,
-          `current status: ${summary.current_status || current.status || "unknown"}`,
-          `return files present: ${summary.present_return_files || 0}/${summary.expected_return_files || 0}`,
-          `runtime contracts passing: ${summary.runtime_contracts_passing || 0}`,
-          `optional diagnostics doc: ${summary.triage_doc_mentions_optional_diagnostics ? "verified" : "not verified"} (${summary.optional_diagnostic_files || 0} files; ${summary.optional_campaign_logs || 0} campaign logs)`,
-          `speed claim allowed: ${summary.speed_claim_allowed ? "yes" : "no"}`,
-          `next action: ${current.next_action || "inspect HOST_RETURN_TRIAGE.md"}`,
-          `lesson: ${payload.lesson || "triage returned host files before comparing runtimes"}`
-        ].join("\n");
-        $("hostReturnTriageCharts").innerHTML = [
-          chart("return file state", [
-            { policy: "present files", value: summary.present_return_files || 0 },
-            { policy: "missing files", value: summary.missing_return_files || 0 },
-            { policy: "optional diagnostics", value: summary.optional_diagnostic_files || 0 },
-            { policy: "campaign logs", value: summary.optional_campaign_logs || 0 },
-            { policy: "contracts passing", value: summary.runtime_contracts_passing || 0 },
-            { policy: "speed allowed", value: summary.speed_claim_allowed ? 1 : 0 }
-          ], "value", "", "#e8a64b"),
-          chart("triage branches", branches.map((row) => ({ policy: row.branch, speed: row.speed_claim_allowed ? 1 : 0 })), "speed", "", "#58d8e6")
-        ].join("");
-        $("hostReturnTriageRows").innerHTML = [
-          `<div class="result-row">
-            <b>${current.branch || "current branch"}: ${current.status || "unknown"}</b>
-            <span>${current.meaning || "No current triage branch available."}</span>
-            <span>read first: ${(current.read_first || []).join(", ") || "HOST_RETURN_TRIAGE.md"}</span>
-            <span>speed claim: ${current.speed_claim_allowed ? "allowed" : "locked"}</span>
-          </div>`,
-          ...runtimes.map((row) => `
-            <div class="result-row">
-              <b>${row.system}: ${row.contract_status}</b>
-              <span>${row.present_files}/${row.expected_files} files present; result status: ${row.result_summary_status || "none"}</span>
-              <span>metadata ${row.metadata_ok ? "pass" : "not ready"}; summary ${row.summary_ok ? "pass" : "not ready"}; rows ${row.rows_ok ? "pass" : "not ready"}; host artifacts ${row.host_artifacts_ok ? "pass" : "not ready"}</span>
-              <span>first failure file: ${row.first_failure_to_read || "n/a"}</span>
-            </div>
-          `),
-          ...branches.map((row) => `
-            <div class="result-row">
-              <b>${row.branch}</b>
-              <span>when: ${row.when}</span>
-              <span>first file: ${row.first_file}</span>
-              <span>speed claim: ${row.speed_claim_allowed ? "allowed" : "locked"}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("host_return_triage_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("host_return_triage_results.json not found")))
-        .then(renderHostReturnTriage)
-        .catch((error) => { $("hostReturnTriageSummary").textContent = error.message; });
-      function renderReturnToFollowup(payload) {
-        const summary = payload.summary || {};
-        const stages = payload.stages || [];
-        const followups = payload.followups || [];
-        $("returnToFollowupSummary").textContent = [
-          `evidence: ${payload.evidence_type || "return-to-follow-up audit"}`,
-          `stages passed: ${summary.stages_passed || 0}/${summary.stages || stages.length}`,
-          `first blocked stage: ${summary.first_blocked_stage || "none"}`,
-          `return files: ${summary.present_return_files || 0}/${summary.expected_return_files || 0}`,
-          `diagnostic triage ready: ${summary.diagnostic_triage_ready ? "yes" : "no"} (${summary.optional_diagnostic_files || 0} optional files; ${summary.optional_campaign_logs || 0} campaign logs)`,
-          `speed claim allowed: ${summary.speed_claim_allowed ? "yes" : "no"}`,
-          `post-host follow-ups waiting: ${summary.post_host_followups_waiting || 0}`,
-          `next action: ${summary.next_action || "inspect returned files"}`,
-          `lesson: ${payload.lesson || "returned files must unlock gates before follow-up tuning becomes runtime evidence"}`
-        ].join("\n");
-        $("returnToFollowupCharts").innerHTML = [
-          chart("return-to-follow-up stages", stages.map((row) => ({ policy: row.stage, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("diagnostic bridge", [
-            { policy: "triage ready", value: summary.diagnostic_triage_ready ? 1 : 0 },
-            { policy: "optional files", value: summary.optional_diagnostic_files || 0 },
-            { policy: "campaign logs", value: summary.optional_campaign_logs || 0 }
-          ], "value", "", "#e8a64b"),
-          chart("follow-up readiness", followups.map((row) => ({ policy: row.experiment, ready: row.ready_now ? 1 : 0 })), "ready", "", "#58d8e6")
-        ].join("");
-        $("returnToFollowupRows").innerHTML = [
-          ...stages.map((row) => `
-            <div class="result-row">
-              <b>${row.order}. ${row.stage}: ${row.passed ? "pass" : "locked"}</b>
-              <span>artifact: ${row.artifact}</span>
-              <span>next if blocked: ${row.next_if_blocked}</span>
-            </div>
-          `),
-          ...followups.slice(0, 5).map((row) => `
-            <div class="result-row">
-              <b>follow-up ${row.rank}: ${row.experiment}</b>
-              <span>phase: ${row.phase}; ready now: ${row.ready_now ? "yes" : "no"}</span>
-              <span>missing: ${(row.missing_artifacts || []).join(", ") || "none"}</span>
-              <span>action: ${row.action}</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("return_to_followup_audit_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("return_to_followup_audit_results.json not found")))
-        .then(renderReturnToFollowup)
-        .catch((error) => { $("returnToFollowupSummary").textContent = error.message; });
       function renderGpuHostReturnVerification(payload) {
         const summary = payload.summary || {};
         const checks = payload.checks || [];
@@ -10965,81 +9286,6 @@ Simulate arrivals and compare static batching with continuous batching using the
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_return_packet_verification_results.json not found")))
         .then(renderGpuHostReturnVerification)
         .catch((error) => { $("gpuHostReturnVerifySummary").textContent = error.message; });
-      function renderGpuHostFailureCapture(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        const cases = payload.cases || [];
-        $("gpuHostFailureCaptureSummary").textContent = [
-          `evidence: ${payload.evidence_type || "failure-capture verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `TGI failure result present: ${summary.tgi_failure_result_present ? "yes" : "no"}`,
-          `vLLM failure result present: ${summary.vllm_failure_result_present ? "yes" : "no"}`,
-          `failure capture verified: ${summary.failure_capture_verified ? "yes" : "no"}`,
-          `lesson: ${payload.lesson || "failed host runs should return diagnostic evidence without unlocking speed claims"}`
-        ].join("\n");
-        $("gpuHostFailureCaptureCharts").innerHTML = [
-          chart("failure capture checks", checks.map((row) => ({ policy: `${row.case} ${row.check}`, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("failure result files", [
-            { policy: "TGI failure JSON", value: summary.tgi_failure_result_present ? 1 : 0 },
-            { policy: "vLLM failure JSON", value: summary.vllm_failure_result_present ? 1 : 0 }
-          ], "value", "", "#e8a64b")
-        ].join("");
-        $("gpuHostFailureCaptureRows").innerHTML = cases.map((row) => `
-          <div class="result-row">
-            <b>${row.system}: failure JSON ${row.result_present ? "written" : "missing"}</b>
-            <span>failed type ${row.failed_evidence_type ? "labeled" : "missing"}; failed command ${row.failed_command_present ? "recorded" : "missing"}; proof limit ${row.proof_limit_blocks_speed ? "blocks speed" : "unclear"}</span>
-            <span>diagnostics present: ${(row.existing_diagnostic_files || []).join(", ") || "none"}</span>
-            <span>script return code: ${row.script_returncode_nonzero ? "nonzero as expected" : "unexpected success"}</span>
-          </div>
-        `).join("");
-      }
-      fetch("gpu_host_failure_capture_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("gpu_host_failure_capture_verification_results.json not found")))
-        .then(renderGpuHostFailureCapture)
-        .catch((error) => { $("gpuHostFailureCaptureSummary").textContent = error.message; });
-      function renderFailedHostLock(payload) {
-        const summary = payload.summary || {};
-        const checks = payload.checks || [];
-        const contracts = payload.runtime_contracts || [];
-        $("failedHostLockSummary").textContent = [
-          `evidence: ${payload.evidence_type || "failed-host lock verifier"}`,
-          `checks passed: ${summary.passed_checks || 0}/${summary.checks || checks.length}`,
-          `returned files in fixture: ${summary.present_return_files || 0}/${summary.expected_return_files || 0}`,
-          `runtime contracts passing: ${summary.contracts_passing || 0}`,
-          `ready to rebuild final comparison: ${summary.ready_to_rebuild_final_comparison ? "yes" : "no"}`,
-          `ready for speed claim: ${summary.ready_for_speed_claim ? "yes" : "no"}`,
-          `failed results stay locked: ${summary.failed_results_stay_locked ? "yes" : "no"}`,
-          `lesson: ${payload.lesson || "failure files are diagnostic evidence, not benchmark rows"}`
-        ].join("\n");
-        $("failedHostLockCharts").innerHTML = [
-          chart("lock verifier checks", checks.map((row) => ({ policy: row.check, passed: row.passed ? 1 : 0 })), "passed", "", "#79d493"),
-          chart("lock gates", [
-            { policy: "files present", value: summary.present_return_files || 0 },
-            { policy: "contracts passing", value: summary.contracts_passing || 0 },
-            { policy: "speed ready", value: summary.ready_for_speed_claim ? 1 : 0 }
-          ], "value", "", "#db6555")
-        ].join("");
-        $("failedHostLockRows").innerHTML = [
-          ...contracts.map((contract) => `
-            <div class="result-row">
-              <b>${contract.system}: ${contract.status}</b>
-              <span>metadata ${contract.metadata_ok ? "pass" : "not ready"}; workload ${contract.workload_ok ? "pass" : "not ready"}; request IDs ${contract.request_ids_ok ? "pass" : "not ready"}</span>
-              <span>rows ${contract.rows_ok ? "pass" : "locked"}; host artifacts ${contract.host_artifacts_ok ? "pass" : "not ready"}; stream ${contract.stream_ok ? "pass" : "not ready"}</span>
-              <span>empty failed rows are useful diagnostics but not speed evidence.</span>
-            </div>
-          `),
-          ...checks.map((row) => `
-            <div class="result-row">
-              <b>${row.check}: ${row.passed ? "pass" : "fail"}</b>
-              <span>synthetic failed-return invariant</span>
-            </div>
-          `)
-        ].join("");
-      }
-      fetch("failed_host_results_lock_verification_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("failed_host_results_lock_verification_results.json not found")))
-        .then(renderFailedHostLock)
-        .catch((error) => { $("failedHostLockSummary").textContent = error.message; });
       function renderPreflightContractStates(payload) {
         const cases = payload.cases || [];
         const lessons = payload.lessons || [];

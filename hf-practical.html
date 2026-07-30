@@ -161,9 +161,6 @@
           <div class="card method"><b>reusable prefix</b><span>A stable system message and its boundary tokens can be reused across requests when prefix caching is enabled.</span></div>
         </div>
         <div id="chatTemplateSummary" class="runbox" style="margin-top:14px">loading hf_chat_template_trace_results.json</div>
-        <div id="promptPressureSummary" class="runbox" style="margin-top:14px">loading prompt_context_pressure_results.json</div>
-        <div id="promptPressureCharts" class="chart-grid"></div>
-        <div id="promptPressureRows" class="result-table"></div>
         <div id="chatTemplateCharts" class="chart-grid"></div>
         <div id="chatTemplateDiagram" class="diagram"></div>
         <div id="chatTemplatePrompts" class="prompt-view"></div>
@@ -186,9 +183,6 @@
         <div id="cacheSettingsSummary" class="runbox" style="margin-top:14px">loading hf_cache_setting_trace_results.json</div>
         <div id="cacheSettingsControls" class="control-strip"></div>
         <div id="cacheSettingsFocus" class="runbox" style="margin-top:14px"></div>
-        <div id="cacheStrategySummary" class="runbox" style="margin-top:14px">loading hf_cache_strategy_results.json</div>
-        <div id="cacheStrategyCharts" class="chart-grid"></div>
-        <div id="cacheStrategyRows" class="result-table"></div>
         <div id="cacheSettingsCharts" class="chart-grid"></div>
         <div id="cacheSettingsDiagram" class="diagram"></div>
         <div id="cacheSettingsModes" class="mode-grid"></div>
@@ -613,33 +607,6 @@
           </div>
         `).join("");
       }
-      function renderPromptPressure(payload) {
-        const summary = payload.summary || {};
-        const rows = payload.rows || [];
-        $("promptPressureSummary").textContent = [
-          `evidence: ${payload.evidence_type || "local tokenizer trace"}`,
-          `model id: ${payload.model_id || "unknown"} via ${payload.tokenizer_source || "unknown tokenizer"}`,
-          `baseline plain prompt tokens: ${payload.baseline_plain_prompt_tokens || 0}`,
-          `largest overhead: ${summary.largest_overhead_case || "unknown"} adds ${summary.largest_overhead_tokens_vs_plain || 0} tokens`,
-          `least reusable formatted case: ${summary.least_reusable_formatted_case || "unknown"} (${fmt(summary.least_reusable_formatted_prefix_fraction || 0, 3)} reusable fraction)`,
-          `all cases fit 2048 with ${payload.reserved_output_tokens || 0} reserved output tokens: ${summary.all_cases_fit_2048_with_reserved_output ? "yes" : "no"}`,
-          `lesson: ${payload.lesson || "prompt formatting spends context before generation starts"}`
-        ].join("\n");
-        $("promptPressureCharts").innerHTML = [
-          chart("input tokens by prompt shape", rows.map((row) => ({ policy: row.case, count: row.input_tokens })), "count", " tokens", "#58d8e6"),
-          chart("extra tokens above plain", rows.map((row) => ({ policy: row.case, count: Math.max(0, row.overhead_tokens_vs_plain || 0) })), "count", " tokens", "#e8a64b"),
-          chart("reusable prefix", rows.map((row) => ({ policy: row.case, count: row.reusable_prefix_tokens_vs_reference })), "count", " tokens", "#79d493")
-        ].join("");
-        $("promptPressureRows").innerHTML = rows.map((row) => {
-          const smallest = (row.budget_checks || [])[0] || {};
-          return `<div class="result-row">
-            <b>${esc(row.case)}</b>
-            <span>${row.input_tokens || 0} input tokens; ${row.overhead_tokens_vs_plain || 0} overhead versus plain</span>
-            <span>2048-window room after prompt: ${smallest.budget_left_before_generation || 0}; reserved-output fit: ${smallest.fits_with_reserved_output ? "yes" : "no"}</span>
-            <span>${esc(row.lesson || "")}</span>
-          </div>`;
-        }).join("");
-      }
       function renderCacheSettings(payload) {
         cacheSettingsPayload = payload;
         const summary = payload.summary || {};
@@ -701,32 +668,6 @@
           </div>
         `).join("");
         renderCacheSettingsControls(payload);
-      }
-      function renderCacheStrategy(payload) {
-        const summary = payload.summary || {};
-        const rows = payload.rows || [];
-        $("cacheStrategySummary").textContent = [
-          `evidence: ${payload.evidence_type || "real cache-strategy measurement"}`,
-          `model id: ${payload.model_id || "unknown"} on ${payload.gpu || "unknown GPU"}`,
-          `strategies ran: ${summary.strategies_ran || 0}/${summary.strategies_attempted || 0}`,
-          `fastest strategy: ${summary.fastest_strategy || "unknown"}`,
-          `lowest GPU-memory delta strategy: ${summary.lowest_gpu_memory_delta_strategy || "unknown"}`,
-          `max new tokens: ${payload.max_new_tokens || 0}; verifier requires prompt timing, generated tokens, and memory evidence`,
-          `lesson: ${payload.lesson || "cache implementations are measured tradeoffs"}`
-        ].join("\n");
-        $("cacheStrategyCharts").innerHTML = [
-          chart("mean generation time", rows.map((row) => ({ policy: row.strategy, count: row.summary?.mean_elapsed_ms || 0 })), "count", " ms", "#58d8e6"),
-          chart("mean tokens per second", rows.map((row) => ({ policy: row.strategy, count: row.summary?.mean_tokens_per_second || 0 })), "count", " tok/s", "#79d493"),
-          chart("GPU memory delta", rows.map((row) => ({ policy: row.strategy, count: Math.max(0, row.gpu_memory_delta_mb || 0) })), "count", " MB", "#e8a64b")
-        ].join("");
-        $("cacheStrategyRows").innerHTML = rows.map((row) => `
-          <div class="result-row">
-            <b>${esc(row.strategy)} · ${esc(row.status)}</b>
-            <span>${fmt(row.summary?.mean_elapsed_ms || 0, 2)} ms mean; ${fmt(row.summary?.mean_tokens_per_second || 0, 2)} tok/s</span>
-            <span>GPU delta: ${fmt(row.gpu_memory_delta_mb || 0, 1)} MB; prompts ok: ${row.summary?.ok_prompts || 0}</span>
-            <span>${esc(row.expected_tradeoff || "")}</span>
-          </div>
-        `).join("");
       }
       function renderPrecisionLoading(payload) {
         precisionPayload = payload;
@@ -798,18 +739,10 @@
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_chat_template_trace_results.json not found")))
         .then(renderChatTemplate)
         .catch((error) => { $("chatTemplateSummary").textContent = error.message; });
-      fetch("prompt_context_pressure_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("prompt_context_pressure_results.json not found")))
-        .then(renderPromptPressure)
-        .catch((error) => { $("promptPressureSummary").textContent = error.message; });
       fetch("hf_cache_setting_trace_results.json", { cache: "no-store" })
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_cache_setting_trace_results.json not found")))
         .then(renderCacheSettings)
         .catch((error) => { $("cacheSettingsSummary").textContent = error.message; });
-      fetch("hf_cache_strategy_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_cache_strategy_results.json not found")))
-        .then(renderCacheStrategy)
-        .catch((error) => { $("cacheStrategySummary").textContent = error.message; });
       fetch("hf_precision_loading_trace_results.json", { cache: "no-store" })
         .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_precision_loading_trace_results.json not found")))
         .then(renderPrecisionLoading)

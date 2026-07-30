@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Formula Sheet: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1220px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1000px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 940px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 960px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .formula-list {
+        display: grid;
+        gap: 10px;
+      }
+      .formula-row {
+        display: grid;
+        grid-template-columns: 190px 1.2fr 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .formula-row b { color: var(--ink); }
+      .formula-row span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .formula {
+        margin: 0;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      @media (max-width: 1000px) {
+        .grid, .formula-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">formula sheet</div>
+        <h1>The core inference formulas on one page.</h1>
+        <p>
+          This sheet collects the formulas used across the first-principles
+          pages. Each row names the formula, defines the variables in plain
+          terms, and states the serving or training consequence.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="first-principles-study-path.html">study path</a>
+        <a href="worked-examples-math.html">worked examples</a>
+        <a href="math-glossary.html">math glossary</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="kv-cache-math.html">KV cache math</a>
+        <a href="serving-runtime-math.html">serving runtime math</a>
+        <a href="adapter-training-math.html">adapter training math</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="#model">model</a>
+        <a href="#cache">cache</a>
+        <a href="#serving">serving</a>
+        <a href="#training">training</a>
+        <a href="#claims">claims</a>
+      </div>
+    </div>
+
+    <main>
+      <section class="panel wrap">
+        <div class="bug">reading key</div>
+        <h2>Every formula is either arithmetic, bytes, waiting, training, or evidence.</h2>
+        <p class="lead">
+          If a formula changes arithmetic, it changes work. If it changes bytes,
+          it changes fit and memory movement. If it changes waiting, it changes
+          user-visible latency. If it changes trainable parameters, it changes
+          adaptation cost. If it changes evidence, it changes what we can claim.
+        </p>
+        <div class="grid">
+          <div class="card"><b>Compute</b><span>Attention, softmax, logits, speculative decode verification.</span></div>
+          <div class="card"><b>Capacity</b><span>KV bytes, available room, admission gates, quantized storage.</span></div>
+          <div class="card"><b>Evidence</b><span>Same workload, same host, same client, explicit non-claims.</span></div>
+        </div>
+      </section>
+
+      <section id="model" class="panel wrap">
+        <div class="bug">model formulas</div>
+        <h2>One model step.</h2>
+        <div class="formula-list">
+          <div class="formula-row">
+            <b>Embedding lookup</b>
+            <pre class="formula">h_t = E[x_t] + position(t)</pre>
+            <span><code>x_t</code> is a token ID; <code>E</code> is the embedding table.</span>
+            <span>Text becomes vector state. Token count controls how many positions enter later work.</span>
+          </div>
+          <div class="formula-row">
+            <b>QKV projections</b>
+            <pre class="formula">Q = H W_Q
+K = H W_K
+V = H W_V</pre>
+            <span><code>H</code> is hidden states; <code>W_Q</code>, <code>W_K</code>, <code>W_V</code> are learned matrices.</span>
+            <span>Queries ask what to read; keys label visible positions; values carry the payload to mix.</span>
+          </div>
+          <div class="formula-row">
+            <b>Attention</b>
+            <pre class="formula">O = softmax((Q K^T + mask) / sqrt(d_head)) V</pre>
+            <span><code>d_head</code> is head width; mask blocks illegal future reads.</span>
+            <span>This is the read operation that makes prior token content affect the current token.</span>
+          </div>
+          <div class="formula-row">
+            <b>Stable softmax</b>
+            <pre class="formula">p_i = exp(s_i - max(s)) / sum_j exp(s_j - max(s))</pre>
+            <span><code>s_i</code> is a score. Subtracting max keeps numbers stable.</span>
+            <span>Scores become positive shares that sum to one.</span>
+          </div>
+          <div class="formula-row">
+            <b>Logits</b>
+            <pre class="formula">z = h_last W_vocab^T</pre>
+            <span><code>z</code> has one score per vocabulary token.</span>
+            <span>Generation policy turns these scores into the next output token.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="cache" class="panel wrap">
+        <div class="bug">cache formulas</div>
+        <h2>Memory created by faster decode.</h2>
+        <div class="formula-list">
+          <div class="formula-row">
+            <b>KV bytes</b>
+            <pre class="formula">KV bytes =
+layers * 2 * positions * kv_heads * head_dim * active_sequences * bytes_per_number</pre>
+            <span>The <code>2</code> is K and V. Positions include prompt and generated tokens.</span>
+            <span>This is why concurrency, context length, output length, and precision determine traffic fit.</span>
+          </div>
+          <div class="formula-row">
+            <b>Available KV room</b>
+            <pre class="formula">KV room =
+GPU memory - weights - workspace - activations - safety_margin</pre>
+            <span>Weights loading successfully does not mean serving traffic fits.</span>
+            <span>Admission limits must protect the remaining memory.</span>
+          </div>
+          <div class="formula-row">
+            <b>Paged lookup</b>
+            <pre class="formula">logical_position -> block_id + offset
+block_table[request, block_id] -> physical_block</pre>
+            <span>Attention needs logical order, not contiguous physical allocation.</span>
+            <span>PagedAttention reduces wasted KV memory for dynamic request lengths.</span>
+          </div>
+          <div class="formula-row">
+            <b>Prefix hit</b>
+            <pre class="formula">cache hit if same token ids
++ same model/tokenizer
++ same cache settings
++ same block boundary</pre>
+            <span>Similar text is not enough; the token prefix must match.</span>
+            <span>Exact prefix reuse skips repeated prefill for shared prefixes.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="serving" class="panel wrap">
+        <div class="bug">serving formulas</div>
+        <h2>Queues, latency, and admission.</h2>
+        <div class="formula-list">
+          <div class="formula-row">
+            <b>Queue stability</b>
+            <pre class="formula">stable if lambda < mu</pre>
+            <span><code>lambda</code> is arrival rate; <code>mu</code> is measured service rate.</span>
+            <span>If arrivals exceed service, queue wait and p95 grow.</span>
+          </div>
+          <div class="formula-row">
+            <b>TTFT</b>
+            <pre class="formula">TTFT =
+queue_wait + validation + tokenization + prefill + first_decode_gap</pre>
+            <span>Time from request arrival to first streamed token.</span>
+            <span>Long prompts and queue pressure appear here.</span>
+          </div>
+          <div class="formula-row">
+            <b>ITL</b>
+            <pre class="formula">ITL_i = time(token_i) - time(token_(i-1))</pre>
+            <span>Inter-token latency during streaming.</span>
+            <span>Decode scheduler pressure and KV read cost appear here.</span>
+          </div>
+          <div class="formula-row">
+            <b>Admission gate</b>
+            <pre class="formula">admit if:
+input_tokens <= max_input_tokens
+input_tokens + output_cap <= max_total_tokens
+estimated_KV_after <= KV_room
+active_sequences_after <= sequence_cap</pre>
+            <span>Each condition protects a different capacity limit.</span>
+            <span>Admission is math around finite GPU memory and service rate.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="training" class="panel wrap">
+        <div class="bug">training formulas</div>
+        <h2>Adapter behavior change.</h2>
+        <div class="formula-list">
+          <div class="formula-row">
+            <b>LoRA update</b>
+            <pre class="formula">y = x (W + (alpha / r) A B)</pre>
+            <span><code>W</code> is frozen; <code>A</code> and <code>B</code> are trainable rank-r factors.</span>
+            <span>Small adapters can move behavior with far fewer trainable parameters.</span>
+          </div>
+          <div class="formula-row">
+            <b>LoRA parameter count</b>
+            <pre class="formula">full update: d_in * d_out
+LoRA update: r * (d_in + d_out)</pre>
+            <span><code>r</code> is the adapter rank.</span>
+            <span>Lower trainable count lowers optimizer memory and makes notebook runs practical.</span>
+          </div>
+          <div class="formula-row">
+            <b>SFT loss</b>
+            <pre class="formula">loss = - sum_t log P(y_t | prompt, y_1 ... y_(t-1))</pre>
+            <span>Penalty for assigning low probability to target training tokens.</span>
+            <span>Moves adapter behavior toward training examples; quality needs held-out proof.</span>
+          </div>
+          <div class="formula-row">
+            <b>GRPO-style group</b>
+            <pre class="formula">sample completions c_1 ... c_G
+score rewards r_1 ... r_G
+advantage_i = normalize(r_i within group)</pre>
+            <span>Updates favor completions that score better than peers for the same prompt.</span>
+            <span>Tiny runs prove workflow, not durable reasoning.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="claims" class="panel wrap">
+        <div class="bug">claim formulas</div>
+        <h2>Evidence boundaries.</h2>
+        <div class="formula-list">
+          <div class="formula-row">
+            <b>Speculative payoff</b>
+            <pre class="formula">useful if:
+accepted_target_tokens_saved > draft_overhead + verification_overhead</pre>
+            <span>Draft model proposals help only when enough tokens are accepted.</span>
+            <span>Acceptance rate is the center of the claim.</span>
+          </div>
+          <div class="formula-row">
+            <b>Fair runtime claim</b>
+            <pre class="formula">same model
++ same tokenizer/template
++ same workload and request ids
++ same host and GPU
++ same client
++ same metrics</pre>
+            <span>Runtime comparisons are not portable unless the evidence boundary is fixed.</span>
+            <span>This is why the matched TGI/vLLM host run remains the capstone gate.</span>
+          </div>
+          <div class="formula-row">
+            <b>Honest public claim</b>
+            <pre class="formula">claim =
+mechanism
++ artifact
++ measurement
++ source
++ explicit non-claim</pre>
+            <span>The non-claim is part of the result, not a footnote.</span>
+            <span>It keeps mechanism proof, workflow proof, quality proof, and speed proof separate.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
