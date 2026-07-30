@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>First-Principles Study Path: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1220px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1000px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 940px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 960px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .path {
+        display: grid;
+        gap: 12px;
+      }
+      .step {
+        display: grid;
+        grid-template-columns: 70px 1.1fr 1fr 1fr 1fr;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .step b { color: var(--ink); }
+      .step span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .step .num {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 20px;
+        font-weight: 760;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      @media (max-width: 1100px) {
+        .grid, .step { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">first-principles study path</div>
+        <h1>Read the lab in the order the system actually runs.</h1>
+        <p>
+          This page turns the public writeups into a study path. Start with the
+          model's arithmetic, then cache memory, then runtime scheduling, then
+          adapter training, then source claims, then the capstone serving
+          decision.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="math-glossary.html">math glossary</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="kv-cache-math.html">KV cache math</a>
+        <a href="serving-runtime-math.html">serving runtime math</a>
+        <a href="adapter-training-math.html">adapter training math</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="experiment-claim-matrix.html">experiment claim matrix</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="#route">route</a>
+        <a href="#checkpoints">checkpoints</a>
+        <a href="#finish">finish line</a>
+      </div>
+    </div>
+
+    <main>
+      <section class="panel wrap">
+        <div class="bug">orientation</div>
+        <h2>The order matters because each later problem depends on an earlier object.</h2>
+        <p class="lead">
+          Serving runtime behavior makes little sense until token work, attention
+          work, and KV memory are clear. Adapter training makes little sense
+          until the difference between changing weights and serving fixed
+          weights is clear. The capstone only makes sense when every claim has
+          a source, a mechanism, and an experiment boundary.
+        </p>
+        <div class="formula">model arithmetic -> cache memory -> runtime scheduling -> adapter behavior -> source claims -> experiment claims -> serving decision</div>
+        <div class="grid">
+          <div class="card"><b>Do not start with runtimes</b><span>TGI and vLLM are wrappers around token work, KV memory, queues, and metrics.</span></div>
+          <div class="card"><b>Do not start with benchmarks</b><span>Metrics mean something only after the measured phase is named: prefill, decode, queue, or memory.</span></div>
+          <div class="card"><b>Do not merge claim types</b><span>Workflow proof, speed proof, and quality proof answer different questions.</span></div>
+        </div>
+      </section>
+
+      <section id="route" class="panel wrap">
+        <div class="bug">route</div>
+        <h2>The recommended reading path.</h2>
+        <div class="path">
+          <div class="step">
+            <span class="num">01</span>
+            <b>Glossary</b>
+            <span>Read <a href="math-glossary.html">math-glossary.html</a>.</span>
+            <span>Question: what concrete object does each word name?</span>
+            <span>Exit when token, logit, KV bytes, TTFT, LoRA rank, and speed proof are distinct in your head.</span>
+          </div>
+          <div class="step">
+            <span class="num">02</span>
+            <b>Big Picture</b>
+            <span>Read <a href="big-picture-inference.html">big-picture-inference.html</a> and <a href="math-first-principles.html">math-first-principles.html</a>.</span>
+            <span>Question: what overall problem are we solving?</span>
+            <span>Exit when you can say why inference is repeated conditional probability under memory and waiting constraints.</span>
+          </div>
+          <div class="step">
+            <span class="num">03</span>
+            <b>Attention</b>
+            <span>Read <a href="attention-math.html">attention-math.html</a>.</span>
+            <span>Question: how does one token read previous tokens?</span>
+            <span>Exit when Q, K, V, mask, softmax, and logits are tied to formulas.</span>
+          </div>
+          <div class="step">
+            <span class="num">04</span>
+            <b>KV Cache</b>
+            <span>Read <a href="kv-cache-math.html">kv-cache-math.html</a>.</span>
+            <span>Question: why does faster decode create a memory wall?</span>
+            <span>Exit when you can derive the KV byte formula and explain PagedAttention without changing attention math.</span>
+          </div>
+          <div class="step">
+            <span class="num">05</span>
+            <b>Serving Runtime</b>
+            <span>Read <a href="serving-runtime-math.html">serving-runtime-math.html</a>.</span>
+            <span>Question: how do queues, batching, and admission turn model math into user latency?</span>
+            <span>Exit when TTFT, ITL, p95, throughput, and overload each point to a different part of the system.</span>
+          </div>
+          <div class="step">
+            <span class="num">06</span>
+            <b>Adapter Training</b>
+            <span>Read <a href="adapter-training-math.html">adapter-training-math.html</a>.</span>
+            <span>Question: how does Unsloth/LoRA change behavior without full fine-tuning?</span>
+            <span>Exit when workflow proof and quality proof are separate.</span>
+          </div>
+          <div class="step">
+            <span class="num">07</span>
+            <b>Source Map</b>
+            <span>Read <a href="paper-math-map.html">paper-math-map.html</a>.</span>
+            <span>Question: what object does each source change?</span>
+            <span>Exit when PagedAttention, HF cache/quantization, TGI, NVIDIA, JetStream, and Unsloth are one connected chain.</span>
+          </div>
+          <div class="step">
+            <span class="num">08</span>
+            <b>Experiment Claims</b>
+            <span>Read <a href="experiment-claim-matrix.html">experiment-claim-matrix.html</a>.</span>
+            <span>Question: what did each experiment prove, and what stayed locked?</span>
+            <span>Exit when each run has an allowed claim and a non-claim.</span>
+          </div>
+          <div class="step">
+            <span class="num">09</span>
+            <b>Capstone</b>
+            <span>Read <a href="capstone-serving-decision.html">capstone-serving-decision.html</a>.</span>
+            <span>Question: what evidence would let us choose a serving path?</span>
+            <span>Exit when the matched TGI/vLLM host proof is clearly the remaining speed gate.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="checkpoints" class="panel wrap">
+        <div class="bug">checkpoints</div>
+        <h2>Use these checks to tell whether the first-principles thread is actually understood.</h2>
+        <div class="grid">
+          <div class="card"><b>Attention check</b><span>Explain why <code>softmax(QK^T/sqrt(d))V</code> is a read operation over prior token vectors.</span></div>
+          <div class="card"><b>Cache check</b><span>Explain why KV cache is exact reuse, then show why it becomes a memory bill.</span></div>
+          <div class="card"><b>Serving check</b><span>Explain why high tokens/sec can still coexist with bad p95 latency.</span></div>
+          <div class="card"><b>Adapter check</b><span>Explain why <code>W + A B</code> can be much smaller than a full update.</span></div>
+          <div class="card"><b>Experiment check</b><span>Given a run artifact, state the allowed claim and the locked claim.</span></div>
+          <div class="card"><b>Capstone check</b><span>State the exact same-host evidence needed before naming a TGI/vLLM winner.</span></div>
+        </div>
+      </section>
+
+      <section id="finish" class="panel wrap">
+        <div class="bug">finish line</div>
+        <h2>The study path finishes when explanation, experiment, and claim boundary line up.</h2>
+        <p class="lead">
+          A strong final writeup should not read like a pile of papers or
+          notebooks. It should read like one defended case: the math predicts
+          where pressure comes from, the experiments test those pressures, and
+          the claim says only what the evidence can carry.
+        </p>
+        <div class="formula">finished public argument =
+first-principles mechanism
++ source-backed method
++ experiment artifact
++ measured result
++ explicit non-claim
++ next gate if the claim is still locked</div>
+      </section>
+    </main>
+  </body>
+</html>
