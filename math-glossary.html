@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Math Glossary: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1220px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1000px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 920px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 940px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .term-list {
+        display: grid;
+        gap: 10px;
+      }
+      .term {
+        display: grid;
+        grid-template-columns: 180px 230px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .term b { color: var(--ink); }
+      .term code { display: inline-block; margin-bottom: 5px; }
+      .term span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      @media (max-width: 1000px) {
+        .grid, .term { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">math glossary</div>
+        <h1>No-jargon glossary for the inference math.</h1>
+        <p>
+          Every term below is tied to a concrete object, a formula or accounting
+          rule, the reason it matters for serving, and the page where the idea
+          is expanded. Use it as the index for the deeper math writeups.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="kv-cache-math.html">KV cache math</a>
+        <a href="serving-runtime-math.html">serving runtime math</a>
+        <a href="adapter-training-math.html">adapter training math</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="#model">model math</a>
+        <a href="#cache">cache math</a>
+        <a href="#serving">serving math</a>
+        <a href="#training">training math</a>
+        <a href="#claims">claim words</a>
+      </div>
+    </div>
+
+    <main>
+      <section class="panel wrap">
+        <div class="bug">reading rule</div>
+        <h2>Translate every abstract word into one of four things.</h2>
+        <p class="lead">
+          In this lab, a term is only useful if we can point to the numbers it
+          touches. Most terms reduce to arithmetic, bytes, waiting, or evidence.
+        </p>
+        <div class="grid">
+          <div class="card"><b>Arithmetic</b><span>Dot products, matrix products, softmax, logits, loss, gradients.</span></div>
+          <div class="card"><b>Bytes</b><span>Weights, KV cache, activations, quantized values, adapter files.</span></div>
+          <div class="card"><b>Waiting</b><span>Queue wait, TTFT, ITL, p95, throughput, overload.</span></div>
+        </div>
+      </section>
+
+      <section id="model" class="panel wrap">
+        <div class="bug">model math</div>
+        <h2>Terms inside one model step.</h2>
+        <div class="term-list">
+          <div class="term">
+            <b>Token</b>
+            <span><code>x_t</code><br />integer ID at position t</span>
+            <span>Text after tokenizer conversion. The model sees IDs, not words.</span>
+            <span>Prompt cost, context fit, prefix-cache reuse, and output length are all token-count problems. See <a href="math-first-principles.html">math first principles</a>.</span>
+          </div>
+          <div class="term">
+            <b>Embedding</b>
+            <span><code>h_t = E[x_t]</code></span>
+            <span>A table lookup from token ID to vector.</span>
+            <span>After lookup, all later work is vector arithmetic. See <a href="attention-math.html#vectors">attention vectors</a>.</span>
+          </div>
+          <div class="term">
+            <b>Dot product</b>
+            <span><code>a . b = sum_i a_i b_i</code></span>
+            <span>Coordinate-by-coordinate agreement between two vectors.</span>
+            <span>Attention scores and logits are built from many dot products. See <a href="attention-math.html#qkv">QKV</a>.</span>
+          </div>
+          <div class="term">
+            <b>Matrix multiply</b>
+            <span><code>Y = X W</code></span>
+            <span>Many dot products arranged as one operation.</span>
+            <span>GPU efficiency depends heavily on these shapes and batches. See <a href="serving-runtime-math.html#batching">batching</a>.</span>
+          </div>
+          <div class="term">
+            <b>Query</b>
+            <span><code>Q = H W_Q</code></span>
+            <span>The current token's learned read request.</span>
+            <span>During decode, usually one new query reads cached K/V rows. See <a href="attention-math.html#qkv">attention math</a>.</span>
+          </div>
+          <div class="term">
+            <b>Key</b>
+            <span><code>K = H W_K</code></span>
+            <span>A learned address label for each visible token.</span>
+            <span>Stored in KV cache because future decode steps need it. See <a href="kv-cache-math.html">KV cache math</a>.</span>
+          </div>
+          <div class="term">
+            <b>Value</b>
+            <span><code>V = H W_V</code></span>
+            <span>The learned payload that attention mixes.</span>
+            <span>Also stored in KV cache; values are the content read after weights are computed.</span>
+          </div>
+          <div class="term">
+            <b>Softmax</b>
+            <span><code>exp(s_i) / sum_j exp(s_j)</code></span>
+            <span>Converts scores into positive shares that sum to one.</span>
+            <span>Used for attention weights and next-token probabilities. See <a href="attention-math.html#softmax">softmax</a>.</span>
+          </div>
+          <div class="term">
+            <b>Logit</b>
+            <span><code>z = h W_vocab^T</code></span>
+            <span>A raw score for a candidate next token.</span>
+            <span>Temperature, top-k, and top-p reshape logits before token choice. See <a href="attention-math.html#sampling">sampling</a>.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="cache" class="panel wrap">
+        <div class="bug">cache math</div>
+        <h2>Terms that make inference a memory problem.</h2>
+        <div class="term-list">
+          <div class="term">
+            <b>Prefill</b>
+            <span><code>prompt tokens -> initial K/V</code></span>
+            <span>The first pass over the prompt before the first output token.</span>
+            <span>Long prompts raise TTFT. See <a href="kv-cache-math.html#reuse">cache reuse</a>.</span>
+          </div>
+          <div class="term">
+            <b>Decode</b>
+            <span><code>one new token per step</code></span>
+            <span>The repeated loop that streams output tokens.</span>
+            <span>Decode pressure shows up as ITL and output latency. See <a href="serving-runtime-math.html#latency">latency</a>.</span>
+          </div>
+          <div class="term">
+            <b>KV cache</b>
+            <span><code>K_old, V_old</code></span>
+            <span>Stored keys and values for previous visible positions.</span>
+            <span>Saves recomputation but consumes memory that grows with active tokens. See <a href="kv-cache-math.html#formula">KV formula</a>.</span>
+          </div>
+          <div class="term">
+            <b>KV bytes</b>
+            <span><code>layers * 2 * positions * kv_heads * head_dim * bytes</code></span>
+            <span>The memory bill for stored attention history.</span>
+            <span>This explains why loaded model fit is not the same as traffic fit.</span>
+          </div>
+          <div class="term">
+            <b>PagedAttention</b>
+            <span><code>logical block -> physical block</code></span>
+            <span>KV allocation in reusable fixed-size blocks.</span>
+            <span>Reduces wasted cache memory for uneven request lengths. See <a href="kv-cache-math.html#paged">paged KV</a>.</span>
+          </div>
+          <div class="term">
+            <b>Prefix cache</b>
+            <span><code>same token prefix -> reuse K/V</code></span>
+            <span>Reuse of completed cache blocks for identical token prefixes.</span>
+            <span>Works only when token IDs and settings match. See <a href="kv-cache-math.html#prefix">prefix cache</a>.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="serving" class="panel wrap">
+        <div class="bug">serving math</div>
+        <h2>Terms that connect runtime behavior to user-visible results.</h2>
+        <div class="term-list">
+          <div class="term">
+            <b>Arrival rate</b>
+            <span><code>lambda</code></span>
+            <span>How fast requests enter the system.</span>
+            <span>If arrivals exceed service, queues grow. See <a href="serving-runtime-math.html#queue">queueing</a>.</span>
+          </div>
+          <div class="term">
+            <b>Service rate</b>
+            <span><code>mu</code></span>
+            <span>How fast the server can complete useful work under a workload.</span>
+            <span>The overload boundary is measured, not guessed.</span>
+          </div>
+          <div class="term">
+            <b>Admission</b>
+            <span><code>estimated_KV <= room</code></span>
+            <span>The decision to let a request enter active work.</span>
+            <span>Protects memory and latency by rejecting or delaying work that cannot fit. See <a href="serving-runtime-math.html#admission">admission</a>.</span>
+          </div>
+          <div class="term">
+            <b>TTFT</b>
+            <span><code>arrival -> first token</code></span>
+            <span>Time to first streamed output token.</span>
+            <span>Mostly exposes queue and prefill pressure.</span>
+          </div>
+          <div class="term">
+            <b>ITL</b>
+            <span><code>token_i -> token_(i+1)</code></span>
+            <span>Inter-token latency during streaming.</span>
+            <span>Mostly exposes decode step time and scheduler pressure.</span>
+          </div>
+          <div class="term">
+            <b>p95</b>
+            <span><code>95% below this latency</code></span>
+            <span>A tail-latency measurement.</span>
+            <span>Prevents average latency from hiding bad user experience.</span>
+          </div>
+          <div class="term">
+            <b>Throughput</b>
+            <span><code>tokens / second</code></span>
+            <span>Aggregate useful output or processed token rate.</span>
+            <span>Useful for capacity, but incomplete without TTFT, ITL, and p95.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="training" class="panel wrap">
+        <div class="bug">training math</div>
+        <h2>Terms in the Unsloth and adapter lane.</h2>
+        <div class="term-list">
+          <div class="term">
+            <b>LoRA rank</b>
+            <span><code>rank(A B) <= r</code></span>
+            <span>The dimensional limit on the adapter update.</span>
+            <span>Small rank lowers trainable parameters. See <a href="adapter-training-math.html#lora">LoRA math</a>.</span>
+          </div>
+          <div class="term">
+            <b>QLoRA</b>
+            <span><code>quantized W + trainable A B</code></span>
+            <span>Frozen low-bit base with trainable adapters.</span>
+            <span>Lowers training memory, but quality still needs evaluation. See <a href="adapter-training-math.html#qlora">QLoRA</a>.</span>
+          </div>
+          <div class="term">
+            <b>SFT loss</b>
+            <span><code>- sum log P(target token)</code></span>
+            <span>Penalty for assigning low probability to target completions.</span>
+            <span>Moves the adapter toward the training examples. See <a href="adapter-training-math.html#loss">SFT loss</a>.</span>
+          </div>
+          <div class="term">
+            <b>Reward</b>
+            <span><code>r(completion)</code></span>
+            <span>A score assigned to sampled output.</span>
+            <span>Useful only if the reward measures the behavior we actually want.</span>
+          </div>
+          <div class="term">
+            <b>GRPO group</b>
+            <span><code>c_1 ... c_G</code></span>
+            <span>Several completions sampled for one prompt and compared by reward.</span>
+            <span>Tiny runs prove API/artifacts, not durable reasoning. See <a href="adapter-training-math.html#grpo">GRPO</a>.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="claims" class="panel wrap">
+        <div class="bug">claim words</div>
+        <h2>Words we use to keep results honest.</h2>
+        <div class="term-list">
+          <div class="term">
+            <b>Mechanism proof</b>
+            <span><code>why it should work</code></span>
+            <span>A mathematical or systems explanation of the method.</span>
+            <span>Example: KV cache avoids recomputing old K/V rows.</span>
+          </div>
+          <div class="term">
+            <b>Workflow proof</b>
+            <span><code>it ran end to end</code></span>
+            <span>Evidence that setup, script, artifact, and reload path work.</span>
+            <span>Example: tiny Unsloth adapter archive and fresh reload.</span>
+          </div>
+          <div class="term">
+            <b>Quality proof</b>
+            <span><code>behavior improved</code></span>
+            <span>Requires held-out evaluation, baseline comparison, and repeatability.</span>
+            <span>Not provided by tiny setup-only runs.</span>
+          </div>
+          <div class="term">
+            <b>Speed proof</b>
+            <span><code>same workload, same host</code></span>
+            <span>Runtime comparison under controlled conditions.</span>
+            <span>For us, this is locked until the matched TGI/vLLM host archive returns.</span>
+          </div>
+        </div>
+        <div class="formula">honest public claim =
+mechanism explanation
++ exact experiment evidence
++ explicit non-claims
++ source links
++ reproducible artifact boundary</div>
+      </section>
+    </main>
+  </body>
+</html>
