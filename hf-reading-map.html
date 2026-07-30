@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hugging Face Reading Map</title>
+    <style>
+      :root {
+        --bg:#081012; --panel:#0f191c; --panel2:#132126; --ink:#e8f4f1; --muted:#9fb0ad;
+        --line:#263a40; --cyan:#58d8e6; --amber:#e7a64c; --red:#dc6656; --green:#7bd391;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+      }
+      * { box-sizing:border-box; }
+      body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.58; }
+      .wrap { width:min(1180px, calc(100% - 36px)); margin:0 auto; }
+      header { padding:48px 0 34px; border-bottom:1px solid var(--line); background:linear-gradient(90deg,rgba(88,216,230,.06) 1px,transparent 1px),linear-gradient(0deg,rgba(88,216,230,.05) 1px,transparent 1px),var(--bg); background-size:42px 42px; }
+      .bug { color:var(--cyan); font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; }
+      h1,h2,h3,p { margin-top:0; }
+      h1 { max-width:900px; margin:12px 0 14px; font-size:clamp(36px,5vw,62px); line-height:1; }
+      h2 { font-size:clamp(24px,3vw,36px); line-height:1.08; }
+      p { color:var(--muted); }
+      header p { max-width:850px; font-size:18px; }
+      .nav { position:sticky; top:0; z-index:4; background:rgba(8,16,18,.92); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
+      .nav .wrap { display:flex; gap:10px; overflow:auto; padding:10px 0; }
+      .nav a { flex:0 0 auto; color:#a4eef4; border:1px solid var(--line); border-radius:7px; padding:7px 10px; text-decoration:none; font-family:var(--mono); font-size:12px; }
+      main { padding:28px 0 70px; }
+      .panel { margin:0 0 26px; padding:24px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+      .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+      .metric,.step,.note { padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--panel2); }
+      .metric b,.step b,.note b { display:block; color:var(--cyan); font-family:var(--mono); font-size:12px; margin-bottom:6px; }
+      .metric span,.step span,.note span { display:block; color:#c8d8d5; font-size:14px; }
+      .runbox { margin-top:14px; white-space:pre-wrap; color:#dbe8e5; font-family:var(--mono); font-size:12px; padding:12px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
+      .timeline { display:grid; gap:10px; margin-top:14px; }
+      .step { display:grid; grid-template-columns:64px minmax(0,1fr) minmax(220px,.5fr); gap:12px; align-items:start; }
+      .num { width:42px; height:42px; display:grid; place-items:center; color:#081012; background:var(--cyan); border-radius:8px; font-family:var(--mono); font-weight:700; }
+      .links { display:grid; gap:6px; font-family:var(--mono); font-size:12px; }
+      .links a { color:#a4eef4; overflow-wrap:anywhere; }
+      .deps { color:#e7a64c; }
+      a { color:#a4eef4; }
+      @media (max-width:900px) { .grid,.step { grid-template-columns:1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">official-docs reading map</div>
+        <h1>Read the docs in the order the system actually runs.</h1>
+        <p>
+          This map connects official Hugging Face docs to local visual labs.
+          Use the docs for exact API behavior; use the local lab beside each
+          source to see the data path, memory path, or serving path move.
+        </p>
+      </div>
+    </header>
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="hf-practical.html">HF practical</a>
+        <a href="hf-settings.html">HF settings</a>
+        <a href="production-systems.html">production systems</a>
+        <a href="teaching-audit.html">teaching audit</a>
+        <a href="#path">reading path</a>
+      </div>
+    </div>
+    <main class="wrap">
+      <section class="panel">
+        <div class="bug">source-backed study path</div>
+        <h2>Summary</h2>
+        <div id="summaryGrid" class="grid"></div>
+        <div id="summaryText" class="runbox">loading hf_reading_map_results.json</div>
+      </section>
+      <section id="path" class="panel">
+        <div class="bug">step by step</div>
+        <h2>Reading Path</h2>
+        <p>
+          Each step starts with one concept, then points to the official doc,
+          the local visual lab, and the local result file.
+        </p>
+        <div id="readingRows" class="timeline"></div>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const esc = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      function metric(label, value) {
+        return `<div class="metric"><b>${esc(label)}</b><span>${esc(value)}</span></div>`;
+      }
+      function render(payload) {
+        const s = payload.summary || {};
+        $("summaryGrid").innerHTML = [
+          metric("sources", s.sources || 0),
+          metric("Transformers docs", s.official_transformers_sources || 0),
+          metric("TGI docs", s.official_tgi_sources || 0),
+          metric("local results", s.local_results_linked || 0),
+        ].join("");
+        $("summaryText").textContent = [
+          `evidence: ${payload.evidence_type || "reading map"}`,
+          `generated date: ${payload.generated_date || ""}`,
+          `local labs linked: ${s.local_labs_linked || 0}`,
+          `reading order: ${(s.reading_order || []).join(" -> ")}`,
+          `lesson: ${payload.lesson || ""}`
+        ].join("\n");
+        $("readingRows").innerHTML = (payload.rows || []).map((row) => {
+          const deps = (row.depends_on || []).length ? `depends on: ${row.depends_on.join(", ")}` : "starting point";
+          return `<article class="step">
+            <div class="num">${row.order}</div>
+            <div>
+              <b>${esc(row.title)}</b>
+              <span>${esc(row.first_principle)}</span>
+              <span>${esc(row.what_to_read_for)}</span>
+              <span class="deps">${esc(deps)}</span>
+              <span>next: ${esc(row.next_question)}</span>
+            </div>
+            <div class="links">
+              <a href="${esc(row.source_url)}">${esc(row.source_kind)}</a>
+              <a href="${esc(row.local_lab)}">local visual lab</a>
+              <a href="${esc(row.local_result)}">local result JSON</a>
+            </div>
+          </article>`;
+        }).join("");
+      }
+      fetch("hf_reading_map_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_reading_map_results.json not found")))
+        .then(render)
+        .catch((error) => { $("summaryText").textContent = error.message; });
+    </script>
+  </body>
+</html>

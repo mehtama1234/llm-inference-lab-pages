@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hugging Face Inference Settings Map</title>
+    <style>
+      :root {
+        --ink: #111817;
+        --paper: #f5f6f4;
+        --panel: #ffffff;
+        --soft: #edf2ef;
+        --line: #d7ddd9;
+        --muted: #596662;
+        --green: #2f7a4f;
+        --blue: #1d6f8f;
+        --amber: #a66a13;
+        --red: #a8412f;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.6;
+      }
+
+      header {
+        background: var(--ink);
+        color: #eef4f2;
+      }
+
+      .wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      header .wrap {
+        padding-top: 40px;
+        padding-bottom: 34px;
+      }
+
+      .bug {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #7fd0c5;
+      }
+
+      h1 {
+        margin: 12px 0 0;
+        max-width: 820px;
+        font-size: clamp(30px, 4vw, 46px);
+        line-height: 1.08;
+      }
+
+      header p {
+        max-width: 790px;
+        margin: 16px 0 0;
+        color: #bfcbc8;
+        font-size: 17px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: rgba(245, 246, 244, 0.94);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .topbar .wrap {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .topbar a {
+        color: var(--blue);
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      main {
+        padding: 24px 0 60px;
+      }
+
+      .panel {
+        margin: 0 0 20px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      .panel h2 {
+        margin: 0;
+        font-size: 25px;
+        line-height: 1.15;
+      }
+
+      .panel > p {
+        max-width: 780px;
+        color: #25302d;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
+        gap: 14px;
+        align-items: start;
+      }
+
+      .subpanel {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfb;
+      }
+
+      .subpanel h3 {
+        margin: 0 0 10px;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--blue);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .subpanel label {
+        display: grid;
+        gap: 6px;
+        margin: 12px 0;
+        color: #25302d;
+        font-size: 14px;
+      }
+
+      .subpanel input,
+      .subpanel select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        padding: 9px 10px;
+      }
+
+      .control-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px;
+      }
+
+      .metric b {
+        display: block;
+        font-family: var(--mono);
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .flow-step {
+        min-height: 92px;
+        display: grid;
+        gap: 5px;
+        align-content: start;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .flow-step b,
+      .setting-row b,
+      .experiment-row b {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .flow-step span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .flow-step.active {
+        border-color: #5f9f78;
+        box-shadow: inset 0 0 0 2px rgba(47, 122, 79, 0.14);
+      }
+
+      .settings-map,
+      .experiment-map {
+        display: grid;
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .setting-row {
+        display: grid;
+        grid-template-columns: 132px 132px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: #25302d;
+        font-size: 12px;
+      }
+
+      .setting-row.active {
+        border-color: #5f9f78;
+        box-shadow: inset 0 0 0 2px rgba(47, 122, 79, 0.14);
+      }
+
+      .experiment-row {
+        display: grid;
+        grid-template-columns: 126px minmax(0, 1fr) 98px;
+        gap: 10px;
+        align-items: center;
+        padding: 9px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: #25302d;
+        font-size: 12px;
+      }
+
+      .budget-bar {
+        display: grid;
+        grid-template-columns: var(--prompt-share, 1fr) var(--new-share, 1fr) var(--free-share, 1fr);
+        gap: 2px;
+        height: 34px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .budget-bar span:nth-child(1) {
+        background: #91c0a5;
+      }
+
+      .budget-bar span:nth-child(2) {
+        background: #edc48f;
+      }
+
+      .budget-bar span:nth-child(3) {
+        background: #dce4e0;
+      }
+
+      .code-box {
+        overflow: auto;
+        margin: 12px 0 0;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #101715;
+        color: #e8f0ed;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .notes {
+        display: grid;
+        gap: 9px;
+        margin: 12px 0 0;
+      }
+
+      .notes div {
+        border-left: 3px solid var(--line);
+        padding-left: 10px;
+        color: #25302d;
+        font-size: 14px;
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--soft);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+
+      a {
+        color: var(--blue);
+      }
+
+      footer {
+        margin: 28px 0 70px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      @media (max-width: 760px) {
+        .topbar .wrap {
+          flex-direction: column;
+        }
+
+        .grid,
+        .flow,
+        .setting-row,
+        .experiment-row,
+        .control-row,
+        .metric-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">Hugging Face settings map</div>
+        <h1>How to read inference settings without guessing</h1>
+        <p>
+          Every setting belongs to a specific part of the system. Some settings
+          change model loading, some change generation, and some only exist in a
+          serving runtime such as TGI.
+        </p>
+      </div>
+    </header>
+    <div class="topbar">
+      <div class="wrap">
+        <a href="deepdives.html">Back to deep dives</a>
+        <a href="mechanisms.html">Mechanism diagrams</a>
+        <a href="serving-settings.html">Serving settings map</a>
+        <a href="hf-practical.html">HF practical labs</a>
+        <a href="hf-reading-map.html">HF reading map</a>
+        <a href="trace-runner.html">Trace outputs</a>
+        <a href="END_TO_END_LEARNING_GOALS.md">End-to-end goals</a>
+        <a href="#sources">Official docs used</a>
+      </div>
+    </div>
+    <main class="wrap">
+      <section class="panel">
+        <h2>First Rule: Place The Setting Before Reading It</h2>
+        <p>
+          A setting is easier to understand after you place it in the system.
+          Ask what it changes: model loading, generation, cache, attention,
+          scheduling, memory placement, or streaming service behavior.
+        </p>
+        <div class="flow" aria-label="Settings flow">
+          <div id="hfFlow0" class="flow-step active"><b>load</b><span>weights, dtype, device placement, offload</span></div>
+          <div id="hfFlow1" class="flow-step"><b>generate</b><span>new-token limit, cache choice, sampling settings</span></div>
+          <div id="hfFlow2" class="flow-step"><b>execute</b><span>attention path, compile path, device kernels</span></div>
+          <div id="hfFlow3" class="flow-step"><b>serve</b><span>router, queue, batch limits, stream metrics</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Settings Map</h2>
+        <p>
+          The same word can be misleading if you read it in the wrong layer.
+          `Transformers` runs model code in Python. `TGI` is a serving system
+          around model workers. A library setting and a serving setting can both
+          affect latency, but they do it through different parts.
+        </p>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>Setting to mechanism</h3>
+            <div class="settings-map" aria-label="Hugging Face settings map">
+              <div id="hfSet0" class="setting-row active"><b>max_new_tokens</b><span>generate()</span><span>Stops decode after this many new output tokens.</span></div>
+              <div id="hfSet1" class="setting-row"><b>use_cache</b><span>generate()</span><span>Turns KV cache on or off during decode.</span></div>
+              <div id="hfSet2" class="setting-row"><b>cache_implementation</b><span>generate()</span><span>Selects the cache class, such as dynamic, static, offloaded, or quantized.</span></div>
+              <div id="hfSet3" class="setting-row"><b>dtype</b><span>load</span><span>Changes bytes per parameter number.</span></div>
+              <div id="hfSet4" class="setting-row"><b>device_map</b><span>load</span><span>Places modules on CPU, GPU, disk, or a split map.</span></div>
+              <div id="hfSet5" class="setting-row"><b>attn_implementation</b><span>load</span><span>Selects the attention implementation supported by the model and hardware.</span></div>
+              <div id="hfSet6" class="setting-row"><b>compile</b><span>execute</span><span>Reuses a compiled graph when shapes stay stable.</span></div>
+              <div id="hfSet7" class="setting-row"><b>TGI batch limits</b><span>serve</span><span>Controls waiting requests, prefill token budget, and total batch token budget.</span></div>
+              <div id="hfSet8" class="setting-row"><b>offload</b><span>load/cache</span><span>Moves weights or cache away from GPU memory when needed.</span></div>
+            </div>
+          </div>
+          <div class="subpanel">
+            <h3>Runnable experiments</h3>
+            <div class="experiment-map">
+              <div class="experiment-row"><b>length</b><span>`max_new_tokens=1,3,5` changes output shape.</span><span>runs</span></div>
+              <div class="experiment-row"><b>cache</b><span>`use_cache` and `cache_implementation="dynamic"` are accepted by `generate()`.</span><span>runs</span></div>
+              <div class="experiment-row"><b>dtype</b><span>FP16 uses half the parameter bytes of FP32 on the tiny model.</span><span>runs</span></div>
+              <div class="experiment-row"><b>device_map</b><span>Local machine has no CUDA device, so CPU placement is the safe local path.</span><span>limited</span></div>
+              <div class="experiment-row"><b>TGI</b><span>Use `trace_batching.py` and `trace_serving_sim.py` to see serving controls locally.</span><span>sim</span></div>
+            </div>
+            <div class="notes">
+              <div>`torch_dtype` appears in older examples; current Transformers model loading docs use `dtype` while still discussing `torch_dtype` metadata in model config.</div>
+              <div>`max_new_tokens` counts only generated tokens, not prompt tokens.</div>
+              <div>Static cache can help compile decode, but it reserves memory for a fixed maximum size.</div>
+              <div>TGI batching settings belong to the router and scheduler, not to `AutoModelForCausalLM.generate()`.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Live Local Experiment</h2>
+        <p>
+          These controls mirror the tiny local Transformers experiment. They do
+          not call a remote model. They show what the setting changes before you
+          run the Python trace.
+        </p>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>Controls</h3>
+            <div class="control-row">
+              <label>
+                Prompt tokens
+                <input id="hfPromptTokens" type="number" min="1" max="16" step="1" value="3" />
+              </label>
+              <label>
+                max_new_tokens
+                <input id="hfMaxNewTokens" type="number" min="1" max="13" step="1" value="5" />
+              </label>
+            </div>
+            <div class="control-row">
+              <label>
+                cache setting
+                <select id="hfCacheMode">
+                  <option value="dynamic" selected>cache_implementation="dynamic"</option>
+                  <option value="use_cache_true">use_cache=True</option>
+                  <option value="use_cache_false">use_cache=False</option>
+                  <option value="static">cache_implementation="static"</option>
+                </select>
+              </label>
+              <label>
+                dtype
+                <select id="hfDtype">
+                  <option value="4" selected>FP32, 4 bytes per number</option>
+                  <option value="2">FP16, 2 bytes per number</option>
+                </select>
+              </label>
+            </div>
+            <div class="metric-grid">
+              <div class="metric"><b id="hfOutputShape">(1, 8)</b><span>output shape</span></div>
+              <div class="metric"><b id="hfNewTokens">5</b><span>new tokens</span></div>
+              <div class="metric"><b id="hfParamBytes">109.50 KB</b><span>parameter bytes</span></div>
+            </div>
+            <div id="hfBudgetBar" class="budget-bar" aria-label="Prompt and generated token budget">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="code-box" id="hfGeneratedCode"></div>
+          </div>
+          <div class="subpanel">
+            <h3>What changed</h3>
+            <div class="notes" id="hfLiveNotes"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Run The Local Trace</h2>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>Command</h3>
+            <div class="code-box">cd /home/manishmehta/projects/nanoGPT
+.venv/bin/python trace_hf_settings.py</div>
+            <h3>What it uses</h3>
+            <div class="notes">
+              <div>A tiny random GPT-2 model from Transformers, so no model download is needed.</div>
+              <div>The token IDs are not meaningful text. The experiment is about settings and shapes.</div>
+              <div>Hardware-limited settings are mapped, but not forced on this CPU-only environment.</div>
+            </div>
+          </div>
+          <div class="subpanel">
+            <h3>Latest output from this machine</h3>
+            <div class="code-box">torch: 2.13.0+cu130
+transformers model class: GPT2LMHeadModel
+cuda available: False
+
+1. settings map
+setting | where it is used | system part changed | why you care
+max_new_tokens | generate() | decode loop stop count | changes output length and active time
+use_cache | generate() | KV cache on or off | trades memory for less repeated decode work
+cache_implementation | generate() | KV cache class | changes cache growth, memory, compile support, or offload
+dtype or torch_dtype | from_pretrained() | parameter dtype | changes bytes per weight number
+device_map | from_pretrained() | module placement | chooses CPU, GPU, disk, or split placement
+attn_implementation | from_pretrained() | attention kernel path | chooses eager, SDPA, flash, or model-supported attention path
+compile | model or cache path | compiled decode graph | can reduce repeated Python and dispatch overhead
+TGI batching controls | TGI router | scheduler limits | changes queue admission and batch token budget
+offload controls | loading or cache | CPU or disk fallback | reduces GPU memory pressure with slower transfers
+
+2. max_new_tokens experiment
+max_new_tokens=1 -> output shape (1, 4), new tokens 1
+max_new_tokens=3 -> output shape (1, 6), new tokens 3
+max_new_tokens=5 -> output shape (1, 8), new tokens 5
+
+3. cache experiment
+{'max_new_tokens': 2, 'use_cache': True} -> output shape (1, 5)
+{'max_new_tokens': 2, 'use_cache': False} -> output shape (1, 5)
+{'max_new_tokens': 2, 'cache_implementation': 'dynamic'} -> output shape (1, 5)
+cache_implementation default on generation_config: None
+
+4. dtype byte experiment
+FP32 first parameter dtype: torch.float32
+FP32 parameter bytes: 109.50 KB
+FP16 first parameter dtype: torch.float16
+FP16 parameter bytes: 54.75 KB
+
+5. settings that need hardware or serving runtime
+device_map: this machine has no CUDA device, so the local safe placement is CPU.
+attn_implementation: this tiny GPT-2 config exposes the field as sdpa
+compile: useful when shapes stay stable; static cache is the common generation-side partner.
+TGI batching controls: use trace_batching.py and trace_serving_sim.py for local scheduler behavior.
+offload controls: useful when GPU memory is tight; not exercised here because no GPU is visible.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sources" class="panel">
+        <h2>Official Docs Used</h2>
+        <div class="notes">
+          <div><a href="https://huggingface.co/docs/transformers/main_classes/text_generation">Transformers generation docs</a>: `max_new_tokens`, `use_cache`, and `cache_implementation`.</div>
+          <div><a href="https://huggingface.co/docs/transformers/main_classes/model">Transformers model loading docs</a>: `dtype`, `device_map`, memory placement, and offload arguments.</div>
+          <div><a href="https://huggingface.co/docs/transformers/kv_cache">Transformers KV cache docs</a>: dynamic, static, offloaded, and quantized cache behavior.</div>
+          <div><a href="https://huggingface.co/docs/text-generation-inference/basic_tutorials/launcher">TGI launcher docs</a>: batch token limits, waiting ratio, and queue-related serving settings.</div>
+          <div><a href="https://huggingface.co/docs/text-generation-inference/architecture">TGI architecture docs</a>: router, queue, batching, and model server roles.</div>
+        </div>
+      </section>
+      <footer>
+        This page is paired with trace_hf_settings.py and the earlier batching,
+        cache, memory, and serving traces.
+      </footer>
+    </main>
+    <script>
+      function formatBytes(bytes) {
+        if (bytes < 1024) {
+          return `${bytes.toFixed(0)} B`;
+        }
+        if (bytes < 1024 * 1024) {
+          return `${(bytes / 1024).toFixed(2)} KB`;
+        }
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      }
+
+      function rotate(ids, ms) {
+        let step = 0;
+        setInterval(() => {
+          ids.forEach((id, index) => {
+            document.getElementById(id).classList.toggle("active", index === step);
+          });
+          step = (step + 1) % ids.length;
+        }, ms);
+      }
+
+      function updateLiveExperiment() {
+        const promptTokens = Math.max(1, Math.min(16, Number(document.getElementById("hfPromptTokens").value) || 3));
+        const maxNewTokens = Math.max(1, Math.min(13, Number(document.getElementById("hfMaxNewTokens").value) || 5));
+        const cacheMode = document.getElementById("hfCacheMode").value;
+        const bytesPerNumber = Number(document.getElementById("hfDtype").value);
+        const parameterCount = 28032;
+        const outputTokens = promptTokens + maxNewTokens;
+        const contextLimit = 16;
+        const free = Math.max(0, contextLimit - outputTokens);
+        const promptShare = Math.max(0.01, promptTokens);
+        const newShare = Math.max(0.01, maxNewTokens);
+        const freeShare = Math.max(0.01, free);
+        const dtypeName = bytesPerNumber === 4 ? "torch.float32" : "torch.float16";
+        const cacheText = {
+          dynamic: "cache_implementation='dynamic'",
+          use_cache_true: "use_cache=True",
+          use_cache_false: "use_cache=False",
+          static: "cache_implementation='static'"
+        }[cacheMode];
+        const cacheNotes = {
+          dynamic: "Dynamic cache grows as new tokens are generated.",
+          use_cache_true: "use_cache=True keeps KV values so decode can reuse earlier work.",
+          use_cache_false: "use_cache=False disables KV reuse and can repeat earlier decode work.",
+          static: "Static cache reserves a fixed cache size, which can help compile but uses more planned memory."
+        };
+
+        document.getElementById("hfOutputShape").textContent = `(1, ${outputTokens})`;
+        document.getElementById("hfNewTokens").textContent = maxNewTokens;
+        document.getElementById("hfParamBytes").textContent = formatBytes(parameterCount * bytesPerNumber);
+
+        const budget = document.getElementById("hfBudgetBar");
+        budget.style.setProperty("--prompt-share", `${promptShare}fr`);
+        budget.style.setProperty("--new-share", `${newShare}fr`);
+        budget.style.setProperty("--free-share", `${freeShare}fr`);
+
+        const notes = [
+          `The output shape is prompt tokens plus generated tokens: ${promptTokens} + ${maxNewTokens} = ${outputTokens}.`,
+          cacheNotes[cacheMode],
+          `${dtypeName} uses ${bytesPerNumber} bytes per parameter number in this simplified count.`,
+          free > 0
+            ? `${free} token positions remain inside the tiny model context limit of ${contextLimit}.`
+            : `The selected prompt and output fill the tiny model context limit of ${contextLimit}.`
+        ];
+        document.getElementById("hfLiveNotes").innerHTML = notes.map((note) => `<div>${note}</div>`).join("");
+        document.getElementById("hfGeneratedCode").textContent = [
+          "from transformers import GPT2Config, GPT2LMHeadModel",
+          "import torch",
+          "",
+          "config = GPT2Config(vocab_size=64, n_positions=16, n_embd=32, n_layer=2, n_head=2)",
+          `model = GPT2LMHeadModel(config).eval().to(dtype=${dtypeName})`,
+          `input_ids = torch.tensor([[${Array.from({ length: promptTokens }, (_, index) => index + 1).join(", ")}]])`,
+          `out = model.generate(input_ids, do_sample=False, max_new_tokens=${maxNewTokens}, ${cacheText})`,
+          "print(tuple(out.shape))"
+        ].join("\n");
+      }
+
+      ["hfPromptTokens", "hfMaxNewTokens", "hfCacheMode", "hfDtype"].forEach((id) => {
+        const node = document.getElementById(id);
+        node.addEventListener("input", updateLiveExperiment);
+        node.addEventListener("change", updateLiveExperiment);
+      });
+
+      updateLiveExperiment();
+      rotate(["hfFlow0", "hfFlow1", "hfFlow2", "hfFlow3"], 1200);
+      rotate(["hfSet0", "hfSet1", "hfSet2", "hfSet3", "hfSet4", "hfSet5", "hfSet6", "hfSet7", "hfSet8"], 1100);
+    </script>
+  </body>
+</html>

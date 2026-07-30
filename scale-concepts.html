@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLM Inference Scale Concepts</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --green: #79d493;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88,216,230,.06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88,216,230,.05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+
+      .wrap {
+        width: min(1180px, calc(100% - 36px));
+        margin: 0 auto;
+      }
+
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 900px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 820px; font-size: 18px; }
+
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .9);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      main { padding: 28px 0 70px; }
+
+      .overview,
+      .concept {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .overview-grid,
+      .concept-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .card {
+        min-height: 120px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+
+      .card b {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .card span { display: block; color: #c8d8d5; font-size: 14px; }
+      .card.method b { color: var(--green); }
+      .card.trade b { color: var(--amber); }
+      .card.measure b { color: var(--red); }
+
+      .concept-head {
+        display: grid;
+        grid-template-columns: minmax(0, .88fr) minmax(300px, .5fr);
+        gap: 18px;
+        align-items: start;
+        margin-bottom: 16px;
+      }
+
+      .source {
+        border-left: 3px solid var(--amber);
+        padding: 8px 0 8px 12px;
+        color: #c8d8d5;
+        font-size: 14px;
+      }
+
+      .source a { color: #a4eef4; }
+      .source b {
+        display: block;
+        color: var(--amber);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .diagram {
+        position: relative;
+        min-height: 330px;
+        margin-top: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background:
+          linear-gradient(90deg, rgba(88,216,230,.05) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88,216,230,.05) 1px, transparent 1px),
+          #091214;
+        background-size: 28px 28px;
+        overflow: hidden;
+      }
+
+      svg { display: block; width: 100%; height: 330px; }
+      .label { fill: #d5e3e0; font-family: var(--mono); font-size: 12px; }
+      .tiny { fill: #91a39f; font-family: var(--mono); font-size: 10px; }
+      .node { fill: #101d21; stroke: #375157; stroke-width: 1.4; }
+      .wire { fill: none; stroke: var(--cyan); stroke-width: 2; stroke-linecap: round; }
+      .cyan { fill: var(--cyan); }
+      .amber { fill: var(--amber); }
+      .red { fill: var(--red); }
+      .green { fill: var(--green); }
+      .dim { fill: #24343a; }
+      .outline { fill: none; stroke: var(--line); stroke-width: 1.4; }
+
+      .active .packet { animation: packet 3.6s ease-in-out infinite; }
+      .active .slow-packet { animation: packet 6s ease-in-out infinite; }
+      .active .pulse { animation: pulse 1.5s ease-in-out infinite; }
+      .active .fill { animation: fill 3.2s ease-in-out infinite; transform-origin: left; }
+      .active .drop { animation: drop 3.4s ease-in-out infinite; }
+      .active .switch { animation: switchLane 4.2s ease-in-out infinite; }
+      .active .grow { animation: grow 4s ease-in-out infinite; transform-origin: left; }
+
+      @keyframes packet {
+        0%, 100% { transform: translateX(0); opacity: .35; }
+        45%, 70% { transform: translateX(390px); opacity: 1; }
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: .25; }
+        50% { opacity: 1; }
+      }
+
+      @keyframes fill {
+        0%, 100% { transform: scaleX(.15); }
+        50% { transform: scaleX(1); }
+      }
+
+      @keyframes drop {
+        0%, 100% { transform: translateY(-25px); opacity: .2; }
+        50% { transform: translateY(80px); opacity: 1; }
+      }
+
+      @keyframes switchLane {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(185px, 82px); }
+      }
+
+      @keyframes grow {
+        0%, 100% { transform: scaleX(.32); }
+        50% { transform: scaleX(.86); }
+      }
+
+      .end-to-end {
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #0a1518;
+      }
+
+      @media (max-width: 860px) {
+        .overview-grid,
+        .concept-grid,
+        .concept-head {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .active .packet,
+        .active .slow-packet,
+        .active .pulse,
+        .active .fill,
+        .active .drop,
+        .active .switch,
+        .active .grow { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">source-backed scale concepts</div>
+        <h1>The real serving problems behind LLM inference.</h1>
+        <p>
+          This page turns the source notes into diagrams. Each section explains
+          the practical issue, why it happens, the method used, the tradeoff,
+          and what to measure.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="mechanisms.html">mechanisms</a>
+        <a href="practical-experiments.html">experiments</a>
+        <a href="gpu-experiments.html">GPU results</a>
+        <a href="production-systems.html">production systems</a>
+        <a href="#ttft">first token</a>
+        <a href="#streaming">streaming</a>
+        <a href="#kvwall">KV wall</a>
+        <a href="#paged">paged KV</a>
+        <a href="#batching">batching</a>
+        <a href="#compete">prefill/decode</a>
+        <a href="#architecture">architecture</a>
+        <a href="#knobs">knobs</a>
+        <a href="#speculative">speculation</a>
+        <a href="#quant">quantization</a>
+      </div>
+    </div>
+
+    <main class="wrap">
+      <section class="overview">
+        <div class="bug">big picture</div>
+        <h2>Training, inference, and serving are different jobs.</h2>
+        <div class="overview-grid">
+          <div class="card"><b>training</b><span>Change model weights by learning from many full text sequences.</span></div>
+          <div class="card"><b>inference</b><span>Use fixed weights to answer one request.</span></div>
+          <div class="card"><b>serving</b><span>Answer many requests quickly while staying inside fixed GPU memory.</span></div>
+        </div>
+        <div class="diagram active">
+          <svg viewBox="0 0 720 330">
+            <rect class="node" x="44" y="72" width="135" height="58" rx="7"></rect><text class="label" x="75" y="106">users</text>
+            <rect class="node" x="220" y="72" width="135" height="58" rx="7"></rect><text class="label" x="255" y="106">router</text>
+            <rect class="node" x="396" y="72" width="135" height="58" rx="7"></rect><text class="label" x="431" y="106">queue</text>
+            <rect class="node" x="572" y="72" width="110" height="58" rx="7"></rect><text class="label" x="602" y="106">GPU</text>
+            <path class="wire" d="M179 101 H572"></path><circle class="cyan packet" cx="190" cy="101" r="8"></circle>
+            <rect class="outline" x="92" y="205" width="540" height="52" rx="7"></rect>
+            <rect class="cyan" x="92" y="205" width="180" height="52" rx="7"></rect><text class="label" x="124" y="237">weights</text>
+            <rect class="amber grow" x="272" y="205" width="240" height="52"></rect><text class="label" x="318" y="237">KV cache grows</text>
+            <rect class="red" x="560" y="205" width="72" height="52" rx="7"></rect><text class="tiny" x="575" y="237">headroom</text>
+          </svg>
+        </div>
+      </section>
+
+      <section id="ttft" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">01 / first-token delay</div><h2>Long prompts delay the first output token.</h2><p>Before the model can write, it must read the prompt and create state for those prompt positions.</p></div>
+          <div class="source"><b>sources</b><a href="https://huggingface.co/docs/transformers/v4.53.2/llm_optims">HF optimization</a>, <a href="https://huggingface.co/docs/text-generation-inference/basic_tutorials/launcher">TGI launcher flags</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>User sends a long prompt and waits before streaming starts.</span></div>
+          <div class="card method"><b>method</b><span>Reduce prompt tokens, cache repeated prefixes, chunk long prefill, route long prompts separately.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Less context can remove useful information; chunking helps fairness but adds scheduler work.</span></div>
+          <div class="card measure"><b>measure</b><span>Prompt tokens, time to first token, prefill tokens/sec, queue wait.</span></div>
+          <div class="card measure"><b>real HF run</b><span>Qwen2.5-0.5B on L4: 64 tokens gave 27.09 ms TTFT; 1536 tokens gave 36.69 ms after warmup.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <text class="label" x="54" y="44">request arrives</text>
+          <rect class="node" x="55" y="70" width="150" height="56" rx="7"></rect><text class="label" x="84" y="104">prompt tokens</text>
+          <rect class="node" x="285" y="70" width="165" height="56" rx="7"></rect><text class="label" x="326" y="104">prefill work</text>
+          <rect class="node" x="535" y="70" width="140" height="56" rx="7"></rect><text class="label" x="568" y="104">first token</text>
+          <path class="wire" d="M205 98 H535"></path><circle class="cyan slow-packet" cx="218" cy="98" r="8"></circle>
+          <rect class="outline" x="84" y="195" width="535" height="42" rx="7"></rect><rect class="amber fill" x="84" y="195" width="535" height="42" rx="7"></rect>
+          <text class="tiny" x="84" y="266">longer prompt means this bar takes longer before token 1 appears</text>
+        </svg></div>
+      </section>
+
+      <section id="streaming" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">02 / slow streaming</div><h2>Long answers pay decode cost again and again.</h2><p>After prefill, the model writes one token, appends it, then repeats.</p></div>
+          <div class="source"><b>sources</b><a href="https://huggingface.co/docs/transformers/v4.53.2/llm_optims">HF optimization</a>, <a href="https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/">NVIDIA inference optimization</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>The first word appears, but the answer streams slowly.</span></div>
+          <div class="card method"><b>method</b><span>Batch decode, reduce output limit, use faster runtime, use speculative decoding when it fits.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Short output limits can cut off useful answers. Speculation adds another model and acceptance checks.</span></div>
+          <div class="card measure"><b>measure</b><span>Inter-token latency, decode step time, tokens/sec, output length.</span></div>
+          <div class="card measure"><b>real HF run</b><span>Qwen2.5-0.5B on L4: 16 output tokens took 412.9 ms; 512 took 12,430.1 ms, while decode stayed near 24-26 ms/token.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <rect class="node" x="70" y="80" width="155" height="58" rx="7"></rect><text class="label" x="103" y="114">stored past</text>
+          <rect class="node" x="292" y="80" width="145" height="58" rx="7"></rect><text class="label" x="328" y="114">one step</text>
+          <rect class="node" x="510" y="80" width="135" height="58" rx="7"></rect><text class="label" x="544" y="114">token out</text>
+          <path class="wire" d="M225 109 H510"></path><circle class="cyan packet" cx="238" cy="109" r="8"></circle>
+          <g transform="translate(82 205)"><rect class="dim" x="0" y="0" width="48" height="34" rx="5"></rect><rect class="dim" x="58" y="0" width="48" height="34" rx="5"></rect><rect class="amber pulse" x="116" y="0" width="48" height="34" rx="5"></rect><rect class="green pulse" x="174" y="0" width="48" height="34" rx="5" style="animation-delay:.45s"></rect><text class="tiny" x="0" y="66">each tick appends one more token</text></g>
+        </svg></div>
+      </section>
+
+      <section id="kvwall" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">03 / KV memory wall</div><h2>The model can fit, but active requests can still run out of memory.</h2><p>Every active request stores key and value rows for its past tokens.</p></div>
+          <div class="source"><b>sources</b><a href="https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/">NVIDIA</a>, <a href="https://huggingface.co/docs/transformers/v4.53.2/llm_optims">HF KV cache</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>Weights load, then traffic causes out-of-memory failures.</span></div>
+          <div class="card method"><b>method</b><span>Reduce context or batch, lower cache bytes, page or offload KV cache.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Smaller context or batch can reduce quality or throughput. Offload adds transfer time.</span></div>
+          <div class="card measure"><b>measure</b><span>KV bytes, active tokens, memory left, max tokens before OOM.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <text class="label" x="70" y="58">GPU memory capacity</text>
+          <rect class="outline" x="70" y="82" width="585" height="60" rx="7"></rect>
+          <rect class="cyan" x="70" y="82" width="220" height="60" rx="7"></rect><text class="label" x="112" y="118">weights</text>
+          <rect class="amber grow" x="290" y="82" width="280" height="60"></rect><text class="label" x="340" y="118">KV cache</text>
+          <rect class="red" x="595" y="82" width="60" height="60" rx="7"></rect><text class="tiny" x="606" y="118">left</text>
+          <text class="tiny" x="82" y="196">KV bytes = layers * 2 * positions * KV heads * head_dim * batch * bytes</text>
+        </svg></div>
+      </section>
+
+      <section id="paged" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">04 / paged KV</div><h2>KV cache blocks reduce memory waste.</h2><p>Requests grow at different lengths. Fixed large reservations leave unused space.</p></div>
+          <div class="source"><b>sources</b><a href="https://arxiv.org/abs/2309.06180">PagedAttention paper</a>, <a href="https://vllm.ai/blog/2023-06-20-vllm">vLLM blog</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>Memory is reserved but not all reserved slots hold useful token state.</span></div>
+          <div class="card method"><b>method</b><span>Split KV into fixed blocks and map logical request order to physical GPU blocks.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Block lookup adds implementation work, but more GPU memory stores useful KV rows.</span></div>
+          <div class="card measure"><b>measure</b><span>Allocated blocks, used slots, wasted slots, active requests, throughput.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <text class="label" x="55" y="52">logical request tokens</text>
+          <g transform="translate(60 76)"><rect class="cyan" x="0" y="0" width="38" height="32" rx="4"></rect><rect class="cyan" x="46" y="0" width="38" height="32" rx="4"></rect><rect class="amber" x="92" y="0" width="38" height="32" rx="4"></rect><rect class="amber" x="138" y="0" width="38" height="32" rx="4"></rect></g>
+          <rect class="node" x="280" y="68" width="150" height="54" rx="7"></rect><text class="label" x="314" y="101">block table</text>
+          <path class="wire" d="M236 92 H280 M430 92 H520"></path><circle class="cyan packet" cx="238" cy="92" r="7"></circle>
+          <text class="label" x="520" y="52">physical KV blocks</text>
+          <g transform="translate(520 76)"><rect class="cyan" x="0" y="0" width="52" height="42" rx="5"></rect><rect class="amber" x="62" y="0" width="52" height="42" rx="5"></rect><rect class="dim" x="0" y="56" width="52" height="42" rx="5"></rect><rect class="green pulse" x="62" y="56" width="52" height="42" rx="5"></rect></g>
+          <text class="tiny" x="60" y="214">finished requests return blocks to the free list</text>
+        </svg></div>
+      </section>
+
+      <section id="batching" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">05 / continuous batching</div><h2>New requests can join between decode steps.</h2><p>Static batches waste slots when some requests finish early.</p></div>
+          <div class="source"><b>sources</b><a href="https://huggingface.co/docs/text-generation-inference/index">TGI overview</a>, <a href="https://docs.cloud.google.com/kubernetes-engine/docs/tutorials/serve-llm-tpu-jetstream-pytorch">Google JetStream tutorial</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>Some users wait while the GPU could still process useful work.</span></div>
+          <div class="card method"><b>method</b><span>Let scheduler insert new requests into open active slots between decode steps.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Higher throughput can add queue wait. Scheduler must protect memory fit and fairness.</span></div>
+          <div class="card measure"><b>measure</b><span>Active batch size, waiting requests, tokens per step, TTFT, ITL.</span></div>
+          <div class="card measure"><b>real HF run</b><span>Qwen2.5-0.5B on L4: batch 1 reached 39.5 aggregate decode tok/s; batch 32 reached 1225.7 tok/s while each request still streamed near 38 tok/s.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <text class="label" x="70" y="48">waiting lane</text><text class="label" x="330" y="48">active decode batch</text><text class="label" x="558" y="48">tokens out</text>
+          <rect class="node" x="70" y="72" width="90" height="42" rx="6"></rect><text class="tiny" x="96" y="99">D</text>
+          <rect class="node" x="70" y="128" width="90" height="42" rx="6"></rect><text class="tiny" x="96" y="155">E</text>
+          <rect class="node" x="316" y="72" width="90" height="42" rx="6"></rect><text class="tiny" x="344" y="99">A</text>
+          <rect class="node" x="316" y="128" width="90" height="42" rx="6"></rect><text class="tiny" x="344" y="155">B</text>
+          <rect class="node" x="316" y="184" width="90" height="42" rx="6"></rect><text class="tiny" x="344" y="211">C</text>
+          <path class="wire" d="M160 93 H316 M406 93 H585 M406 149 H585 M406 205 H585"></path><circle class="cyan switch" cx="170" cy="93" r="7"></circle>
+          <circle class="green pulse" cx="596" cy="93" r="8"></circle><circle class="green pulse" cx="596" cy="149" r="8" style="animation-delay:.25s"></circle><circle class="green pulse" cx="596" cy="205" r="8" style="animation-delay:.5s"></circle>
+        </svg></div>
+      </section>
+
+      <section id="compete" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">06 / prefill and decode compete</div><h2>A huge prompt can disturb active streaming.</h2><p>Prefill and decode have different work shapes but share the same worker unless the system separates or schedules them carefully.</p></div>
+          <div class="source"><b>sources</b><a href="https://huggingface.co/docs/text-generation-inference/basic_tutorials/launcher">TGI launcher flags</a>, <a href="https://huggingface.co/docs/text-generation-inference/architecture">TGI architecture</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>Short chats pause because another request sent a large prompt.</span></div>
+          <div class="card method"><b>method</b><span>Limit prefill batch tokens, chunk prefill, route long prompts separately.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Chunking improves shared progress but can delay the long prompt's first token.</span></div>
+          <div class="card measure"><b>measure</b><span>TTFT, ITL, prefill tokens per batch, decode tokens per batch.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <text class="label" x="68" y="58">prefill lane</text><rect class="node" x="70" y="82" width="230" height="50" rx="7"></rect><rect class="amber fill" x="70" y="82" width="230" height="50" rx="7"></rect><text class="label" x="112" y="113">long prompt work</text>
+          <text class="label" x="68" y="180">decode lane</text><rect class="node" x="70" y="204" width="70" height="42" rx="6"></rect><rect class="node" x="152" y="204" width="70" height="42" rx="6"></rect><rect class="node" x="234" y="204" width="70" height="42" rx="6"></rect><text class="tiny" x="90" y="231">A</text><text class="tiny" x="172" y="231">B</text><text class="tiny" x="254" y="231">C</text>
+          <rect class="node" x="430" y="130" width="150" height="62" rx="7"></rect><text class="label" x="464" y="166">scheduler</text>
+          <path class="wire" d="M300 107 H430 M304 225 H430 M580 161 H660"></path><circle class="cyan packet" cx="312" cy="107" r="7"></circle><circle class="green packet" cx="316" cy="225" r="7" style="animation-delay:.5s"></circle>
+        </svg></div>
+      </section>
+
+      <section id="architecture" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">07 / serving architecture</div><h2>Production serving is more than `model.generate()`.</h2><p>The system needs request intake, queueing, scheduling, model execution, streaming, limits, and metrics.</p></div>
+          <div class="source"><b>sources</b><a href="https://huggingface.co/docs/text-generation-inference/architecture">TGI architecture</a>, <a href="https://huggingface.co/docs/text-generation-inference/index">TGI overview</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>One script cannot manage many request shapes, streaming, memory limits, and metrics.</span></div>
+          <div class="card method"><b>method</b><span>Use router, queue, scheduler, model worker, streaming path, and metrics.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>The system gives control but adds knobs that must be measured and tuned.</span></div>
+          <div class="card measure"><b>measure</b><span>Queue depth, batch size, TTFT, ITL, memory pressure, errors.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <rect class="node" x="40" y="96" width="100" height="56" rx="7"></rect><text class="label" x="67" y="129">HTTP</text>
+          <rect class="node" x="170" y="96" width="100" height="56" rx="7"></rect><text class="label" x="196" y="129">router</text>
+          <rect class="node" x="300" y="96" width="100" height="56" rx="7"></rect><text class="label" x="326" y="129">queue</text>
+          <rect class="node" x="430" y="96" width="120" height="56" rx="7"></rect><text class="label" x="456" y="129">scheduler</text>
+          <rect class="node" x="590" y="96" width="100" height="56" rx="7"></rect><text class="label" x="618" y="129">worker</text>
+          <path class="wire" d="M140 124 H590"></path><circle class="cyan packet" cx="152" cy="124" r="7"></circle>
+          <path class="wire" d="M640 152 V228 H110 V152"></path><text class="tiny" x="280" y="248">token stream and metrics return while requests continue</text>
+        </svg></div>
+      </section>
+
+      <section id="knobs" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">08 / production knobs</div><h2>Serving settings are gates around limited hardware.</h2><p>The system must choose run, wait, or reject before a request can harm memory or latency.</p></div>
+          <div class="source"><b>sources</b><a href="https://huggingface.co/docs/text-generation-inference/basic_tutorials/launcher">TGI launcher flags</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>Loose settings cause OOM and latency spikes; strict settings reject or shorten work.</span></div>
+          <div class="card method"><b>method</b><span>Set max input tokens, max total tokens, batch token limits, waiting limits, memory target.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Protecting the service limits what some requests can do.</span></div>
+          <div class="card measure"><b>measure</b><span>Rejected requests, p95 TTFT, p95 ITL, OOM count, memory use.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <rect class="node" x="56" y="92" width="140" height="70" rx="7"></rect><text class="label" x="86" y="121">request</text><text class="tiny" x="82" y="141">prompt + output</text>
+          <rect class="node" x="260" y="70" width="115" height="48" rx="7"></rect><text class="tiny" x="286" y="100">token gate</text>
+          <rect class="node" x="260" y="140" width="115" height="48" rx="7"></rect><text class="tiny" x="286" y="170">memory gate</text>
+          <rect class="node" x="260" y="210" width="115" height="48" rx="7"></rect><text class="tiny" x="288" y="240">batch gate</text>
+          <path class="wire" d="M196 127 H260 M375 94 H520 M375 164 H520 M375 234 H520"></path><circle class="cyan packet" cx="204" cy="127" r="7"></circle>
+          <text class="label" x="542" y="98">run</text><text class="label" x="542" y="168">wait</text><text class="label" x="542" y="238">reject</text>
+        </svg></div>
+      </section>
+
+      <section id="speculative" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">09 / speculative decoding</div><h2>A small model can draft tokens for the large model to check.</h2><p>The large model usually writes one token per step. Drafting can let one large-model pass accept several tokens.</p></div>
+          <div class="source"><b>sources</b><a href="https://huggingface.co/docs/transformers/v4.53.2/llm_optims">HF optimization</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>Long decode streams require many large-model steps.</span></div>
+          <div class="card method"><b>method</b><span>Assistant model proposes several tokens; large model verifies them together.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Needs a good assistant model. Rejected tokens reduce the gain.</span></div>
+          <div class="card measure"><b>measure</b><span>Proposed tokens, accepted tokens, rejected tokens, saved large-model steps.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <rect class="node" x="70" y="70" width="150" height="54" rx="7"></rect><text class="label" x="98" y="103">small model</text>
+          <g transform="translate(270 82)"><rect class="amber pulse" x="0" y="0" width="38" height="32" rx="4"></rect><rect class="amber pulse" x="48" y="0" width="38" height="32" rx="4" style="animation-delay:.2s"></rect><rect class="amber pulse" x="96" y="0" width="38" height="32" rx="4" style="animation-delay:.4s"></rect></g>
+          <rect class="node" x="470" y="70" width="150" height="54" rx="7"></rect><text class="label" x="498" y="103">large model</text>
+          <path class="wire" d="M220 97 H470"></path><circle class="cyan packet" cx="232" cy="97" r="7"></circle>
+          <g transform="translate(270 190)"><rect class="green" x="0" y="0" width="38" height="32" rx="4"></rect><rect class="green" x="48" y="0" width="38" height="32" rx="4"></rect><rect class="red" x="96" y="0" width="38" height="32" rx="4"></rect><text class="tiny" x="0" y="62">accepted, accepted, rejected</text></g>
+        </svg></div>
+      </section>
+
+      <section id="quant" class="concept watch">
+        <div class="concept-head">
+          <div><div class="bug">10 / quantization</div><h2>Lower-byte number formats help memory fit.</h2><p>The same count of stored values uses different memory depending on bytes per value.</p></div>
+          <div class="source"><b>sources</b><a href="https://huggingface.co/docs/text-generation-inference/index">TGI overview</a>, <a href="https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/">NVIDIA</a></div>
+        </div>
+        <div class="concept-grid">
+          <div class="card"><b>practical issue</b><span>Weights and KV cache use too much memory or move too many bytes.</span></div>
+          <div class="card method"><b>method</b><span>Use FP16/BF16, int8/int4 weights, or lower-byte KV cache where supported.</span></div>
+          <div class="card trade"><b>tradeoff</b><span>Lower-byte values can affect quality or require specific hardware/runtime support.</span></div>
+          <div class="card measure"><b>measure</b><span>Weight memory, KV memory, tokens/sec, task quality, numerical failures.</span></div>
+        </div>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <text class="label" x="82" y="58">same number count</text>
+          <g transform="translate(90 92)"><text class="label" x="0" y="-18">FP32</text><rect class="cyan drop" x="0" y="0" width="32" height="32"></rect><rect class="cyan drop" x="42" y="0" width="32" height="32" style="animation-delay:.1s"></rect><rect class="cyan drop" x="84" y="0" width="32" height="32" style="animation-delay:.2s"></rect><rect class="cyan drop" x="126" y="0" width="32" height="32" style="animation-delay:.3s"></rect><text class="tiny" x="0" y="132">4 bytes each</text></g>
+          <g transform="translate(395 92)"><text class="label" x="0" y="-18">FP16 / int8 / int4</text><rect class="amber drop" x="0" y="0" width="32" height="32"></rect><rect class="amber drop" x="42" y="0" width="32" height="32" style="animation-delay:.16s"></rect><text class="tiny" x="0" y="132">fewer bytes each</text></g>
+          <path class="wire" d="M250 110 H360"></path><text class="tiny" x="282" y="94">fit changes</text>
+        </svg></div>
+      </section>
+
+      <section id="end" class="end-to-end watch">
+        <div class="bug">end-to-end diagram to build next</div>
+        <h2>One production story should connect all concepts.</h2>
+        <p>Users arrive with different prompt and output shapes. The serving system checks limits, schedules prefill and decode, manages KV blocks, streams tokens, and records metrics.</p>
+        <div class="diagram"><svg viewBox="0 0 720 330">
+          <rect class="node" x="32" y="82" width="92" height="50" rx="7"></rect><text class="tiny" x="60" y="112">users</text>
+          <rect class="node" x="150" y="82" width="92" height="50" rx="7"></rect><text class="tiny" x="176" y="112">router</text>
+          <rect class="node" x="268" y="82" width="92" height="50" rx="7"></rect><text class="tiny" x="294" y="112">queue</text>
+          <rect class="node" x="386" y="82" width="118" height="50" rx="7"></rect><text class="tiny" x="414" y="112">scheduler</text>
+          <rect class="node" x="530" y="82" width="118" height="50" rx="7"></rect><text class="tiny" x="558" y="112">GPU worker</text>
+          <path class="wire" d="M124 107 H530"></path><circle class="cyan packet" cx="136" cy="107" r="7"></circle>
+          <rect class="node" x="150" y="210" width="168" height="52" rx="7"></rect><text class="tiny" x="184" y="241">KV block manager</text>
+          <rect class="node" x="386" y="210" width="118" height="52" rx="7"></rect><text class="tiny" x="416" y="241">metrics</text>
+          <path class="wire" d="M589 132 V236 H504 M530 236 H318"></path>
+          <text class="tiny" x="55" y="296">next pass: make this end-to-end diagram interactive with request count, prompt mix, output mix, batch limits, KV block size, and dtype</text>
+        </svg></div>
+      </section>
+    </main>
+
+    <script>
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => entry.target.classList.toggle("active", entry.isIntersecting));
+      }, { threshold: 0.32 });
+      document.querySelectorAll(".watch").forEach((node) => observer.observe(node));
+    </script>
+  </body>
+</html>

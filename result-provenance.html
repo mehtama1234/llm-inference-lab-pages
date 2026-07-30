@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Result Provenance Audit</title>
+    <style>
+      :root {
+        --bg:#081012; --panel:#0f191c; --panel2:#132126; --ink:#e8f4f1; --muted:#9fb0ad;
+        --line:#263a40; --cyan:#58d8e6; --amber:#e7a64c; --red:#dc6656; --green:#7bd391;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+      }
+      * { box-sizing:border-box; }
+      body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.58; }
+      .wrap { width:min(1180px, calc(100% - 36px)); margin:0 auto; }
+      header { padding:48px 0 34px; border-bottom:1px solid var(--line); background:linear-gradient(90deg,rgba(88,216,230,.06) 1px,transparent 1px),linear-gradient(0deg,rgba(88,216,230,.05) 1px,transparent 1px),var(--bg); background-size:42px 42px; }
+      .bug { color:var(--cyan); font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; }
+      h1,h2,p { margin-top:0; }
+      h1 { max-width:920px; margin:12px 0 14px; font-size:clamp(36px,5vw,62px); line-height:1; }
+      h2 { font-size:clamp(24px,3vw,36px); line-height:1.08; }
+      p { color:var(--muted); }
+      header p { max-width:850px; font-size:18px; }
+      .nav { position:sticky; top:0; z-index:4; background:rgba(8,16,18,.92); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
+      .nav .wrap { display:flex; gap:10px; overflow:auto; padding:10px 0; }
+      .nav a { flex:0 0 auto; color:#a4eef4; border:1px solid var(--line); border-radius:7px; padding:7px 10px; text-decoration:none; font-family:var(--mono); font-size:12px; }
+      main { padding:28px 0 70px; }
+      .panel { margin:0 0 26px; padding:24px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+      .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+      .metric,.row,.badge { padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--panel2); }
+      .metric b,.row b,.badge b { display:block; color:var(--cyan); font-family:var(--mono); font-size:12px; margin-bottom:6px; }
+      .metric span,.row span,.badge span { display:block; color:#c8d8d5; font-size:14px; }
+      .runbox { margin-top:14px; white-space:pre-wrap; color:#dbe8e5; font-family:var(--mono); font-size:12px; padding:12px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
+      .rows { display:grid; gap:8px; margin-top:14px; }
+      .row { display:grid; grid-template-columns:220px 210px minmax(0,1fr) 110px; gap:10px; align-items:start; }
+      .kind { font-family:var(--mono); color:#081012; border-radius:6px; padding:4px 7px; display:inline-block; background:var(--cyan); font-size:12px; }
+      .kind.real { background:var(--green); }
+      .kind.sim { background:var(--amber); }
+      .kind.trace { background:#8fc8ff; }
+      .kind.mixed { background:#d6b0ff; }
+      .kind.audit { background:#b8c6c9; }
+      .kind.source { background:#9fe6dd; }
+      a { color:#a4eef4; overflow-wrap:anywhere; }
+      @media (max-width:900px) { .grid,.row { grid-template-columns:1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">result provenance audit</div>
+        <h1>Know which numbers are real measurements and which are teaching traces.</h1>
+        <p>
+          This page labels selected result files by evidence type: real GPU
+          measurements, local simulations, deterministic teaching traces,
+          source-backed studies, mixed records, and local audits.
+        </p>
+      </div>
+    </header>
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="practical-experiments.html">experiments</a>
+        <a href="hf-practical.html">HF practical</a>
+        <a href="production-systems.html">production systems</a>
+        <a href="teaching-audit.html">teaching audit</a>
+        <a href="concept-checklist.html">concept checklist</a>
+        <a href="#artifacts">artifacts</a>
+      </div>
+    </div>
+    <main class="wrap">
+      <section class="panel">
+        <div class="bug">summary</div>
+        <h2>Evidence Counts</h2>
+        <div id="summaryGrid" class="grid"></div>
+        <div id="summaryText" class="runbox">loading result_provenance_audit_results.json</div>
+        <div id="classGrid" class="grid" style="margin-top:14px"></div>
+      </section>
+      <section class="panel">
+        <div class="bug">actual versus planned</div>
+        <h2>Actual Experiments Are Not The Same As Runbooks</h2>
+        <p>
+          A real experiment has measured runtime output from a GPU or a measured
+          GPU result plus explicit derived math. A runbook, source study,
+          execution plan, or client contract is useful, but it is not a
+          benchmark result.
+        </p>
+        <div id="actualGrid" class="grid"></div>
+        <div id="actualLists" class="runbox">loading experiment split</div>
+      </section>
+      <section id="artifacts" class="panel">
+        <div class="bug">artifact-by-artifact</div>
+        <h2>Result Files</h2>
+        <p>Open the page beside each artifact to see where the result is used.</p>
+        <div id="rows" class="rows"></div>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const esc = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      function metric(label, value) {
+        return `<div class="metric"><b>${esc(label)}</b><span>${esc(value)}</span></div>`;
+      }
+      function cls(kind) {
+        if (kind.includes("real GPU")) return "real";
+        if (kind.includes("simulation")) return "sim";
+        if (kind.includes("trace")) return "trace";
+        if (kind.includes("mixed")) return "mixed";
+        if (kind.includes("audit")) return "audit";
+        if (kind.includes("source")) return "source";
+        return "";
+      }
+      function render(payload) {
+        const s = payload.summary || {};
+        $("summaryGrid").innerHTML = [
+          metric("checked", s.artifacts_checked || 0),
+          metric("existing", s.existing_artifacts || 0),
+          metric("missing", s.missing_artifacts || 0),
+          metric("unclear", s.unlabeled_or_unclear || 0),
+        ].join("");
+        $("actualGrid").innerHTML = [
+          metric("actual experiment artifacts", s.actual_experiment_artifacts || 0),
+          metric("not actual benchmarks", s.not_actual_benchmark_artifacts || 0),
+          metric("simulation, trace, or audit", s.simulation_trace_or_audit_artifacts || 0),
+          metric("next rule", "run before comparing")
+        ].join("");
+        $("actualLists").textContent = [
+          `actual experiments: ${(payload.actual_experiment_artifacts || []).join(", ") || "none"}`,
+          "",
+          `not actual benchmarks yet: ${(payload.not_actual_benchmark_artifacts || []).join(", ") || "none"}`,
+          "",
+          "rule: if the row says runbook, execution plan, source-backed study, or client validation, it should teach setup and proof limits, not claim runtime speed."
+        ].join("\n");
+        $("summaryText").textContent = [
+          `evidence: ${payload.evidence_type || "audit"}`,
+          `missing labels: ${(s.missing_labels || []).join(", ") || "none"}`,
+          `lesson: ${payload.lesson || ""}`
+        ].join("\n");
+        $("classGrid").innerHTML = Object.entries(s.classification_counts || {}).map(([key, value]) => (
+          `<div class="badge"><b>${esc(key)}</b><span>${esc(value)}</span></div>`
+        )).join("");
+        $("rows").innerHTML = (payload.rows || []).map((row) => (
+          `<article class="row">
+            <b><a href="${esc(row.artifact)}">${esc(row.artifact)}</a></b>
+            <span class="kind ${cls(row.classification)}">${esc(row.classification)}</span>
+            <span>${esc(row.reason)}${row.evidence_type ? `<br>evidence: ${esc(row.evidence_type)}` : ""}</span>
+            <span><a href="${esc(row.page)}">open page</a></span>
+          </article>`
+        )).join("");
+      }
+      fetch("result_provenance_audit_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("result_provenance_audit_results.json not found")))
+        .then(render)
+        .catch((error) => { $("summaryText").textContent = error.message; });
+    </script>
+  </body>
+</html>

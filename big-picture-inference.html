@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Big Picture: LLM Inference</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 980px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 860px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 900px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1.02fr .98fr;
+        gap: 14px;
+        align-items: stretch;
+      }
+      .card {
+        min-height: 128px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p {
+        display: block;
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .diagram {
+        min-height: 320px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        overflow: hidden;
+      }
+      svg { width: 100%; height: 100%; display: block; }
+      .node { fill: #132126; stroke: #31484e; stroke-width: 1.5; }
+      .node2 { fill: #10272b; stroke: #3c6a72; stroke-width: 1.5; }
+      .wire { fill: none; stroke: #45676f; stroke-width: 2; }
+      .label { fill: var(--ink); font: 13px var(--mono); }
+      .tiny { fill: var(--muted); font: 11px var(--mono); }
+      .cyan { fill: var(--cyan); }
+      .green { fill: var(--green); }
+      .amber { fill: var(--amber); }
+      .red { fill: var(--red); }
+      .table {
+        display: grid;
+        gap: 10px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 190px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .row b { color: var(--ink); }
+      .row span { color: var(--muted); font-size: 14px; }
+      .source-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .source-row {
+        display: grid;
+        grid-template-columns: 210px 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .source-row b {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .source-row span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .callout {
+        padding: 16px;
+        border: 1px solid rgba(232, 166, 75, .45);
+        border-radius: 8px;
+        background: rgba(232, 166, 75, .08);
+      }
+      .callout b { color: var(--amber); }
+      .runbox {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #c7d4d2;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+      }
+      .metric {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .metric div {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .metric b {
+        display: block;
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .metric span {
+        display: block;
+        margin-top: 8px;
+        color: var(--ink);
+        font-size: 22px;
+        font-weight: 760;
+      }
+      @media (max-width: 900px) {
+        .grid, .two, .row, .source-row, .metric { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">big picture writeup</div>
+        <h1>LLM inference is a chain of work, memory, waiting, and proof.</h1>
+        <p>
+          This page connects the papers, docs, Colab experiments, local traces,
+          and host runbooks into one plain explanation. The point is not to
+          collect benchmark rows. The point is to understand what changes when a
+          model call becomes a serving system.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="mechanisms.html">mechanisms</a>
+        <a href="scale-concepts.html">scale concepts</a>
+        <a href="practical-experiments.html">experiments</a>
+        <a href="production-systems.html">production</a>
+        <a href="result-provenance.html">provenance</a>
+        <a href="#problem">problem</a>
+        <a href="#loop">core loop</a>
+        <a href="#sources">source lessons</a>
+        <a href="#experiments">experiments</a>
+        <a href="#approaches">approaches</a>
+        <a href="#claim">claim boundary</a>
+        <a href="#next">next proof</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="problem" class="panel wrap">
+        <div class="bug">problem</div>
+        <h2>The problem is not text generation. The problem is controlled repeated computation.</h2>
+        <p class="lead">
+          A trained model is a large set of stored numbers. A request arrives as
+          text. The serving system must turn that text into token IDs, read
+          vectors and weights, run many matrix operations, store attention
+          history, choose one next token, append it, and do that again until the
+          answer stops.
+        </p>
+        <div class="grid">
+          <div class="card measure">
+            <b>Text becomes counted work</b>
+            <span>Prompt shape decides token count, context fit, prefill cost, and how much prefix cache can be reused.</span>
+          </div>
+          <div class="card method">
+            <b>Decode repeats</b>
+            <span>After the prompt is processed, each new token triggers another model step. Small per-token costs become large when many users wait.</span>
+          </div>
+          <div class="card trade">
+            <b>Memory is part of latency</b>
+            <span>Weights, KV cache, active sequences, runtime buffers, and precision decide whether the server fits and how much batching it can tolerate.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="loop" class="panel wrap">
+        <div class="bug">first principles</div>
+        <h2>The request path is one chain. Each optimization touches one link.</h2>
+        <div class="two">
+          <div>
+            <p>
+              A single request has two different kinds of work. First, the
+              server processes the full prompt. That is prefill. Then it
+              produces output one token at a time. That is decode. The KV cache
+              stores attention history so decode does not recompute the whole
+              prompt each time.
+            </p>
+            <p>
+              The serving problem appears when many requests share the same GPU.
+              The system must decide which prompts to admit, which tokens to
+              batch together, how much cache to keep, when to stream partial
+              output, and when to reject or slow traffic instead of letting
+              every request wait.
+            </p>
+          </div>
+          <div class="diagram" aria-label="Request path diagram">
+            <svg viewBox="0 0 760 320" role="img">
+              <path class="wire" d="M85 80 H650" />
+              <path class="wire" d="M225 80 C250 150 300 170 350 170 H650" />
+              <path class="wire" d="M500 170 C530 210 570 230 650 230" />
+              <rect class="node2" x="35" y="42" width="100" height="76" rx="8" />
+              <text class="label" x="58" y="76">text</text>
+              <text class="tiny" x="54" y="96">request</text>
+              <rect class="node" x="170" y="42" width="118" height="76" rx="8" />
+              <text class="label" x="195" y="76">tokens</text>
+              <text class="tiny" x="188" y="96">counted input</text>
+              <rect class="node" x="330" y="42" width="120" height="76" rx="8" />
+              <text class="label" x="356" y="76">prefill</text>
+              <text class="tiny" x="350" y="96">full prompt</text>
+              <rect class="node" x="505" y="42" width="120" height="76" rx="8" />
+              <text class="label" x="532" y="76">decode</text>
+              <text class="tiny" x="524" y="96">one token</text>
+              <rect class="node2" x="330" y="132" width="148" height="76" rx="8" />
+              <text class="label" x="365" y="166">KV cache</text>
+              <text class="tiny" x="355" y="186">stored history</text>
+              <rect class="node2" x="520" y="192" width="130" height="76" rx="8" />
+              <text class="label" x="545" y="226">scheduler</text>
+              <text class="tiny" x="540" y="246">who runs next</text>
+              <text class="tiny cyan" x="42" y="288">The serving system is the path plus the rules around the path.</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section id="sources" class="panel wrap">
+        <div class="bug">what the sources share</div>
+        <h2>The papers and docs keep pointing at the same pressure points.</h2>
+        <p>
+          The references do not all use the same words, but they describe the
+          same system. Hugging Face explains model-level settings. vLLM and the
+          PagedAttention paper explain serving pressure around KV memory and
+          batching. TGI explains the production server path. NVIDIA and Google
+          show what changes when runtime and deployment become explicit host
+          contracts.
+        </p>
+        <div class="source-list">
+          <div class="source-row">
+            <b>Hugging Face Transformers</b>
+            <span>Prompt formatting, cache implementation, precision, quantized loading, and speculative decoding change the model call before we add a serving runtime.</span>
+          </div>
+          <div class="source-row">
+            <b>vLLM + PagedAttention</b>
+            <span>Serving many requests is a memory-management problem as much as a compute problem. KV blocks, active sequences, and batching policy affect waiting time.</span>
+          </div>
+          <div class="source-row">
+            <b>Hugging Face TGI</b>
+            <span>A production endpoint is a containerized server with launch flags, health, routing, metrics, logs, and a client contract.</span>
+          </div>
+          <div class="source-row">
+            <b>NVIDIA TensorRT-LLM</b>
+            <span>An optimized engine can be faster, but build time and operational complexity need payback. It is not automatically the right first runtime.</span>
+          </div>
+          <div class="source-row">
+            <b>Google JetStream/GKE</b>
+            <span>Cloud serving adds project, quota, storage, cluster, service, endpoint, and cost gates before performance rows mean anything.</span>
+          </div>
+          <div class="source-row">
+            <b>Unsloth</b>
+            <span>Adapter training and GRPO workflows can be learned on Colab. Tiny adapter runs prove artifact movement; they do not prove broad quality or serving speed.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="experiments" class="panel wrap">
+        <div class="bug">what we ran</div>
+        <h2>The lab has measured the lower links of the chain.</h2>
+        <div class="metric">
+          <div><b>Colab scripts</b><span>42/42</span></div>
+          <div><b>audited artifacts</b><span>188</span></div>
+          <div><b>unclear labels</b><span>0</span></div>
+          <div><b>final speed claim</b><span>locked</span></div>
+        </div>
+        <div class="table" style="margin-top: 14px">
+          <div class="row">
+            <b>Prompt shape</b>
+            <span>Measured tokenizer/context pressure. The RAG four-chunk form added 87 tokens versus plain text.</span>
+            <span>Lesson: request format changes cost before the model answers.</span>
+          </div>
+          <div class="row">
+            <b>HF cache strategy</b>
+            <span>Six cache strategies ran on Colab L4; `dynamic_default` was fastest for the short-generation workload.</span>
+            <span>Lesson: cache implementation matters, but result scope follows the workload.</span>
+          </div>
+          <div class="row">
+            <b>HF quantization</b>
+            <span>fp16, int8, and 4-bit all loaded; 4-bit used least load memory, fp16 generated fastest in this setup.</span>
+            <span>Lesson: fitting a model and speeding a model are different claims.</span>
+          </div>
+          <div class="row">
+            <b>Speculative decoding</b>
+            <span>Assisted decoding was faster on 3 of 4 prompts and reduced target forward calls in the measured run.</span>
+            <span>Lesson: fewer heavy model calls can help, but acceptance behavior controls payoff.</span>
+          </div>
+          <div class="row">
+            <b>vLLM pressure</b>
+            <span>Colab L4 runs covered queue pressure, active sequences, prompt/output length, streaming, prefix cache, and memory ledger behavior.</span>
+            <span>Lesson: runtime settings decide where waiting appears.</span>
+          </div>
+          <div class="row">
+            <b>Unsloth</b>
+            <span>SFT and tiny GRPO adapters were created, archived, checksummed, reloaded, and probed.</span>
+            <span>Lesson: adapter workflow is real; quality and serving-speed claims remain separate.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="approaches" class="panel wrap">
+        <div class="bug">approaches</div>
+        <h2>Each approach is a different answer to the same pressure.</h2>
+        <div class="grid">
+          <div class="card measure">
+            <b>Change the request</b>
+            <span>Use stable prefixes, fewer unnecessary tokens, and formats that leave room for output. This reduces prefill and improves cache reuse.</span>
+          </div>
+          <div class="card measure">
+            <b>Change model execution</b>
+            <span>Choose cache settings, precision, quantization, speculative decoding, and compile paths. Measure memory and latency separately.</span>
+          </div>
+          <div class="card method">
+            <b>Change the model artifact</b>
+            <span>Use adapters or fine-tuning when behavior needs to change. Verify save, checksum, reload, and held-out quality before claiming improvement.</span>
+          </div>
+          <div class="card method">
+            <b>Change the serving runtime</b>
+            <span>Use vLLM, TGI, TensorRT-LLM, or JetStream when routing, batching, metrics, and deployment contracts matter.</span>
+          </div>
+          <div class="card trade">
+            <b>Change admission rules</b>
+            <span>Limit prompt length, output length, active sequences, retries, and per-tenant traffic so overload does not turn into long waiting.</span>
+          </div>
+          <div class="card warn">
+            <b>Change the claim only after proof</b>
+            <span>A runtime winner needs same model, workload, host, GPU, client, run ID, logs, and result contract. Otherwise it is only partial evidence.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="claim" class="panel wrap">
+        <div class="bug">claim boundary</div>
+        <h2>What we can say now, and what we cannot say yet.</h2>
+        <div class="two">
+          <div class="card method">
+            <b>Allowed now</b>
+            <span>
+              We can explain how prompt shape, cache choices, quantization,
+              speculative decoding, vLLM queue pressure, streaming, prefix
+              cache, and Unsloth adapter movement affect the inference path.
+              These claims are backed by local traces, Colab GPU results,
+              verifiers, and provenance labels.
+            </span>
+          </div>
+          <div class="card warn">
+            <b>Still locked</b>
+            <span>
+              We cannot name a production TGI versus vLLM winner. The final speed claim remains locked until both runtimes run the same
+              workload on the same NVIDIA Docker host and the returned archive
+              passes the fair-comparison contract.
+            </span>
+          </div>
+        </div>
+        <div class="callout" style="margin-top: 14px">
+          <b>Colab boundary.</b>
+          <p>
+            Colab was useful for Hugging Face, vLLM probes, and Unsloth adapter
+            learning. It is not the right surface for the current final proof
+            because the proof depends on Docker GPU access, host identity, logs,
+            shared workload hashes, and returned runtime files. This is not another isolated Colab benchmark.
+          </p>
+        </div>
+      </section>
+
+      <section id="next" class="panel wrap">
+        <div class="bug">next proof</div>
+        <h2>The next real experiment is the matched host run.</h2>
+        <p>
+          The prepared bundle contains the workload, client, TGI and vLLM host
+          scripts, preflight checks, return collector, runbook, checklist, and
+          claim-boundary text. The archive is ready to copy to a Linux NVIDIA
+          host with Docker Engine and NVIDIA Container Toolkit.
+        </p>
+        <div class="runbox">sha256sum -c gpu_host_run_bundle.sha256 && tar -xzf gpu_host_run_bundle.tar.gz && bash run_complete_gpu_host_campaign.sh</div>
+        <div class="source-list">
+          <div class="source-row">
+            <b>Start here</b>
+            <span><a href="START_HERE_NEXT_RUN.md">START_HERE_NEXT_RUN.md</a> has the exact handoff contract and return-file list.</span>
+          </div>
+          <div class="source-row">
+            <b>Current review</b>
+            <span><a href="CURRENT_EXPERIMENT_REVIEW.md">CURRENT_EXPERIMENT_REVIEW.md</a> lists the measured artifacts and current locked decisions.</span>
+          </div>
+          <div class="source-row">
+            <b>Source ladder</b>
+            <span><a href="SOURCE_SHARED_EXPERIMENT_LADDER.md">SOURCE_SHARED_EXPERIMENT_LADDER.md</a> explains the source-backed experiment sequence.</span>
+          </div>
+          <div class="source-row">
+            <b>Evidence labels</b>
+            <span><a href="result-provenance.html">result-provenance.html</a> separates real GPU results, simulations, runbooks, and locked claims.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hugging Face Practical Labs</title>
+    <style>
+      :root {
+        --bg:#081012; --panel:#0f191c; --panel2:#132126; --ink:#e8f4f1; --muted:#9fb0ad;
+        --line:#263a40; --cyan:#58d8e6; --amber:#e7a64c; --red:#dc6656; --green:#7bd391;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+        --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+      }
+      * { box-sizing:border-box; }
+      body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.58; }
+      .wrap { width:min(1180px, calc(100% - 36px)); margin:0 auto; }
+      header { padding:48px 0 34px; border-bottom:1px solid var(--line); background:linear-gradient(90deg,rgba(88,216,230,.06) 1px,transparent 1px),linear-gradient(0deg,rgba(88,216,230,.05) 1px,transparent 1px),var(--bg); background-size:42px 42px; }
+      .bug { color:var(--cyan); font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; }
+      h1,h2,h3,p { margin-top:0; }
+      h1 { max-width:900px; margin:12px 0 14px; font-size:clamp(36px,5vw,62px); line-height:1; }
+      h2 { margin-bottom:10px; font-size:clamp(25px,3vw,38px); line-height:1.08; }
+      p { color:var(--muted); }
+      header p { max-width:830px; font-size:18px; }
+      .nav { position:sticky; top:0; z-index:4; background:rgba(8,16,18,.92); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
+      .nav .wrap { display:flex; gap:10px; overflow:auto; padding:10px 0; }
+      .nav a { flex:0 0 auto; color:#a4eef4; border:1px solid var(--line); border-radius:7px; padding:7px 10px; text-decoration:none; font-family:var(--mono); font-size:12px; }
+      main { padding:28px 0 70px; }
+      .panel { margin:0 0 26px; padding:24px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+      .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+      .two { display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,.55fr); gap:14px; align-items:start; }
+      .card,.runbox,.metric { padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--panel2); }
+      .card b,.metric b { display:block; margin-bottom:6px; color:var(--cyan); font-family:var(--mono); font-size:12px; }
+      .card span,.metric span { display:block; color:#c8d8d5; font-size:14px; }
+      .card.method b { color:var(--green); } .card.warn b { color:var(--amber); } .card.hot b { color:var(--red); }
+      .runbox { white-space:pre-wrap; color:#dbe8e5; font-family:var(--mono); font-size:12px; }
+      .control-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:14px; }
+      .control { padding:12px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
+      .control label { display:block; margin-bottom:8px; color:var(--cyan); font-family:var(--mono); font-size:12px; }
+      .control input,.control select { width:100%; color:var(--ink); border:1px solid #365057; border-radius:7px; background:#101c20; padding:9px; font:13px var(--mono); }
+      .control input[type="range"] { padding:0; accent-color:var(--cyan); }
+      .focus-note { margin-top:10px; color:#c8d8d5; font-size:13px; }
+      .chart-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:14px; }
+      .chart { min-height:220px; padding:12px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
+      .chart b { display:block; color:var(--cyan); font-family:var(--mono); font-size:12px; margin-bottom:8px; }
+      .chart svg { display:block; width:100%; height:160px; }
+      .diagram { min-height:300px; margin-top:14px; border:1px solid var(--line); border-radius:8px; background:#0a1417; overflow:hidden; }
+      .diagram svg { display:block; width:100%; height:320px; }
+      .result-table { display:grid; gap:8px; margin-top:14px; }
+      .result-row { display:grid; grid-template-columns:110px minmax(0,1fr) minmax(0,1fr); gap:10px; padding:10px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
+      .result-row b { color:var(--cyan); font-family:var(--mono); font-size:12px; }
+      .result-row span { color:#c8d8d5; font-size:13px; }
+      .token-stream { display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:8px; margin-top:14px; }
+      .token-card { min-height:96px; padding:10px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
+      .token-card b { display:flex; justify-content:space-between; gap:8px; color:#dbe8e5; font-family:var(--mono); font-size:12px; }
+      .token-card span { display:block; margin-top:6px; color:#99aaa7; font-size:12px; }
+      .token-card.keep { border-color:rgba(123,211,145,.62); }
+      .token-card.drop { border-color:rgba(220,102,86,.54); opacity:.78; }
+      .token-card.stop { border-color:rgba(231,166,76,.8); }
+      .prompt-view { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+      .prompt-view pre { min-height:190px; margin:0; padding:12px; white-space:pre-wrap; color:#dbe8e5; border:1px solid var(--line); border-radius:8px; background:#0a1417; font-size:12px; }
+      .mode-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:14px; }
+      .mode-card { padding:12px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
+      .mode-card b { display:block; color:var(--cyan); font-family:var(--mono); font-size:12px; margin-bottom:8px; }
+      .mode-card span { display:block; color:#c8d8d5; font-size:13px; margin-top:6px; }
+      .code-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:14px; }
+      .code-card { padding:12px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
+      .code-card b { display:block; color:var(--cyan); font-family:var(--mono); font-size:12px; margin-bottom:8px; }
+      .code-card pre { margin:0; white-space:pre-wrap; color:#dbe8e5; font-size:12px; }
+      .code-card span { display:block; color:#9fb0ad; font-size:13px; margin-top:8px; }
+      code,pre { font-family:var(--mono); }
+      .node { fill:#132126; stroke:#365057; stroke-width:1.4; }
+      .wire { fill:none; stroke:var(--cyan); stroke-width:2; stroke-linecap:round; }
+      .label { fill:#d5e3e0; font-family:var(--mono); font-size:12px; }
+      .tiny { fill:#91a39f; font-family:var(--mono); font-size:10px; }
+      .packet { fill:var(--cyan); animation:packet 4.6s ease-in-out infinite; }
+      @keyframes packet { 0%,100% { transform:translateX(0); opacity:.25; } 55%,75% { transform:translateX(455px); opacity:1; } }
+      @media (max-width:900px) { .grid,.two,.chart-grid,.result-row,.prompt-view,.mode-grid,.code-grid,.control-strip { grid-template-columns:1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">hugging face practical bridge</div>
+        <h1>Read the Transformers code as a data path.</h1>
+        <p>
+          These labs connect the first-principles diagrams to actual Hugging
+          Face usage. The goal is to know what each line creates, why it
+          matters, and how it connects to prefill, decode, KV cache, and output
+          text.
+        </p>
+      </div>
+    </header>
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="practical-experiments.html">experiments</a>
+        <a href="production-systems.html">production systems</a>
+        <a href="hf-settings.html">HF settings</a>
+        <a href="hf-reading-map.html">reading map</a>
+        <a href="teaching-audit.html">teaching audit</a>
+        <a href="result-provenance.html">provenance</a>
+        <a href="concept-checklist.html">concept checklist</a>
+        <a href="#firstrun">first run</a>
+        <a href="#outputdecode">output decode</a>
+        <a href="#chattemplate">chat template</a>
+        <a href="#cachesettings">cache settings</a>
+        <a href="#precisionload">precision loading</a>
+      </div>
+    </div>
+    <main class="wrap">
+      <section id="firstrun" class="panel">
+        <div class="bug">completed first-run trace</div>
+        <h2>A minimal Transformers run is text, token IDs, tensors, generated IDs, then text again.</h2>
+        <p>
+          This trace does not pretend the library is magic. It shows the
+          objects created by each line and the point where the returned sequence
+          switches from prompt IDs to newly generated IDs.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>tokenizer</b><span>Turns text pieces into integer token IDs using the model vocabulary.</span></div>
+          <div class="card"><b>model</b><span>Uses loaded weights to append new token IDs one step at a time.</span></div>
+          <div class="card warn"><b>prompt echo</b><span>`generate()` returns prompt IDs plus new IDs, so output text should usually slice after the prompt length.</span></div>
+        </div>
+        <div id="firstRunSummary" class="runbox" style="margin-top:14px">loading hf_first_run_trace_results.json</div>
+        <div id="firstRunControls" class="control-strip"></div>
+        <div id="firstRunFocus" class="runbox" style="margin-top:14px"></div>
+        <div id="firstRunCharts" class="chart-grid"></div>
+        <div id="firstRunDiagram" class="diagram"></div>
+        <div id="firstRunRows" class="result-table"></div>
+      </section>
+      <section id="outputdecode" class="panel">
+        <div class="bug">completed output-decoding trace</div>
+        <h2>Output text is a choice made after generation, not the raw thing the model returns.</h2>
+        <p>
+          The model returns IDs. Practical code has to decide which IDs are
+          prompt echo, which IDs are the answer, where the answer stops, and
+          which control tokens should stay hidden from the user.
+        </p>
+        <div class="grid">
+          <div class="card warn"><b>prompt echo</b><span>The returned row starts with the original prompt IDs. Those IDs are usually dropped before printing the answer.</span></div>
+          <div class="card method"><b>answer IDs</b><span>Generated content starts at the prompt length and continues until a stop token or output cap.</span></div>
+          <div class="card hot"><b>special tokens</b><span>Stop and role markers control generation and formatting. They are not ordinary answer words.</span></div>
+        </div>
+        <div id="outputDecodeSummary" class="runbox" style="margin-top:14px">loading hf_output_decoding_trace_results.json</div>
+        <div id="outputDecodeCharts" class="chart-grid"></div>
+        <div id="outputDecodeDiagram" class="diagram"></div>
+        <div id="outputDecodeTokens" class="token-stream"></div>
+        <div id="outputDecodeRows" class="result-table"></div>
+      </section>
+      <section id="chattemplate" class="panel">
+        <div class="bug">completed chat-template trace</div>
+        <h2>Chat messages become one prompt string before the model sees them.</h2>
+        <p>
+          A chat template is not display formatting. It inserts role markers,
+          message boundaries, and an assistant-start marker before tokenization.
+          Those inserted pieces become real token IDs.
+        </p>
+        <div class="grid">
+          <div class="card warn"><b>role markers</b><span>System, user, and assistant labels are written into the prompt so the model knows which span it is reading.</span></div>
+          <div class="card"><b>token overhead</b><span>Template markers use context window space and add prompt work during prefill.</span></div>
+          <div class="card method"><b>reusable prefix</b><span>A stable system message and its boundary tokens can be reused across requests when prefix caching is enabled.</span></div>
+        </div>
+        <div id="chatTemplateSummary" class="runbox" style="margin-top:14px">loading hf_chat_template_trace_results.json</div>
+        <div id="promptPressureSummary" class="runbox" style="margin-top:14px">loading prompt_context_pressure_results.json</div>
+        <div id="promptPressureCharts" class="chart-grid"></div>
+        <div id="promptPressureRows" class="result-table"></div>
+        <div id="chatTemplateCharts" class="chart-grid"></div>
+        <div id="chatTemplateDiagram" class="diagram"></div>
+        <div id="chatTemplatePrompts" class="prompt-view"></div>
+        <div id="chatTemplateTokens" class="token-stream"></div>
+        <div id="chatTemplateRows" class="result-table"></div>
+      </section>
+      <section id="cachesettings" class="panel">
+        <div class="bug">completed cache-setting trace</div>
+        <h2>KV cache changes what the model has to read on each decode step.</h2>
+        <p>
+          The user-visible sequence still grows one token at a time. The
+          setting decides whether the model reuses stored key/value rows or
+          forwards the whole growing sequence again.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>cache on</b><span>Prefill stores K and V rows. Later decode steps pass one newest token and read the stored rows.</span></div>
+          <div class="card warn"><b>cache off</b><span>No stored rows are reused. Each decode step forwards the full sequence built so far.</span></div>
+          <div class="card"><b>static cache</b><span>Fixed cache shape can help repeated decode optimization, but unused reserved positions still cost memory.</span></div>
+        </div>
+        <div id="cacheSettingsSummary" class="runbox" style="margin-top:14px">loading hf_cache_setting_trace_results.json</div>
+        <div id="cacheSettingsControls" class="control-strip"></div>
+        <div id="cacheSettingsFocus" class="runbox" style="margin-top:14px"></div>
+        <div id="cacheStrategySummary" class="runbox" style="margin-top:14px">loading hf_cache_strategy_results.json</div>
+        <div id="cacheStrategyCharts" class="chart-grid"></div>
+        <div id="cacheStrategyRows" class="result-table"></div>
+        <div id="cacheSettingsCharts" class="chart-grid"></div>
+        <div id="cacheSettingsDiagram" class="diagram"></div>
+        <div id="cacheSettingsModes" class="mode-grid"></div>
+        <div id="cacheSettingsRows" class="result-table"></div>
+      </section>
+      <section id="precisionload" class="panel">
+        <div class="bug">completed precision-loading trace</div>
+        <h2>Precision changes fixed weight memory before any request runs.</h2>
+        <p>
+          A model has learned weight numbers. Precision decides how many bytes
+          store each number. Smaller storage can make a model fit and leave
+          more room for KV cache, but speed and output quality need separate
+          tests.
+        </p>
+        <div class="grid">
+          <div class="card"><b>dtype</b><span>Floating loads such as fp16 and bf16 use `torch_dtype` during `from_pretrained()`.</span></div>
+          <div class="card method"><b>8-bit / 4-bit</b><span>Quantized loads use `BitsAndBytesConfig`; this changes module storage, not just a display label.</span></div>
+          <div class="card warn"><b>fit check</b><span>Weights, runtime overhead, safety margin, and KV room all have to fit in VRAM together.</span></div>
+        </div>
+        <div id="precisionSummary" class="runbox" style="margin-top:14px">loading hf_precision_loading_trace_results.json</div>
+        <div id="precisionControls" class="control-strip"></div>
+        <div id="precisionFocus" class="runbox" style="margin-top:14px"></div>
+        <div id="precisionCharts" class="chart-grid"></div>
+        <div id="precisionDiagram" class="diagram"></div>
+        <div id="precisionCode" class="code-grid"></div>
+        <div id="precisionRows" class="result-table"></div>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const fmt = (value, digits = 1) => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: digits });
+      const esc = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      let firstRunPayload = null;
+      let cacheSettingsPayload = null;
+      let precisionPayload = null;
+      function chart(title, rows, key, suffix, color) {
+        const max = Math.max(1, ...rows.map((row) => Number(row[key]) || 0));
+        const bars = rows.map((row, idx) => {
+          const value = Number(row[key]) || 0;
+          const h = Math.max(3, (value / max) * 120);
+          const x = 36 + idx * Math.max(34, 230 / Math.max(1, rows.length));
+          const y = 140 - h;
+          return `<rect x="${x}" y="${y}" width="22" height="${h}" rx="4" fill="${color}" opacity=".76"></rect>
+            <text class="tiny" x="${x - 4}" y="158">${String(row.policy).slice(0, 10)}</text>
+            <text class="tiny" x="${x - 2}" y="${Math.max(12, y - 6)}">${fmt(value, 0)}</text>`;
+        }).join("");
+        return `<div class="chart"><b>${title}</b><svg viewBox="0 0 320 180">${bars}</svg><span>${key.replaceAll("_", " ")}${suffix ? ` (${suffix.trim()})` : ""}</span></div>`;
+      }
+      function tokenLabel(tok) {
+        if (!tok) return "missing token";
+        const piece = tok.piece === "\n" ? "\\n" : tok.piece;
+        return `${piece} | id ${tok.id}`;
+      }
+      function renderFirstRunFocus() {
+        if (!firstRunPayload) return;
+        const promptText = $("firstRunEditableText")?.value || "";
+        const position = Number($("firstRunFocusedPosition")?.value || 0);
+        const promptTokens = firstRunPayload.prompt_tokens || [];
+        const generatedTokens = firstRunPayload.generated_tokens || [];
+        const all = promptTokens.concat(generatedTokens);
+        const tok = all[position];
+        const side = position < promptTokens.length ? "prompt side" : "generated side";
+        const generatedPosition = Math.max(0, position - promptTokens.length);
+        $("firstRunFocus").textContent = [
+          `focused-position: ${position}`,
+          `selected token: ${tokenLabel(tok)}`,
+          `where it lives: ${side}`,
+          position < promptTokens.length
+            ? `why it matters: this ID is input work during prefill. It is read before the first answer token can be chosen.`
+            : `why it matters: this is generated token ${generatedPosition}. It was added after the prompt, so practical code slices here when it prints only the answer.`,
+          `editable text length: ${promptText.length} characters`,
+          `practical note: changing text changes token IDs. A production service must tokenize the changed text again before the model can use it.`
+        ].join("\n");
+      }
+      function renderFirstRunControls(payload) {
+        const summary = payload.summary || {};
+        const maxPosition = Math.max(0, (summary.returned_token_ids || 1) - 1);
+        $("firstRunControls").innerHTML = `
+          <div class="control">
+            <label for="firstRunEditableText">editable text</label>
+            <input id="firstRunEditableText" value="${esc(payload.prompt || "What is KV cache?")}" />
+            <div class="focus-note">Edit this to see the exact place where a real app would retokenize.</div>
+          </div>
+          <div class="control">
+            <label for="firstRunFocusedPosition">focused-position</label>
+            <input id="firstRunFocusedPosition" type="range" min="0" max="${maxPosition}" value="${summary.new_ids_start_position || 0}" />
+            <div class="focus-note">Move across returned IDs: prompt echo first, generated IDs after the slice.</div>
+          </div>
+          <div class="control">
+            <label>slice rule</label>
+            <input value="answer_ids = output[prompt_length:]" readonly />
+            <div class="focus-note">This is why raw generate output and displayed text are not the same object.</div>
+          </div>
+        `;
+        $("firstRunEditableText").addEventListener("input", renderFirstRunFocus);
+        $("firstRunFocusedPosition").addEventListener("input", renderFirstRunFocus);
+        renderFirstRunFocus();
+      }
+      function renderCacheSettingsFocus() {
+        if (!cacheSettingsPayload) return;
+        const measured = cacheSettingsPayload.measured_rows || [];
+        if (!measured.length) return;
+        const promptTokens = Number($("cachePromptToken")?.value || measured[0].prompt_tokens || 0);
+        const mode = $("cacheMode")?.value || "dynamic";
+        const row = measured.find((item) => Number(item.prompt_tokens) === promptTokens) || measured[0];
+        const cachedRows = (row.max_new_tokens || 0) + (row.prompt_tokens || 0);
+        const noCacheRows = row.no_cache_input_token_rows_total || 0;
+        const staticReserve = row.static_kv_reserved_mb || 0;
+        const dynamicUse = row.dynamic_kv_used_mb || 0;
+        const modeText = mode === "off"
+          ? `cache off: every decode step forwards the full growing sequence again.`
+          : mode === "static"
+            ? `static cache: decode still forwards one newest token, but memory is reserved to a fixed maximum shape.`
+            : `dynamic cache: decode forwards one newest token and grows stored K/V rows as needed.`;
+        $("cacheSettingsFocus").textContent = [
+          `cache-mode: ${mode}`,
+          `prompt-token count: ${promptTokens}`,
+          `decode steps: ${row.max_new_tokens || 0}`,
+          `model input rows with cache: about ${fmt(cachedRows, 0)} rows over the run`,
+          `model input rows without cache: ${fmt(noCacheRows, 0)} rows over the run`,
+          `measured cached total: ${fmt(row.cached_total_ms || 0, 2)} ms; no-cache total: ${fmt(row.no_cache_total_ms || 0, 2)} ms`,
+          `dynamic KV used: ${fmt(dynamicUse, 3)} MB; static KV reserved: ${fmt(staticReserve, 3)} MB`,
+          `why it matters: ${modeText}`
+        ].join("\n");
+      }
+      function renderCacheSettingsControls(payload) {
+        const measured = payload.measured_rows || [];
+        const promptOptions = measured.map((row) => `<option value="${row.prompt_tokens}">${row.prompt_tokens} prompt tokens</option>`).join("");
+        $("cacheSettingsControls").innerHTML = `
+          <div class="control">
+            <label for="cacheMode">cache-mode</label>
+            <select id="cacheMode">
+              <option value="dynamic">dynamic cache</option>
+              <option value="static">static cache</option>
+              <option value="off">cache off</option>
+            </select>
+            <div class="focus-note">This changes what the next decode step forwards.</div>
+          </div>
+          <div class="control">
+            <label for="cachePromptToken">prompt-token</label>
+            <select id="cachePromptToken">${promptOptions}</select>
+            <div class="focus-note">Longer prompts make prefill and no-cache decode do more row work.</div>
+          </div>
+          <div class="control">
+            <label>stored history</label>
+            <input value="past_key_values hold prior K/V rows" readonly />
+            <div class="focus-note">The stored rows are why cached decode can use one newest token.</div>
+          </div>
+        `;
+        $("cacheMode").addEventListener("change", renderCacheSettingsFocus);
+        $("cachePromptToken").addEventListener("change", renderCacheSettingsFocus);
+        renderCacheSettingsFocus();
+      }
+      function renderPrecisionFocus() {
+        if (!precisionPayload) return;
+        const rows = precisionPayload.rows || [];
+        const row = rows.find((item) => item.load_label === $("precisionLoadMode")?.value) || rows[0];
+        if (!row) return;
+        const modelSizeB = Number($("precisionModelSize")?.value || 7);
+        const gpuMemoryGb = Number($("precisionGpuMemory")?.value || 24);
+        const parameters = modelSizeB * 1000 * 1000 * 1000;
+        const bytesPerWeight = Number(row.bytes_per_weight || 2);
+        const weightGb = parameters * bytesPerWeight / (1024 ** 3);
+        const overheadGb = 3;
+        const availableForKvGb = gpuMemoryGb - weightGb - overheadGb;
+        const fits = availableForKvGb > 0;
+        $("precisionFocus").textContent = [
+          `load-mode: ${row.load_label}`,
+          `model-size: ${modelSizeB}B parameters`,
+          `GPU-memory: ${gpuMemoryGb} GB`,
+          `bytes per weight: ${fmt(bytesPerWeight, 2)}`,
+          `weight memory estimate: ${fmt(weightGb, 2)} GB`,
+          `runtime overhead estimate: ${fmt(overheadGb, 1)} GB`,
+          `room left for KV cache and work buffers: ${fmt(availableForKvGb, 2)} GB`,
+          `fit result: ${fits ? "fits this simple envelope" : "does not fit this simple envelope"}`,
+          `why it matters: precision is chosen before requests run. It decides whether the weights fit and how much memory is left for cached prompt and generated positions.`
+        ].join("\n");
+      }
+      function renderPrecisionControls(payload) {
+        const rows = payload.rows || [];
+        const loadOptions = rows.map((row) => `<option value="${esc(row.load_label)}">${esc(row.load_label)}</option>`).join("");
+        $("precisionControls").innerHTML = `
+          <div class="control">
+            <label for="precisionLoadMode">load-mode</label>
+            <select id="precisionLoadMode">${loadOptions}</select>
+            <div class="focus-note">The loader setting controls how weight numbers are stored.</div>
+          </div>
+          <div class="control">
+            <label for="precisionModelSize">model-size</label>
+            <select id="precisionModelSize">
+              <option value="3">3B parameters</option>
+              <option value="7" selected>7B parameters</option>
+              <option value="13">13B parameters</option>
+            </select>
+            <div class="focus-note">More parameters means more weight numbers before any prompt arrives.</div>
+          </div>
+          <div class="control">
+            <label for="precisionGpuMemory">GPU-memory</label>
+            <select id="precisionGpuMemory">
+              <option value="16">16 GB</option>
+              <option value="24" selected>24 GB</option>
+              <option value="40">40 GB</option>
+              <option value="80">80 GB</option>
+            </select>
+            <div class="focus-note">After weights and overhead, the rest is the working room for inference.</div>
+          </div>
+        `;
+        $("precisionLoadMode").addEventListener("change", renderPrecisionFocus);
+        $("precisionModelSize").addEventListener("change", renderPrecisionFocus);
+        $("precisionGpuMemory").addEventListener("change", renderPrecisionFocus);
+        renderPrecisionFocus();
+      }
+      function renderFirstRun(payload) {
+        firstRunPayload = payload;
+        const summary = payload.summary || {};
+        $("firstRunSummary").textContent = [
+          `evidence: ${payload.evidence_type || "trace"}`,
+          `model id: ${payload.model_id || "unknown"}`,
+          `code lines traced: ${summary.code_lines || 0}`,
+          `prompt tokens: ${summary.prompt_tokens || 0}; generated tokens: ${summary.generated_tokens || 0}`,
+          `generate returned IDs: ${summary.returned_token_ids || 0}; new IDs start at position ${summary.new_ids_start_position || 0}`,
+          `decoded text: ${payload.decoded_text || ""}`,
+          `lesson: ${payload.lesson || "text moves through tokens, tensors, model, and decode"}`
+        ].join("\n");
+        const chartRows = [
+          { policy: "prompt", tokens: summary.prompt_tokens || 0, shape_items: payload.shapes?.input_ids?.[1] || 0 },
+          { policy: "generated", tokens: summary.generated_tokens || 0, shape_items: payload.shapes?.new_ids?.[0] || 0 },
+          { policy: "returned", tokens: summary.returned_token_ids || 0, shape_items: payload.shapes?.generate_output?.[1] || 0 },
+        ];
+        $("firstRunCharts").innerHTML = [
+          chart("token counts", chartRows, "tokens", " tokens", "#79d493"),
+          chart("tensor width", chartRows, "shape_items", " ids", "#58d8e6"),
+          chart("code coverage", [{ policy: "lines", value: summary.code_lines || 0 }, { policy: "steps", value: (summary.concept_steps || []).length }], "value", "", "#e8a64b")
+        ].join("");
+        const prompt = (payload.prompt_tokens || []).map((tok, idx) => {
+          const x = 54 + idx * 78;
+          return `<rect x="${x}" y="78" width="58" height="28" rx="6" fill="#58d8e6" opacity=".72"></rect>
+            <text class="tiny" x="${x + 6}" y="96">${esc(tok.piece).slice(0, 8)}</text>
+            <text class="tiny" x="${x + 6}" y="122">${tok.id}</text>`;
+        }).join("");
+        const generated = (payload.generated_tokens || []).slice(0, 12).map((tok, idx) => {
+          const x = 54 + idx * 50;
+          return `<rect x="${x}" y="220" width="34" height="24" rx="5" fill="#79d493" opacity=".76"></rect>
+            <text class="tiny" x="${x + 6}" y="236">${tok.id}</text>`;
+        }).join("");
+        $("firstRunDiagram").innerHTML = `
+          <svg viewBox="0 0 720 320" role="img">
+            <text class="label" x="54" y="38">minimal Transformers data path</text>
+            <rect class="node" x="54" y="52" width="154" height="34" rx="7"></rect><text class="tiny" x="78" y="74">prompt text</text>
+            <path class="wire" d="M208 69 H282"></path><circle class="packet" cx="218" cy="69" r="7"></circle>
+            <rect class="node" x="282" y="52" width="154" height="34" rx="7"></rect><text class="tiny" x="306" y="74">tokenizer</text>
+            <path class="wire" d="M436 69 H510"></path>
+            <rect class="node" x="510" y="52" width="154" height="34" rx="7"></rect><text class="tiny" x="536" y="74">input tensor</text>
+            <text class="label" x="54" y="68"></text>
+            ${prompt}
+            <rect class="node" x="94" y="150" width="150" height="38" rx="7"></rect><text class="tiny" x="116" y="173">model.generate</text>
+            <path class="wire" d="M244 169 H392"></path>
+            <rect class="node" x="392" y="150" width="190" height="38" rx="7"></rect><text class="tiny" x="414" y="173">prompt IDs + new IDs</text>
+            <line x1="${54 + (summary.new_ids_start_position || 0) * 50}" y1="205" x2="${54 + (summary.new_ids_start_position || 0) * 50}" y2="262" stroke="#dc6656" stroke-width="2"></line>
+            ${generated}
+            <text class="tiny" x="54" y="284">Red line marks the slice point. IDs before it are prompt echo; IDs after it are the generated answer.</text>
+          </svg>
+        `;
+        $("firstRunRows").innerHTML = (payload.code_lines || []).map((row) => `
+          <div class="result-row">
+            <b>line ${row.line}</b>
+            <span><code>${esc(row.code)}</code></span>
+            <span>${row.concept} ${row.why}</span>
+          </div>
+        `).join("");
+        renderFirstRunControls(payload);
+      }
+      function roleColor(role, kept) {
+        if (kept) return "#79d493";
+        if (role === "special_stop") return "#e8a64b";
+        if (role === "after_stop") return "#dc6656";
+        return "#405a61";
+      }
+      function renderOutputDecode(payload) {
+        const summary = payload.summary || {};
+        const views = payload.decode_views || {};
+        $("outputDecodeSummary").textContent = [
+          `evidence: ${payload.evidence_type || "trace"}`,
+          `model id: ${payload.model_id || "unknown"}`,
+          `returned IDs: ${summary.returned_token_ids || 0}`,
+          `new IDs start at position ${summary.new_ids_start_position || 0}; stop token at position ${summary.stop_token_position || 0}`,
+          `kept answer tokens: ${summary.kept_answer_tokens || 0}`,
+          `dropped: ${summary.dropped_prompt_echo_tokens || 0} prompt echo, ${summary.dropped_special_tokens || 0} special, ${summary.dropped_after_stop_tokens || 0} after stop`,
+          `visible text: ${views.visible_text || ""}`,
+          `lesson: ${payload.lesson || "slice, stop, and decode only the kept answer IDs"}`
+        ].join("\n");
+        const dropped = (summary.dropped_prompt_echo_tokens || 0) + (summary.dropped_special_tokens || 0) + (summary.dropped_after_stop_tokens || 0);
+        $("outputDecodeCharts").innerHTML = [
+          chart("kept versus dropped", [
+            { policy: "kept", count: summary.kept_answer_tokens || 0 },
+            { policy: "dropped", count: dropped },
+          ], "count", " ids", "#79d493"),
+          chart("drop reasons", [
+            { policy: "prompt", count: summary.dropped_prompt_echo_tokens || 0 },
+            { policy: "special", count: summary.dropped_special_tokens || 0 },
+            { policy: "after stop", count: summary.dropped_after_stop_tokens || 0 },
+          ], "count", " ids", "#dc6656"),
+          chart("returned row", [
+            { policy: "prompt", count: summary.prompt_tokens || 0 },
+            { policy: "new", count: summary.generated_tokens_returned || 0 },
+            { policy: "all", count: summary.returned_token_ids || 0 },
+          ], "count", " ids", "#58d8e6")
+        ].join("");
+        const tokens = payload.returned_tokens || [];
+        const boxes = tokens.map((tok, idx) => {
+          const x = 34 + idx * 45;
+          const fill = roleColor(tok.role, tok.kept);
+          const y = tok.kept ? 120 : tok.role === "prompt_echo" ? 68 : 178;
+          return `<rect x="${x}" y="${y}" width="34" height="30" rx="6" fill="${fill}" opacity=".78"></rect>
+            <text class="tiny" x="${x + 5}" y="${y + 19}">${tok.id}</text>
+            <text class="tiny" x="${x + 4}" y="${y + 44}">${idx}</text>`;
+        }).join("");
+        const sliceX = 34 + (summary.new_ids_start_position || 0) * 45;
+        const stopX = 34 + (summary.stop_token_position || 0) * 45;
+        $("outputDecodeDiagram").innerHTML = `
+          <svg viewBox="0 0 980 320" role="img">
+            <text class="label" x="34" y="36">one returned sequence from generate()</text>
+            <text class="tiny" x="34" y="58">prompt echo row</text>
+            <text class="tiny" x="34" y="112">kept answer row</text>
+            <text class="tiny" x="34" y="170">dropped control or after-stop row</text>
+            <line x1="${sliceX}" y1="48" x2="${sliceX}" y2="246" stroke="#58d8e6" stroke-width="2"></line>
+            <text class="tiny" x="${sliceX + 6}" y="260">slice at prompt length</text>
+            <line x1="${stopX}" y1="48" x2="${stopX}" y2="246" stroke="#e8a64b" stroke-width="2"></line>
+            <text class="tiny" x="${stopX + 6}" y="278">stop token</text>
+            ${boxes}
+            <text class="label" x="34" y="302">visible text: ${esc(views.visible_text || "")}</text>
+          </svg>
+        `;
+        $("outputDecodeTokens").innerHTML = tokens.map((tok) => {
+          const cls = tok.kept ? "keep" : tok.role === "special_stop" ? "stop drop" : "drop";
+          return `<div class="token-card ${cls}">
+            <b><span>${tok.absolute_position}</span><span>${tok.id}</span></b>
+            <span>${esc(tok.piece)}</span>
+            <span>${tok.kept ? "kept" : "dropped"}: ${esc(tok.reason)}</span>
+          </div>`;
+        }).join("");
+        $("outputDecodeRows").innerHTML = (payload.code_lines || []).map((row) => `
+          <div class="result-row">
+            <b>line ${row.line}</b>
+            <span><code>${esc(row.code)}</code></span>
+            <span>${row.concept} ${row.why}</span>
+          </div>
+        `).join("");
+      }
+      function templateColor(role, segment) {
+        if (segment && segment.startsWith("system")) return "#58d8e6";
+        if (segment && segment.startsWith("user")) return "#e8a64b";
+        if (segment && segment.includes("assistant")) return "#79d493";
+        if (role === "template") return "#405a61";
+        return "#9ab1b5";
+      }
+      function renderChatTemplate(payload) {
+        const summary = payload.summary || {};
+        $("chatTemplateSummary").textContent = [
+          `evidence: ${payload.evidence_type || "trace"}`,
+          `model id: ${payload.model_id || "unknown"}`,
+          `messages: ${summary.message_count || 0}`,
+          `plain text tokens: ${summary.no_template_tokens || 0}; chat-template tokens: ${summary.with_template_tokens || 0}`,
+          `template overhead: ${summary.template_overhead_tokens || 0} tokens`,
+          `role marker tokens: ${summary.role_marker_tokens || 0}; boundary/template tokens: ${summary.boundary_template_tokens || 0}`,
+          `assistant answer starts after position ${summary.answer_start_position || 0}`,
+          `reusable prefix tokens: ${summary.reusable_prefix_tokens || 0}; per-request user tokens: ${summary.per_request_user_tokens || 0}`,
+          `lesson: ${payload.lesson || "chat templates become real prompt tokens"}`
+        ].join("\n");
+        $("chatTemplateCharts").innerHTML = [
+          chart("plain versus chat prompt", [
+            { policy: "plain", count: summary.no_template_tokens || 0 },
+            { policy: "template", count: summary.with_template_tokens || 0 },
+          ], "count", " tokens", "#58d8e6"),
+          chart("token roles", [
+            { policy: "content", count: summary.content_tokens || 0 },
+            { policy: "role", count: summary.role_marker_tokens || 0 },
+            { policy: "boundary", count: summary.boundary_template_tokens || 0 },
+          ], "count", " tokens", "#e8a64b"),
+          chart("reuse split", [
+            { policy: "prefix", count: summary.reusable_prefix_tokens || 0 },
+            { policy: "user", count: summary.per_request_user_tokens || 0 },
+            { policy: "answer start", count: Math.max(0, (summary.with_template_tokens || 0) - (summary.reusable_prefix_tokens || 0) - (summary.per_request_user_tokens || 0)) },
+          ], "count", " tokens", "#79d493")
+        ].join("");
+        const tokens = payload.template_tokens || [];
+        const tokenBoxes = tokens.map((tok, idx) => {
+          const x = 28 + idx * 34;
+          const y = tok.segment.startsWith("system") ? 72 : tok.segment.startsWith("user") ? 142 : 212;
+          return `<rect x="${x}" y="${y}" width="26" height="26" rx="5" fill="${templateColor(tok.role, tok.segment)}" opacity=".8"></rect>
+            <text class="tiny" x="${x + 4}" y="${y + 17}">${idx}</text>`;
+        }).join("");
+        const answerX = 28 + (summary.answer_start_position || 0) * 34;
+        $("chatTemplateDiagram").innerHTML = `
+          <svg viewBox="0 0 980 320" role="img">
+            <text class="label" x="28" y="36">apply_chat_template output, token by token</text>
+            <text class="tiny" x="28" y="64">system reusable prefix</text>
+            <text class="tiny" x="28" y="134">user request</text>
+            <text class="tiny" x="28" y="204">assistant generation prompt</text>
+            ${tokenBoxes}
+            <line x1="${answerX}" y1="46" x2="${answerX}" y2="274" stroke="#79d493" stroke-width="2"></line>
+            <text class="tiny" x="${Math.max(28, answerX - 150)}" y="292">answer starts after every formatted prompt token</text>
+          </svg>
+        `;
+        $("chatTemplatePrompts").innerHTML = `
+          <pre><b>messages</b>\n${esc(JSON.stringify(payload.messages || [], null, 2))}</pre>
+          <pre><b>formatted prompt</b>\n${esc(payload.formatted_prompt || "")}</pre>
+        `;
+        $("chatTemplateTokens").innerHTML = tokens.map((tok) => {
+          const cls = tok.segment.startsWith("system") ? "keep" : tok.segment.startsWith("user") ? "stop" : "";
+          return `<div class="token-card ${cls}">
+            <b><span>${tok.position}</span><span>${tok.id}</span></b>
+            <span>${esc(tok.piece === "\n" ? "\\n" : tok.piece)}</span>
+            <span>${esc(tok.role)}: ${esc(tok.segment)}</span>
+          </div>`;
+        }).join("");
+        $("chatTemplateRows").innerHTML = (payload.code_lines || []).map((row) => `
+          <div class="result-row">
+            <b>line ${row.line}</b>
+            <span><code>${esc(row.code)}</code></span>
+            <span>${row.concept} ${row.why}</span>
+          </div>
+        `).join("");
+      }
+      function renderPromptPressure(payload) {
+        const summary = payload.summary || {};
+        const rows = payload.rows || [];
+        $("promptPressureSummary").textContent = [
+          `evidence: ${payload.evidence_type || "local tokenizer trace"}`,
+          `model id: ${payload.model_id || "unknown"} via ${payload.tokenizer_source || "unknown tokenizer"}`,
+          `baseline plain prompt tokens: ${payload.baseline_plain_prompt_tokens || 0}`,
+          `largest overhead: ${summary.largest_overhead_case || "unknown"} adds ${summary.largest_overhead_tokens_vs_plain || 0} tokens`,
+          `least reusable formatted case: ${summary.least_reusable_formatted_case || "unknown"} (${fmt(summary.least_reusable_formatted_prefix_fraction || 0, 3)} reusable fraction)`,
+          `all cases fit 2048 with ${payload.reserved_output_tokens || 0} reserved output tokens: ${summary.all_cases_fit_2048_with_reserved_output ? "yes" : "no"}`,
+          `lesson: ${payload.lesson || "prompt formatting spends context before generation starts"}`
+        ].join("\n");
+        $("promptPressureCharts").innerHTML = [
+          chart("input tokens by prompt shape", rows.map((row) => ({ policy: row.case, count: row.input_tokens })), "count", " tokens", "#58d8e6"),
+          chart("extra tokens above plain", rows.map((row) => ({ policy: row.case, count: Math.max(0, row.overhead_tokens_vs_plain || 0) })), "count", " tokens", "#e8a64b"),
+          chart("reusable prefix", rows.map((row) => ({ policy: row.case, count: row.reusable_prefix_tokens_vs_reference })), "count", " tokens", "#79d493")
+        ].join("");
+        $("promptPressureRows").innerHTML = rows.map((row) => {
+          const smallest = (row.budget_checks || [])[0] || {};
+          return `<div class="result-row">
+            <b>${esc(row.case)}</b>
+            <span>${row.input_tokens || 0} input tokens; ${row.overhead_tokens_vs_plain || 0} overhead versus plain</span>
+            <span>2048-window room after prompt: ${smallest.budget_left_before_generation || 0}; reserved-output fit: ${smallest.fits_with_reserved_output ? "yes" : "no"}</span>
+            <span>${esc(row.lesson || "")}</span>
+          </div>`;
+        }).join("");
+      }
+      function renderCacheSettings(payload) {
+        cacheSettingsPayload = payload;
+        const summary = payload.summary || {};
+        const focus = payload.focus_row || {};
+        $("cacheSettingsSummary").textContent = [
+          `evidence: ${payload.evidence_type || "trace"}`,
+          `source: ${payload.source_file || "unknown"}`,
+          `model id: ${payload.model_id || "unknown"} on ${payload.gpu || "unknown GPU"} (${payload.dtype || "dtype unknown"})`,
+          `focus run: prompt ${summary.focus_prompt_tokens || 0}, new tokens ${summary.focus_new_tokens || 0}`,
+          `measured cached total: ${fmt(summary.focus_cached_total_ms || 0, 2)} ms`,
+          `measured no-cache total: ${fmt(summary.focus_no_cache_total_ms || 0, 2)} ms`,
+          `input-token work ratio: ${fmt(summary.focus_input_token_work_ratio || 0, 1)}x more rows without cache`,
+          `dynamic KV used: ${fmt(summary.focus_dynamic_kv_used_mb || 0, 3)} MB; static reserved: ${fmt(summary.focus_static_kv_reserved_mb || 0, 3)} MB; unused static room: ${fmt(summary.focus_static_unused_mb || 0, 3)} MB`,
+          `same first generated tokens in every measured row: ${summary.same_first_tokens_all_rows ? "yes" : "no"}`,
+          `lesson: ${payload.lesson || "cache settings change decode work and memory shape"}`
+        ].join("\n");
+        const measured = payload.measured_rows || [];
+        $("cacheSettingsCharts").innerHTML = [
+          chart("total time, cached", measured.map((row) => ({ policy: `${row.prompt_tokens}`, count: row.cached_total_ms })), "count", " ms", "#79d493"),
+          chart("total time, no cache", measured.map((row) => ({ policy: `${row.prompt_tokens}`, count: row.no_cache_total_ms })), "count", " ms", "#dc6656"),
+          chart("input rows without cache", measured.map((row) => ({ policy: `${row.prompt_tokens}`, count: row.no_cache_input_token_rows_total })), "count", " rows", "#e8a64b")
+        ].join("");
+        const steps = payload.decode_steps_sample || [];
+        const maxNoCache = Math.max(1, ...steps.map((row) => row.no_cache_model_input_tokens || 0));
+        const stepRows = steps.map((row, idx) => {
+          const x = 50 + idx * 70;
+          const noH = Math.max(8, ((row.no_cache_model_input_tokens || 0) / maxNoCache) * 130);
+          const cacheH = 12;
+          return `<rect x="${x}" y="${186 - noH}" width="22" height="${noH}" rx="4" fill="#dc6656" opacity=".72"></rect>
+            <rect x="${x + 28}" y="${186 - cacheH}" width="22" height="${cacheH}" rx="4" fill="#79d493" opacity=".9"></rect>
+            <text class="tiny" x="${x - 2}" y="210">${row.step}</text>`;
+        }).join("");
+        $("cacheSettingsDiagram").innerHTML = `
+          <svg viewBox="0 0 980 320" role="img">
+            <text class="label" x="50" y="38">decode model input per step, focus run</text>
+            <text class="tiny" x="50" y="62">red: cache off forwards the growing sequence; green: cached decode forwards one newest token</text>
+            ${stepRows}
+            <line x1="50" y1="186" x2="910" y2="186" stroke="#365057" stroke-width="1"></line>
+            <text class="tiny" x="50" y="238">public sequence grows from ${focus.prompt_tokens || 0} prompt positions to ${(focus.prompt_tokens || 0) + (focus.max_new_tokens || 0)} positions</text>
+            <text class="tiny" x="50" y="258">dynamic cache stores used positions: ${fmt(focus.dynamic_kv_used_mb || 0, 3)} MB in this derived shape model</text>
+            <text class="tiny" x="50" y="278">static cache reserves fixed positions: ${fmt(focus.static_kv_reserved_mb || 0, 3)} MB, with ${fmt(focus.static_unused_mb || 0, 3)} MB unused in the focus run</text>
+          </svg>
+        `;
+        $("cacheSettingsModes").innerHTML = (payload.cache_modes || []).map((mode) => `
+          <div class="mode-card">
+            <b>${esc(mode.mode)}</b>
+            <span><code>${esc(mode.generate_argument)}</code></span>
+            <span>${esc(mode.model_input_after_prefill)}</span>
+            <span>${esc(mode.memory_shape)}</span>
+            <span>${esc(mode.decode_work)}</span>
+            <span>${esc(mode.best_for)}</span>
+          </div>
+        `).join("");
+        $("cacheSettingsRows").innerHTML = (payload.code_lines || []).map((row) => `
+          <div class="result-row">
+            <b>line ${row.line}</b>
+            <span><code>${esc(row.code)}</code></span>
+            <span>${row.concept} ${row.why}</span>
+          </div>
+        `).join("");
+        renderCacheSettingsControls(payload);
+      }
+      function renderCacheStrategy(payload) {
+        const summary = payload.summary || {};
+        const rows = payload.rows || [];
+        $("cacheStrategySummary").textContent = [
+          `evidence: ${payload.evidence_type || "real cache-strategy measurement"}`,
+          `model id: ${payload.model_id || "unknown"} on ${payload.gpu || "unknown GPU"}`,
+          `strategies ran: ${summary.strategies_ran || 0}/${summary.strategies_attempted || 0}`,
+          `fastest strategy: ${summary.fastest_strategy || "unknown"}`,
+          `lowest GPU-memory delta strategy: ${summary.lowest_gpu_memory_delta_strategy || "unknown"}`,
+          `max new tokens: ${payload.max_new_tokens || 0}; verifier requires prompt timing, generated tokens, and memory evidence`,
+          `lesson: ${payload.lesson || "cache implementations are measured tradeoffs"}`
+        ].join("\n");
+        $("cacheStrategyCharts").innerHTML = [
+          chart("mean generation time", rows.map((row) => ({ policy: row.strategy, count: row.summary?.mean_elapsed_ms || 0 })), "count", " ms", "#58d8e6"),
+          chart("mean tokens per second", rows.map((row) => ({ policy: row.strategy, count: row.summary?.mean_tokens_per_second || 0 })), "count", " tok/s", "#79d493"),
+          chart("GPU memory delta", rows.map((row) => ({ policy: row.strategy, count: Math.max(0, row.gpu_memory_delta_mb || 0) })), "count", " MB", "#e8a64b")
+        ].join("");
+        $("cacheStrategyRows").innerHTML = rows.map((row) => `
+          <div class="result-row">
+            <b>${esc(row.strategy)} · ${esc(row.status)}</b>
+            <span>${fmt(row.summary?.mean_elapsed_ms || 0, 2)} ms mean; ${fmt(row.summary?.mean_tokens_per_second || 0, 2)} tok/s</span>
+            <span>GPU delta: ${fmt(row.gpu_memory_delta_mb || 0, 1)} MB; prompts ok: ${row.summary?.ok_prompts || 0}</span>
+            <span>${esc(row.expected_tradeoff || "")}</span>
+          </div>
+        `).join("");
+      }
+      function renderPrecisionLoading(payload) {
+        precisionPayload = payload;
+        const summary = payload.summary || {};
+        $("precisionSummary").textContent = [
+          `evidence: ${payload.evidence_type || "trace"}`,
+          `source: ${payload.source_file || "unknown"}`,
+          `model id: ${payload.model_id || "unknown"}`,
+          `parameters: ${fmt(summary.parameters || 0, 0)}`,
+          `GPU envelope: ${fmt(summary.gpu_capacity_mb || 0, 0)} MB`,
+          `fp32 fits: ${summary.fp32_fits ? "yes" : "no"}`,
+          `fp16 weights: ${fmt(summary.fp16_weight_memory_mb || 0, 2)} MB`,
+          `int8 cuts fp16 weight memory by ${fmt(summary.int8_memory_reduction_vs_fp16_percent || 0, 1)}%; 4-bit cuts it by ${fmt(summary.four_bit_memory_reduction_vs_fp16_percent || 0, 1)}%`,
+          `4096-token request capacity by KV room: fp16 ${summary.fp16_4096_token_requests || 0}, int8 ${summary.int8_4096_token_requests || 0}, 4-bit ${summary.four_bit_4096_token_requests || 0}`,
+          `lesson: ${payload.lesson || "precision changes weight memory and fit"}`
+        ].join("\n");
+        const rows = payload.rows || [];
+        $("precisionCharts").innerHTML = [
+          chart("weight memory", rows.map((row) => ({ policy: row.label, count: row.weight_memory_mb })), "count", " MB", "#58d8e6"),
+          chart("KV room after weights", rows.map((row) => ({ policy: row.label, count: row.kv_budget_mb })), "count", " MB", "#79d493"),
+          chart("4096-token requests", rows.map((row) => ({ policy: row.label, count: row.max_4096_token_requests_by_kv })), "count", " requests", "#e8a64b")
+        ].join("");
+        const maxWeight = Math.max(1, ...rows.map((row) => row.weight_memory_mb || 0));
+        const blocks = rows.map((row, idx) => {
+          const y = 62 + idx * 54;
+          const weightW = Math.max(4, ((row.weight_memory_mb || 0) / maxWeight) * 520);
+          const kvW = Math.max(2, ((row.kv_budget_mb || 0) / maxWeight) * 520);
+          const color = row.fits_weights_and_overhead ? "#79d493" : "#dc6656";
+          return `<text class="tiny" x="40" y="${y + 15}">${esc(row.label)}</text>
+            <rect x="190" y="${y}" width="${weightW}" height="18" rx="5" fill="${color}" opacity=".78"></rect>
+            <rect x="190" y="${y + 24}" width="${kvW}" height="14" rx="5" fill="#58d8e6" opacity=".58"></rect>
+            <text class="tiny" x="${Math.min(900, 200 + weightW)}" y="${y + 15}">${fmt(row.weight_memory_gb || 0, 2)} GB weights, ${row.fit_label}</text>`;
+        }).join("");
+        $("precisionDiagram").innerHTML = `
+          <svg viewBox="0 0 980 320" role="img">
+            <text class="label" x="40" y="34">VRAM fit: weight memory first, KV room second</text>
+            <text class="tiny" x="190" y="52">top bar per row = weights; lower blue bar = remaining KV budget</text>
+            ${blocks}
+            <text class="tiny" x="40" y="292">Smaller weight storage leaves more room for cached prompt and generated positions.</text>
+          </svg>
+        `;
+        $("precisionCode").innerHTML = rows.map((row) => `
+          <div class="code-card">
+            <b>${esc(row.load_label)} · ${esc(row.fit_label)}</b>
+            <pre>${esc(row.code)}</pre>
+            <span>${esc(row.changes)}</span>
+            <span>${esc(row.requires)}</span>
+            <span>${esc(row.risk_note)}</span>
+          </div>
+        `).join("");
+        $("precisionRows").innerHTML = (payload.code_lines || []).map((row) => `
+          <div class="result-row">
+            <b>line ${row.line}</b>
+            <span><code>${esc(row.code)}</code></span>
+            <span>${row.concept} ${row.why}</span>
+          </div>
+        `).join("");
+        renderPrecisionControls(payload);
+      }
+      fetch("hf_first_run_trace_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_first_run_trace_results.json not found")))
+        .then(renderFirstRun)
+        .catch((error) => { $("firstRunSummary").textContent = error.message; });
+      fetch("hf_output_decoding_trace_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_output_decoding_trace_results.json not found")))
+        .then(renderOutputDecode)
+        .catch((error) => { $("outputDecodeSummary").textContent = error.message; });
+      fetch("hf_chat_template_trace_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_chat_template_trace_results.json not found")))
+        .then(renderChatTemplate)
+        .catch((error) => { $("chatTemplateSummary").textContent = error.message; });
+      fetch("prompt_context_pressure_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("prompt_context_pressure_results.json not found")))
+        .then(renderPromptPressure)
+        .catch((error) => { $("promptPressureSummary").textContent = error.message; });
+      fetch("hf_cache_setting_trace_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_cache_setting_trace_results.json not found")))
+        .then(renderCacheSettings)
+        .catch((error) => { $("cacheSettingsSummary").textContent = error.message; });
+      fetch("hf_cache_strategy_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_cache_strategy_results.json not found")))
+        .then(renderCacheStrategy)
+        .catch((error) => { $("cacheStrategySummary").textContent = error.message; });
+      fetch("hf_precision_loading_trace_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_precision_loading_trace_results.json not found")))
+        .then(renderPrecisionLoading)
+        .catch((error) => { $("precisionSummary").textContent = error.message; });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Practical LLM Inference Experiments</title>
+    <style>
+      :root {
+        --bg: #081012;
+        --panel: #0f191c;
+        --panel2: #132126;
+        --ink: #e8f4f1;
+        --muted: #9fb0ad;
+        --line: #263a40;
+        --cyan: #58d8e6;
+        --amber: #e7a64c;
+        --red: #dc6656;
+        --green: #7bd391;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.58; }
+      .wrap { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+      header { padding: 48px 0 36px; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, rgba(88,216,230,.06) 1px, transparent 1px), linear-gradient(0deg, rgba(88,216,230,.05) 1px, transparent 1px), var(--bg); background-size: 42px 42px; }
+      .bug { color: var(--cyan); font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { max-width: 900px; margin: 12px 0 14px; font-size: clamp(36px, 5vw, 64px); line-height: 1; }
+      h2 { margin-bottom: 10px; font-size: clamp(25px, 3vw, 38px); line-height: 1.08; }
+      p { color: var(--muted); }
+      header p { max-width: 820px; font-size: 18px; }
+      .nav { position: sticky; top: 0; z-index: 4; background: rgba(8, 16, 18, .92); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); }
+      .nav .wrap { display: flex; gap: 10px; overflow: auto; padding: 10px 0; }
+      .nav a { flex: 0 0 auto; color: #a4eef4; border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; text-decoration: none; font-family: var(--mono); font-size: 12px; }
+      main { padding: 28px 0 70px; }
+      .panel { margin: 0 0 26px; padding: 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+      .two { display: grid; grid-template-columns: minmax(0, .8fr) minmax(300px, .45fr); gap: 14px; align-items: start; }
+      .card, .metric, .runbox { padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); }
+      .card b, .metric b { display: block; margin-bottom: 6px; color: var(--cyan); font-family: var(--mono); font-size: 12px; }
+      .card span, .metric span { display: block; color: #c8d8d5; font-size: 14px; }
+      .card.method b { color: var(--green); }
+      .card.warn b { color: var(--amber); }
+      .card.hot b { color: var(--red); }
+      .experiment { display: grid; grid-template-columns: 58px minmax(0, 1fr) minmax(260px, .6fr); gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
+      .experiment:first-child { border-top: 0; }
+      .num { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 7px; color: var(--cyan); font-family: var(--mono); }
+      .experiment h3 { margin-bottom: 6px; }
+      .experiment p { margin-bottom: 8px; }
+      code, pre { font-family: var(--mono); }
+      pre { overflow: auto; margin: 0; color: #dbe8e5; font-size: 12px; white-space: pre-wrap; }
+      .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+      label { display: grid; gap: 6px; color: #c8d8d5; font-family: var(--mono); font-size: 12px; }
+      input { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; background: #081012; color: var(--ink); padding: 6px 8px; font: inherit; }
+      .bars { display: grid; gap: 10px; }
+      .bar { padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #0a1417; }
+      .bar b { display: block; color: var(--cyan); font-family: var(--mono); font-size: 12px; }
+      .bar i { display: block; width: var(--w, 8%); height: 14px; margin-top: 7px; border-radius: 999px; background: var(--cyan); }
+      .bar.amber i { background: var(--amber); }
+      .bar.red i { background: var(--red); }
+      .bar.green i { background: var(--green); }
+      .result-table { display: grid; gap: 8px; margin-top: 14px; }
+      .result-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #0a1417; }
+      .result-row b { color: var(--cyan); font-family: var(--mono); font-size: 12px; }
+      .result-row span { color: #c8d8d5; font-size: 13px; }
+      .result-row i { display: block; width: var(--w, 8%); height: 12px; margin-top: 6px; border-radius: 999px; background: var(--amber); }
+      .chart-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+      .chart { min-height: 230px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #0a1417; }
+      .chart b { display: block; color: var(--cyan); font-family: var(--mono); font-size: 12px; margin-bottom: 8px; }
+      .chart svg { display: block; width: 100%; height: 170px; }
+      .chart span { display: block; color: #c8d8d5; font-size: 13px; }
+      .motion-diagram { min-height: 260px; margin-top: 14px; border: 1px solid var(--line); border-radius: 8px; background: #0a1417; overflow: hidden; }
+      .motion-diagram svg { display: block; width: 100%; height: 260px; }
+      .node { fill: #132126; stroke: #365057; stroke-width: 1.4; }
+      .wire { fill: none; stroke: var(--cyan); stroke-width: 2; stroke-linecap: round; }
+      .label { fill: #d5e3e0; font-family: var(--mono); font-size: 12px; }
+      .tiny { fill: #91a39f; font-family: var(--mono); font-size: 10px; }
+      .packet { fill: var(--cyan); animation: packet 4.8s ease-in-out infinite; }
+      .scan { fill: rgba(88,216,230,.45); animation: scan 3.2s linear infinite; }
+      @keyframes packet { 0%,100% { transform: translateX(0); opacity: .25; } 55%,75% { transform: translateX(430px); opacity: 1; } }
+      @keyframes scan { 0% { transform: translateX(0); opacity: .2; } 45%,75% { opacity: 1; } 100% { transform: translateX(440px); opacity: .2; } }
+      .linkline a { color: #a4eef4; }
+      @media (max-width: 900px) { .grid, .two, .controls, .experiment, .result-row, .chart-grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">experiment cockpit</div>
+        <h1>Run experiments, improve the diagrams, then learn from the result.</h1>
+        <p>
+          Each experiment has one practical question, one measured result, and
+          one page that should become clearer after the run.
+        </p>
+      </div>
+    </header>
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="mechanisms.html">mechanisms</a>
+        <a href="scale-concepts.html">scale concepts</a>
+        <a href="gpu-experiments.html">GPU results</a>
+        <a href="hf-practical.html">HF practical</a>
+        <a href="production-systems.html">production systems</a>
+        <a href="teaching-audit.html">teaching audit</a>
+        <a href="result-provenance.html">provenance</a>
+        <a href="#loop">test loop</a>
+        <a href="#queue">experiment queue</a>
+        <a href="#sim">live serving model</a>
+        <a href="#cache-results">cache result</a>
+        <a href="#prefill-results">prefill result</a>
+        <a href="#decode-results">decode result</a>
+        <a href="#batch-results">batch result</a>
+        <a href="#paged-results">paged KV result</a>
+        <a href="#hf-cache-results">real HF result</a>
+        <a href="#hf-ttft-results">real TTFT</a>
+        <a href="#hf-output-results">real output</a>
+        <a href="#hf-batch-results">real batch</a>
+        <a href="#pages">page improvements</a>
+      </div>
+    </div>
+    <main class="wrap">
+      <section id="loop" class="panel">
+        <div class="bug">learning loop</div>
+        <h2>The rule for every experiment.</h2>
+        <div class="grid">
+          <div class="card"><b>1. Predict</b><span>Say what should change before looking at numbers. Example: longer prompt should raise first-token delay.</span></div>
+          <div class="card method"><b>2. Run</b><span>Run one controlled experiment. Change one variable at a time: prompt length, output length, batch, cache, dtype.</span></div>
+          <div class="card warn"><b>3. Explain</b><span>Update the diagram and write what moved: time, memory, waiting, fit, or output quality.</span></div>
+        </div>
+      </section>
+
+      <section id="queue" class="panel">
+        <div class="bug">ordered experiments</div>
+        <h2>Run these in this order.</h2>
+        <div class="experiment">
+          <div class="num">01</div>
+          <div><h3>Cached vs no-cache decode</h3><p>Question: what work does KV cache avoid, and what memory does it spend?</p><p class="linkline">Improves: <a href="mechanisms.html#kv">KV mechanism</a>, <a href="scale-concepts.html#kvwall">KV wall</a>.</p></div>
+          <div class="runbox"><pre>Measure:
+use_cache=True vs False
+input length each step
+decode ms/token
+GPU memory</pre></div>
+        </div>
+        <div class="experiment">
+          <div class="num">02</div>
+          <div><h3>Prompt length vs first-token time</h3><p>Question: when does a long prompt become the main delay?</p><p class="linkline">Improves: <a href="mechanisms.html#attention">attention instrument</a>, <a href="scale-concepts.html#ttft">first-token delay</a>.</p></div>
+          <div class="runbox"><pre>Vary prompt:
+128, 512, 2048, 4096, 8192
+Measure TTFT, prefill ms,
+memory used</pre></div>
+        </div>
+        <div class="experiment">
+          <div class="num">03</div>
+          <div><h3>Output length vs decode cost</h3><p>Question: how does a long answer add repeated decode work?</p><p class="linkline">Improves: <a href="scale-concepts.html#streaming">slow streaming</a>.</p></div>
+          <div class="runbox"><pre>Vary output:
+16, 64, 256, 1024
+Measure total decode time,
+inter-token latency</pre></div>
+        </div>
+        <div class="experiment">
+          <div class="num">04</div>
+          <div><h3>Batch size vs throughput and waiting</h3><p>Question: when does batching help, and what does it cost?</p><p class="linkline">Improves: <a href="mechanisms.html#batching">batching mechanism</a>, <a href="scale-concepts.html#batching">continuous batching</a>.</p></div>
+          <div class="runbox"><pre>Vary batch:
+1, 2, 4, 8, 16, 32, 64
+Measure tokens/sec,
+step time, memory</pre></div>
+        </div>
+        <div class="experiment">
+          <div class="num">05</div>
+          <div><h3>Paged KV simulation</h3><p>Question: why does block allocation let more requests fit?</p><p class="linkline">Improves: <a href="scale-concepts.html#paged">PagedAttention diagram</a>.</p></div>
+          <div class="runbox"><pre>Simulate:
+fixed reservation vs blocks
+Measure used slots,
+wasted slots, free blocks</pre></div>
+        </div>
+      </section>
+
+      <section id="sim" class="panel">
+        <div class="bug">live first-principles model</div>
+        <h2>Change request shape and watch the practical pressure move.</h2>
+        <div class="controls">
+          <label>prompt tokens <span id="promptValue">2048</span><input id="promptTokens" type="range" min="128" max="8192" step="128" value="2048" /></label>
+          <label>output tokens <span id="outputValue">256</span><input id="outputTokens" type="range" min="16" max="1024" step="16" value="256" /></label>
+          <label>active users <span id="usersValue">8</span><input id="activeUsers" type="range" min="1" max="64" step="1" value="8" /></label>
+        </div>
+        <div class="two">
+          <div class="bars">
+            <div class="bar amber"><b>first-token delay pressure</b><span id="ttftText"></span><i id="ttftBar"></i></div>
+            <div class="bar green"><b>decode streaming pressure</b><span id="decodeText"></span><i id="decodeBar"></i></div>
+            <div class="bar red"><b>KV memory pressure</b><span id="kvText"></span><i id="kvBar"></i></div>
+          </div>
+          <div class="runbox"><pre id="simExplain"></pre></div>
+        </div>
+      </section>
+
+      <section id="cache-results" class="panel">
+        <div class="bug">completed experiment 01</div>
+        <h2>Cached vs no-cache decode result.</h2>
+        <p>
+          This run uses a plain PyTorch attention block on an NVIDIA L4. It is a
+          focused mechanism test, not a full serving benchmark.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we changed</b><span>No-cache rebuilds Q/K/V rows for the full growing sequence. Cached decode projects one new token and reads stored K/V rows.</span></div>
+          <div class="card method"><b>what proved true</b><span>The repeated input-token work grows sharply without cache. At 4096 prompt tokens, cached decode became faster in this run.</span></div>
+          <div class="card warn"><b>what surprised us</b><span>For small prompts, cached was slower in this synthetic loop. Small one-token GPU steps can be dominated by overhead and less favorable shapes.</span></div>
+        </div>
+        <div id="cacheResultSummary" class="runbox">loading cache_decode_results.json</div>
+        <div id="cacheResultRows" class="result-table"></div>
+      </section>
+
+      <section id="prefill-results" class="panel">
+        <div class="bug">completed experiment 02</div>
+        <h2>Prompt length vs first-token work.</h2>
+        <p>
+          This run measures a transformer-like prefill block on an NVIDIA L4.
+          It shows why long prompts mainly hurt the wait before the first token.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we changed</b><span>Prompt length increased while the block shape stayed the same.</span></div>
+          <div class="card method"><b>what proved true</b><span>Score cells grew with prompt length squared, and prefill time jumped sharply at larger prompts.</span></div>
+          <div class="card warn"><b>what to notice</b><span>Small prompt timings are dominated by launch and shape effects. Large prompts reveal the scale problem clearly.</span></div>
+        </div>
+        <div id="prefillResultSummary" class="runbox">loading prompt_prefill_results.json</div>
+        <div id="prefillCharts" class="chart-grid"></div>
+        <div id="prefillDiagram" class="motion-diagram"></div>
+        <div id="prefillResultRows" class="result-table"></div>
+      </section>
+
+      <section id="decode-results" class="panel">
+        <div class="bug">completed experiment 03</div>
+        <h2>Output length vs decode cost.</h2>
+        <p>
+          This run keeps the prompt fixed at 1024 tokens and changes the answer
+          length. It shows why long answers cost repeated decode steps after
+          streaming begins.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we changed</b><span>Output tokens increased from 16 to 1024 while prompt length stayed fixed.</span></div>
+          <div class="card method"><b>what proved true</b><span>Total decode time grew almost linearly because every output token runs another cached decode step.</span></div>
+          <div class="card warn"><b>what to notice</b><span>Milliseconds per token stayed nearly flat in this focused run, so answer length mainly multiplies the same step.</span></div>
+        </div>
+        <div id="decodeResultSummary" class="runbox">loading output_decode_results.json</div>
+        <div id="decodeCharts" class="chart-grid"></div>
+        <div id="decodeDiagram" class="motion-diagram"></div>
+        <div id="decodeResultRows" class="result-table"></div>
+      </section>
+
+      <section id="batch-results" class="panel">
+        <div class="bug">completed experiment 04</div>
+        <h2>Batch size vs throughput and per-request speed.</h2>
+        <p>
+          This run keeps prompt length and output steps fixed, then changes how
+          many requests share each cached decode step.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we changed</b><span>Batch size increased from 1 to 64 active requests.</span></div>
+          <div class="card method"><b>what proved true</b><span>Total tokens/sec rose because one GPU step returned more tokens.</span></div>
+          <div class="card warn"><b>what tradeoff appeared</b><span>After batch 16, throughput flattened while step time, KV memory, and per-request slowdown increased.</span></div>
+        </div>
+        <div id="batchResultSummary" class="runbox">loading batch_decode_results.json</div>
+        <div id="batchCharts" class="chart-grid"></div>
+        <div id="batchDiagram" class="motion-diagram"></div>
+        <div id="batchResultRows" class="result-table"></div>
+      </section>
+
+      <section id="paged-results" class="panel">
+        <div class="bug">completed experiment 05</div>
+        <h2>Fixed KV reservation vs paged KV blocks.</h2>
+        <p>
+          This local simulation compares reserving the maximum token room for
+          every request against allocating small KV blocks close to actual use.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we changed</b><span>Same request mix, two allocation rules: fixed max reservation and 128-token paged blocks.</span></div>
+          <div class="card method"><b>what proved true</b><span>Paged blocks kept reserved memory close to actual used token slots.</span></div>
+          <div class="card warn"><b>what to notice</b><span>Paged KV is about fit and waste first. It helps throughput because more useful requests can fit.</span></div>
+        </div>
+        <div id="pagedResultSummary" class="runbox">loading paged_kv_simulation_results.json</div>
+        <div id="pagedCharts" class="chart-grid"></div>
+        <div id="pagedDiagram" class="motion-diagram"></div>
+        <div id="pagedResultRows" class="result-table"></div>
+      </section>
+
+      <section id="hf-cache-results" class="panel">
+        <div class="bug">real model enhancement</div>
+        <h2>Hugging Face model: cache on vs no cache.</h2>
+        <p>
+          This run uses an actual Transformers model on the L4 GPU. It connects
+          the synthetic cache mechanism to real Hugging Face code.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we ran</b><span>Qwen2.5-0.5B-Instruct, greedy decode, 32 new tokens, cache on versus full growing sequence with cache off.</span></div>
+          <div class="card method"><b>what proved true</b><span>For longer prompts, cached decode became faster and kept each decode step to one new input token.</span></div>
+          <div class="card warn"><b>what to notice</b><span>For short prompts, total cached time included prefill/setup cost, so cache was not automatically faster end to end.</span></div>
+        </div>
+        <div id="hfCacheSummary" class="runbox">loading hf_cache_results.json</div>
+        <div id="hfCacheCharts" class="chart-grid"></div>
+        <div id="hfCacheDiagram" class="motion-diagram"></div>
+        <div id="hfCacheRows" class="result-table"></div>
+      </section>
+
+      <section id="hf-ttft-results" class="panel">
+        <div class="bug">real model enhancement</div>
+        <h2>Hugging Face model: prompt length vs first-token time.</h2>
+        <p>
+          This run uses the same real Transformers model and increases prompt
+          length while keeping generated output length fixed.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we ran</b><span>Qwen2.5-0.5B-Instruct, cached generation, 32 generated tokens, prompts from 64 to 1536 tokens.</span></div>
+          <div class="card method"><b>what proved true</b><span>GPU memory grew steadily with prompt length. First-token time rose at the largest prompt after warmup.</span></div>
+          <div class="card warn"><b>what to notice</b><span>This small model on an L4 handles these prompt sizes quickly. Larger models and longer prompts make this curve much sharper.</span></div>
+        </div>
+        <div id="hfTtftSummary" class="runbox">loading hf_prompt_ttft_results.json</div>
+        <div id="hfTtftCharts" class="chart-grid"></div>
+        <div id="hfTtftDiagram" class="motion-diagram"></div>
+        <div id="hfTtftRows" class="result-table"></div>
+      </section>
+
+      <section id="hf-output-results" class="panel">
+        <div class="bug">real model enhancement</div>
+        <h2>Hugging Face model: output length vs streaming time.</h2>
+        <p>
+          This run keeps the prompt fixed at 256 tokens and changes how many
+          tokens the real model generates.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we ran</b><span>Qwen2.5-0.5B-Instruct, cached generation, output length from 16 to 512 tokens.</span></div>
+          <div class="card method"><b>what proved true</b><span>Total streaming time grew with output length because each generated token repeats decode.</span></div>
+          <div class="card warn"><b>what to notice</b><span>Milliseconds per token stayed stable, so long answers mainly multiply the same per-token cost.</span></div>
+        </div>
+        <div id="hfOutputSummary" class="runbox">loading hf_output_decode_results.json</div>
+        <div id="hfOutputCharts" class="chart-grid"></div>
+        <div id="hfOutputDiagram" class="motion-diagram"></div>
+        <div id="hfOutputRows" class="result-table"></div>
+      </section>
+
+      <section id="hf-batch-results" class="panel">
+        <div class="bug">real model enhancement</div>
+        <h2>Hugging Face model: batch size vs shared decode work.</h2>
+        <p>
+          This run keeps prompt length and output length fixed, then sends more
+          prompts through the same cached decode path at once.
+        </p>
+        <div class="grid">
+          <div class="card"><b>what we ran</b><span>Qwen2.5-0.5B-Instruct, 256-token prompts, 64 output tokens per request, batch size 1 to 32.</span></div>
+          <div class="card method"><b>what proved true</b><span>Aggregate tokens/sec rose almost with batch size because each decode step returned one token for each active request.</span></div>
+          <div class="card warn"><b>what to notice</b><span>One request did not stream much faster. Batching mostly helps the GPU serve more requests at once, while memory and first-token work rise.</span></div>
+        </div>
+        <div id="hfBatchSummary" class="runbox">loading hf_batch_decode_results.json</div>
+        <div id="hfBatchCharts" class="chart-grid"></div>
+        <div id="hfBatchDiagram" class="motion-diagram"></div>
+        <div id="hfBatchRows" class="result-table"></div>
+      </section>
+
+      <section id="pages" class="panel">
+        <div class="bug">page improvement plan</div>
+        <h2>How experiment results should improve the UI.</h2>
+        <div class="grid">
+          <div class="card"><b>mechanisms.html</b><span>Add measured rows beside each mechanism. The learner should see the moving object and the measured count together.</span></div>
+          <div class="card"><b>scale-concepts.html</b><span>Make every scale diagram interactive: request mix, limits, memory, and queue behavior.</span></div>
+          <div class="card"><b>gpu-experiments.html</b><span>Turn raw bars into "what changed" comparisons: before/after cache, prompt length, batch size, dtype.</span></div>
+          <div class="card"><b>deepdives.html</b><span>Link each deep explanation to one experiment and one result row.</span></div>
+          <div class="card"><b>trace-runner.html</b><span>Show local traces next to the matching diagram state, not as isolated output.</span></div>
+          <div class="card"><b>next build</b><span>Run a serving scheduler simulation: static batching vs continuous batching vs chunked prefill.</span></div>
+        </div>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      function pct(value, max) { return `${Math.max(5, Math.min(100, (value / max) * 100)).toFixed(1)}%`; }
+      function fmt(value, digits = 2) {
+        if (value === undefined || value === null || Number.isNaN(Number(value))) return "n/a";
+        return Number(value).toFixed(digits);
+      }
+      function render() {
+        const prompt = Number($("promptTokens").value);
+        const output = Number($("outputTokens").value);
+        const users = Number($("activeUsers").value);
+        const ttft = prompt / 2048;
+        const decode = output / 256;
+        const kvGb = users * (prompt + output) * 32 * 2 * 8 * 128 * 2 / (1024 ** 3);
+        $("promptValue").textContent = prompt;
+        $("outputValue").textContent = output;
+        $("usersValue").textContent = users;
+        $("ttftText").textContent = `${prompt.toLocaleString()} prompt tokens mainly affect prefill and first-token delay.`;
+        $("decodeText").textContent = `${output.toLocaleString()} output tokens repeat decode steps after streaming starts.`;
+        $("kvText").textContent = `${users} users need about ${kvGb.toFixed(2)} GB of FP16 KV cache for this simplified 32-layer shape.`;
+        $("ttftBar").style.setProperty("--w", pct(ttft, 4));
+        $("decodeBar").style.setProperty("--w", pct(decode, 4));
+        $("kvBar").style.setProperty("--w", pct(kvGb, 22));
+        $("simExplain").textContent = [
+          "What this teaches:",
+          `- Prompt length moves first-token delay because prefill reads ${prompt.toLocaleString()} tokens before token 1.`,
+          `- Output length moves streaming time because decode repeats ${output.toLocaleString()} times.`,
+          `- Active users move memory because each user has a separate KV cache.`,
+          "",
+          "Next real run:",
+          "Use Colab to measure the same three pressures with an actual model."
+        ].join("\\n");
+      }
+      ["promptTokens", "outputTokens", "activeUsers"].forEach((id) => $(id).addEventListener("input", render));
+      render();
+      function renderCacheResults(payload) {
+        const rows = payload.rows || [];
+        const maxRatio = Math.max(1, ...rows.map((row) => Number(row.input_token_work_ratio) || 0));
+        const best = rows.reduce((picked, row) => Number(row.speedup) > Number(picked?.speedup || 0) ? row : picked, null);
+        $("cacheResultSummary").textContent = [
+          `evidence: ${payload.evidence_type || "real result file if CUDA is available"}`,
+          `experiment: ${payload.experiment || "cached vs no-cache decode"}`,
+          `GPU: ${payload.gpu || "unknown"}`,
+          `torch: ${payload.torch || "unknown"}`,
+          `best cached speedup: ${fmt(best?.speedup, 2)}x at ${best?.prompt_tokens || "n/a"} prompt tokens`,
+          `lesson: ${payload.lesson || "cached decode trades stored KV memory for less repeated Q/K/V rebuild work"}`,
+          "Reading rule: if speedup is below 1.0x, cached was slower for that small synthetic shape; if above 1.0x, cached was faster."
+        ].join("\\n");
+        $("cacheResultRows").innerHTML = rows.map((row) => `
+          <div class="result-row">
+            <b>${row.prompt_tokens} prompt</b>
+            <span>no-cache ${fmt(row.no_cache_ms_total, 3)} ms; cached ${fmt(row.cached_ms_total, 3)} ms; speedup ${fmt(row.speedup, 2)}x</span>
+            <span>no-cache input work ${fmt(row.input_token_work_ratio, 1)}x cached; KV memory ${fmt(row.kv_cache_mb, 1)} MB<i style="--w:${pct(row.input_token_work_ratio, maxRatio)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("cache_decode_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("cache_decode_results.json not found")))
+        .then(renderCacheResults)
+        .catch((error) => {
+          $("cacheResultSummary").textContent = error.message;
+        });
+      function chart(title, rows, key, suffix, color) {
+        const max = Math.max(1, ...rows.map((row) => Number(row[key]) || 0));
+        const points = rows.map((row, index) => {
+          const x = 34 + index * (246 / Math.max(1, rows.length - 1));
+          const y = 146 - ((Number(row[key]) || 0) / max) * 118;
+          return { x, y, row };
+        });
+        const line = points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+        return `
+          <div class="chart">
+            <b>${title}</b>
+            <svg viewBox="0 0 310 170" role="img">
+              <path d="M30 18 V150 H292" fill="none" stroke="#31464c" stroke-width="1.5"></path>
+              <polyline points="${line}" fill="none" stroke="${color}" stroke-width="3"></polyline>
+              ${points.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${color}"></circle><text class="tiny" x="${p.x - 12}" y="164">${p.row.prompt_tokens}</text>`).join("")}
+            </svg>
+            <span>max ${fmt(max, key.includes("cells") ? 0 : 3)}${suffix}</span>
+          </div>
+        `;
+      }
+      function renderPrefillResults(payload) {
+        const rows = payload.rows || [];
+        const valid = rows.filter((row) => !row.error);
+        const last = valid[valid.length - 1];
+        const first = valid[0];
+        const timeRatio = first && last ? Number(last.prefill_ms) / Number(first.prefill_ms) : 0;
+        const scoreRatio = first && last ? Number(last.score_cells) / Number(first.score_cells) : 0;
+        $("prefillResultSummary").textContent = [
+          `evidence: ${payload.evidence_type || "real result file if CUDA is available"}`,
+          `experiment: ${payload.experiment || "prompt length vs prefill time"}`,
+          `GPU: ${payload.gpu || "unknown"}`,
+          `torch: ${payload.torch || "unknown"}`,
+          `largest prompt measured: ${last?.prompt_tokens || "n/a"} tokens`,
+          `prefill time grew ${fmt(timeRatio, 1)}x from ${first?.prompt_tokens || "n/a"} to ${last?.prompt_tokens || "n/a"} tokens`,
+          `score cells grew ${fmt(scoreRatio, 0)}x over the same range`,
+          `lesson: ${payload.lesson || "prefill reads the whole prompt before token 1 can be produced"}`
+        ].join("\\n");
+        $("prefillCharts").innerHTML = [
+          chart("prefill time", valid, "prefill_ms", " ms", "#e7a64c"),
+          chart("attention score cells", valid, "score_cells", " cells", "#58d8e6"),
+          chart("KV memory after prefill", valid, "kv_cache_mb_after_prefill", " MB", "#dc6656")
+        ].join("");
+        $("prefillDiagram").innerHTML = `
+          <svg viewBox="0 0 720 260" role="img">
+            <rect class="node" x="52" y="76" width="150" height="56" rx="7"></rect><text class="label" x="82" y="109">prompt tokens</text>
+            <rect class="node" x="285" y="76" width="170" height="56" rx="7"></rect><text class="label" x="318" y="109">prefill block</text>
+            <rect class="node" x="535" y="76" width="135" height="56" rx="7"></rect><text class="label" x="565" y="109">token 1 ready</text>
+            <path class="wire" d="M202 104 H535"></path><circle class="packet" cx="214" cy="104" r="8"></circle>
+            <rect x="90" y="170" width="520" height="34" rx="6" fill="#132126" stroke="#263a40"></rect>
+            <rect class="scan" x="90" y="170" width="64" height="34" rx="6"></rect>
+            <text class="tiny" x="92" y="226">the scan stands for all prompt rows being turned into Q/K/V and score cells before first output</text>
+          </svg>
+        `;
+        const maxTime = Math.max(1, ...valid.map((row) => Number(row.prefill_ms) || 0));
+        $("prefillResultRows").innerHTML = valid.map((row) => `
+          <div class="result-row">
+            <b>${row.prompt_tokens} prompt</b>
+            <span>${fmt(row.prefill_ms, 3)} ms prefill; ${fmt(row.prefill_tokens_per_second, 0)} prompt tok/s</span>
+            <span>${Number(row.score_cells).toLocaleString()} score cells; KV ${fmt(row.kv_cache_mb_after_prefill, 1)} MB<i style="--w:${pct(row.prefill_ms, maxTime)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("prompt_prefill_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("prompt_prefill_results.json not found")))
+        .then(renderPrefillResults)
+        .catch((error) => {
+          $("prefillResultSummary").textContent = error.message;
+        });
+      function renderDecodeResults(payload) {
+        const rows = (payload.rows || []).filter((row) => !row.error);
+        const first = rows[0];
+        const last = rows[rows.length - 1];
+        const totalRatio = first && last ? Number(last.decode_ms_total) / Number(first.decode_ms_total) : 0;
+        const tokenRatio = first && last ? Number(last.output_tokens) / Number(first.output_tokens) : 0;
+        $("decodeResultSummary").textContent = [
+          `evidence: ${payload.evidence_type || "real result file if CUDA is available"}`,
+          `experiment: ${payload.experiment || "output length vs decode cost"}`,
+          `GPU: ${payload.gpu || "unknown"}`,
+          `torch: ${payload.torch || "unknown"}`,
+          `prompt held fixed: ${last?.prompt_tokens || "n/a"} tokens`,
+          `output length grew ${fmt(tokenRatio, 0)}x`,
+          `total decode time grew ${fmt(totalRatio, 1)}x`,
+          `ms/token stayed near ${fmt(last?.decode_ms_per_token, 3)} ms at the largest output`,
+          `lesson: ${payload.lesson || "longer answers repeat cached decode more times"}`
+        ].join("\\n");
+        $("decodeCharts").innerHTML = [
+          chart("total decode time", rows, "decode_ms_total", " ms", "#7bd391"),
+          chart("ms per output token", rows, "decode_ms_per_token", " ms/token", "#e7a64c"),
+          chart("KV memory after answer", rows, "kv_cache_mb_after_decode", " MB", "#dc6656")
+        ].join("");
+        $("decodeDiagram").innerHTML = `
+          <svg viewBox="0 0 720 260" role="img">
+            <rect class="node" x="52" y="70" width="150" height="56" rx="7"></rect><text class="label" x="84" y="103">stored past</text>
+            <rect class="node" x="285" y="70" width="170" height="56" rx="7"></rect><text class="label" x="322" y="103">decode step</text>
+            <rect class="node" x="535" y="70" width="135" height="56" rx="7"></rect><text class="label" x="566" y="103">token out</text>
+            <path class="wire" d="M202 98 H535"></path><circle class="packet" cx="214" cy="98" r="8"></circle>
+            <g transform="translate(92 168)">
+              <rect fill="#132126" stroke="#263a40" x="0" y="0" width="44" height="32" rx="5"></rect>
+              <rect fill="#132126" stroke="#263a40" x="54" y="0" width="44" height="32" rx="5"></rect>
+              <rect fill="#7bd391" x="108" y="0" width="44" height="32" rx="5"></rect>
+              <rect fill="#7bd391" x="162" y="0" width="44" height="32" rx="5" opacity=".8"></rect>
+              <rect fill="#7bd391" x="216" y="0" width="44" height="32" rx="5" opacity=".6"></rect>
+              <text class="tiny" x="0" y="62">each output token repeats this cached decode step</text>
+            </g>
+          </svg>
+        `;
+        const maxTotal = Math.max(1, ...rows.map((row) => Number(row.decode_ms_total) || 0));
+        $("decodeResultRows").innerHTML = rows.map((row) => `
+          <div class="result-row">
+            <b>${row.output_tokens} output</b>
+            <span>${fmt(row.decode_ms_total, 3)} ms total; ${fmt(row.decode_ms_per_token, 3)} ms/token; ${fmt(row.decode_tokens_per_second, 0)} tok/s</span>
+            <span>${Number(row.decode_attention_score_cells).toLocaleString()} score cells; KV ${fmt(row.kv_cache_mb_after_decode, 1)} MB<i style="--w:${pct(row.decode_ms_total, maxTotal)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("output_decode_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("output_decode_results.json not found")))
+        .then(renderDecodeResults)
+        .catch((error) => {
+          $("decodeResultSummary").textContent = error.message;
+        });
+      function renderBatchResults(payload) {
+        const rows = (payload.rows || []).filter((row) => !row.error);
+        const first = rows[0];
+        const best = rows.reduce((picked, row) => Number(row.tokens_per_second) > Number(picked?.tokens_per_second || 0) ? row : picked, null);
+        const b16 = rows.find((row) => row.batch === 16);
+        const last = rows[rows.length - 1];
+        const throughputRatio = first && best ? Number(best.tokens_per_second) / Number(first.tokens_per_second) : 0;
+        const memoryRatio = first && last ? Number(last.kv_cache_mb) / Number(first.kv_cache_mb) : 0;
+        $("batchResultSummary").textContent = [
+          `evidence: ${payload.evidence_type || "real result file if CUDA is available"}`,
+          `experiment: ${payload.experiment || "batch size vs decode throughput"}`,
+          `GPU: ${payload.gpu || "unknown"}`,
+          `torch: ${payload.torch || "unknown"}`,
+          `best total throughput: ${fmt(best?.tokens_per_second, 0)} tokens/sec at batch ${best?.batch || "n/a"}`,
+          `best throughput was ${fmt(throughputRatio, 1)}x batch 1`,
+          `batch 64 used ${fmt(memoryRatio, 0)}x the KV memory of batch 1`,
+          `batch 16 was the strong practical point here: ${fmt(b16?.tokens_per_second, 0)} tokens/sec before the curve flattened`,
+          `lesson: ${payload.lesson || "batching raises total decode throughput while spending more KV memory"}`
+        ].join("\\n");
+        $("batchCharts").innerHTML = [
+          chart("total tokens/sec", rows, "tokens_per_second", " tok/s", "#58d8e6"),
+          chart("step time", rows, "decode_ms_per_step", " ms/step", "#e7a64c"),
+          chart("KV memory", rows, "kv_cache_mb", " MB", "#dc6656")
+        ].join("");
+        $("batchDiagram").innerHTML = `
+          <svg viewBox="0 0 720 260" role="img">
+            <text class="label" x="64" y="44">waiting requests join one decode step</text>
+            <g transform="translate(72 72)">
+              <rect class="node" x="0" y="0" width="70" height="36" rx="6"></rect><text class="tiny" x="22" y="23">A</text>
+              <rect class="node" x="0" y="46" width="70" height="36" rx="6"></rect><text class="tiny" x="22" y="69">B</text>
+              <rect class="node" x="0" y="92" width="70" height="36" rx="6"></rect><text class="tiny" x="22" y="115">C</text>
+              <rect class="node" x="0" y="138" width="70" height="36" rx="6"></rect><text class="tiny" x="22" y="161">D</text>
+            </g>
+            <path class="wire" d="M150 90 H342 M150 136 H342 M150 182 H342 M150 228 H342"></path>
+            <circle class="packet" cx="160" cy="90" r="7"></circle>
+            <circle class="packet" cx="160" cy="136" r="7" style="animation-delay:.2s"></circle>
+            <circle class="packet" cx="160" cy="182" r="7" style="animation-delay:.4s"></circle>
+            <circle class="packet" cx="160" cy="228" r="7" style="animation-delay:.6s"></circle>
+            <rect class="node" x="350" y="86" width="148" height="110" rx="8"></rect><text class="label" x="392" y="132">GPU step</text><text class="tiny" x="384" y="154">one step, many tokens</text>
+            <path class="wire" d="M498 141 H640"></path>
+            <g transform="translate(646 88)">
+              <circle fill="#7bd391" cx="0" cy="0" r="7"></circle><circle fill="#7bd391" cx="0" cy="34" r="7"></circle><circle fill="#7bd391" cx="0" cy="68" r="7"></circle><circle fill="#7bd391" cx="0" cy="102" r="7"></circle>
+            </g>
+          </svg>
+        `;
+        const maxTps = Math.max(1, ...rows.map((row) => Number(row.tokens_per_second) || 0));
+        $("batchResultRows").innerHTML = rows.map((row) => `
+          <div class="result-row">
+            <b>batch ${row.batch}</b>
+            <span>${fmt(row.tokens_per_second, 0)} total tok/s; ${fmt(row.decode_ms_per_step, 3)} ms/step; ${fmt(row.per_request_tokens_per_second, 0)} tok/s per request</span>
+            <span>${row.tokens_returned} tokens returned over ${row.output_steps} steps; KV ${fmt(row.kv_cache_mb, 1)} MB<i style="--w:${pct(row.tokens_per_second, maxTps)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("batch_decode_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("batch_decode_results.json not found")))
+        .then(renderBatchResults)
+        .catch((error) => {
+          $("batchResultSummary").textContent = error.message;
+        });
+      function renderPagedResults(payload) {
+        const summary = payload.summary || {};
+        const timeline = payload.timeline || [];
+        const compare = [
+          { label: "fixed reserved", value: summary.fixed_reserved_slots || 0 },
+          { label: "fixed used", value: summary.fixed_used_slots || 0 },
+          { label: "fixed wasted", value: summary.fixed_wasted_slots || 0 },
+          { label: "paged reserved", value: summary.paged_reserved_slots || 0 },
+          { label: "paged used", value: summary.paged_used_slots || 0 },
+          { label: "paged wasted", value: summary.paged_wasted_slots || 0 }
+        ];
+        $("pagedResultSummary").textContent = [
+          `request count: ${payload.request_count}`,
+          `fixed reservation waste: ${fmt(summary.fixed_waste_percent, 2)}%`,
+          `paged block waste: ${fmt(summary.paged_waste_percent, 2)}%`,
+          `reserved slots reduced: ${fmt(summary.reserved_slot_reduction, 2)}x`,
+          `wasted slots reduced: ${fmt(summary.waste_reduction, 1)}x`,
+          `block size: ${payload.block_size} tokens`
+        ].join("\\n");
+        $("pagedCharts").innerHTML = [
+          chart("reserved / used / wasted slots", compare, "value", " slots", "#58d8e6"),
+          `<div class="chart"><b>waste percent</b><svg viewBox="0 0 310 170"><path d="M30 18 V150 H292" fill="none" stroke="#31464c" stroke-width="1.5"></path><rect x="70" y="${150 - summary.fixed_waste_percent * 1.9}" width="54" height="${summary.fixed_waste_percent * 1.9}" fill="#dc6656"></rect><rect x="188" y="${150 - summary.paged_waste_percent * 1.9}" width="54" height="${summary.paged_waste_percent * 1.9}" fill="#7bd391"></rect><text class="tiny" x="63" y="164">fixed</text><text class="tiny" x="184" y="164">paged</text></svg><span>${fmt(summary.fixed_waste_percent, 2)}% fixed waste vs ${fmt(summary.paged_waste_percent, 2)}% paged waste</span></div>`,
+          `<div class="chart"><b>memory saved</b><svg viewBox="0 0 310 170"><rect x="38" y="58" width="230" height="36" rx="6" fill="#132126" stroke="#263a40"></rect><rect x="38" y="58" width="230" height="36" rx="6" fill="#dc6656"></rect><rect x="38" y="112" width="${230 / Math.max(1, summary.reserved_slot_reduction)}" height="36" rx="6" fill="#7bd391"></rect><text class="tiny" x="38" y="45">fixed reserved</text><text class="tiny" x="38" y="108">paged reserved</text></svg><span>Paged used ${fmt(summary.reserved_slot_reduction, 2)}x fewer reserved slots.</span></div>`
+        ].join("");
+        $("pagedDiagram").innerHTML = `
+          <svg viewBox="0 0 720 260" role="img">
+            <text class="label" x="56" y="38">request token order</text>
+            <g transform="translate(58 62)">
+              <rect fill="#58d8e6" x="0" y="0" width="42" height="30" rx="4"></rect><rect fill="#58d8e6" x="50" y="0" width="42" height="30" rx="4"></rect><rect fill="#e7a64c" x="100" y="0" width="42" height="30" rx="4"></rect><rect fill="#e7a64c" x="150" y="0" width="42" height="30" rx="4"></rect>
+            </g>
+            <rect class="node" x="284" y="52" width="150" height="56" rx="7"></rect><text class="label" x="320" y="86">block table</text>
+            <path class="wire" d="M250 77 H284 M434 77 H528"></path><circle class="packet" cx="252" cy="77" r="7"></circle>
+            <text class="label" x="528" y="38">physical KV blocks</text>
+            <g transform="translate(528 62)">
+              <rect fill="#58d8e6" x="0" y="0" width="48" height="36" rx="5"></rect><rect fill="#e7a64c" x="58" y="0" width="48" height="36" rx="5"></rect><rect fill="#132126" stroke="#263a40" x="0" y="50" width="48" height="36" rx="5"></rect><rect fill="#7bd391" x="58" y="50" width="48" height="36" rx="5"></rect>
+            </g>
+            <text class="tiny" x="58" y="176">fixed reservation: every request gets max room whether it uses it or not</text>
+            <text class="tiny" x="58" y="202">paged blocks: request gets small physical blocks as needed; finished blocks can return to free list</text>
+          </svg>
+        `;
+        const maxWaste = Math.max(1, ...timeline.map((row) => Number(row.fixed_wasted_slots) || 0));
+        $("pagedResultRows").innerHTML = timeline.map((row) => `
+          <div class="result-row">
+            <b>request ${row.request_id}</b>
+            <span>${row.total_tokens} total tokens; paged blocks for request ${row.paged_blocks_for_request}; fixed reserved ${row.fixed_reserved_slots.toLocaleString()}</span>
+            <span>fixed waste ${row.fixed_wasted_slots.toLocaleString()}; paged waste ${row.paged_wasted_slots.toLocaleString()}<i style="--w:${pct(row.fixed_wasted_slots, maxWaste)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("paged_kv_simulation_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("paged_kv_simulation_results.json not found")))
+        .then(renderPagedResults)
+        .catch((error) => {
+          $("pagedResultSummary").textContent = error.message;
+        });
+      function renderHfCacheResults(payload) {
+        const rows = (payload.rows || []).filter((row) => !row.error);
+        const best = rows.reduce((picked, row) => Number(row.speedup_total) > Number(picked?.speedup_total || 0) ? row : picked, null);
+        $("hfCacheSummary").textContent = [
+          `evidence: ${payload.evidence_type || "real Hugging Face result file if CUDA is available"}`,
+          `model: ${payload.model_id || "unknown"}`,
+          `GPU: ${payload.gpu || "unknown"}`,
+          `torch: ${payload.torch || "unknown"}`,
+          `transformers: ${payload.transformers || "unknown"}`,
+          `best cached end-to-end speedup: ${fmt(best?.speedup_total, 2)}x at ${best?.prompt_tokens || "n/a"} prompt tokens`,
+          "All rows produced the same first generated token IDs in cached and no-cache runs.",
+          `lesson: ${payload.lesson || "cached decode stores prompt KV once, then each next step passes one token"}`
+        ].join("\\n");
+        const derived = rows.map((row) => ({
+          prompt_tokens: row.prompt_tokens,
+          cached_total_ms: row.cached.total_ms,
+          no_cache_total_ms: row.no_cache.total_ms,
+          cached_ms_per_token: row.cached.ms_per_decode_token,
+          no_cache_ms_per_token: row.no_cache.ms_per_decode_token,
+          input_token_work_ratio: row.input_token_work_ratio,
+          speedup_total: row.speedup_total,
+        }));
+        $("hfCacheCharts").innerHTML = [
+          chart("cached total ms", derived, "cached_total_ms", " ms", "#7bd391"),
+          chart("no-cache total ms", derived, "no_cache_total_ms", " ms", "#dc6656"),
+          chart("input-token work ratio", derived, "input_token_work_ratio", "x", "#58d8e6")
+        ].join("");
+        $("hfCacheDiagram").innerHTML = `
+          <svg viewBox="0 0 720 260" role="img">
+            <text class="label" x="56" y="38">same model, same prompt, different decode path</text>
+            <rect class="node" x="62" y="74" width="150" height="50" rx="7"></rect><text class="label" x="92" y="105">prompt prefill</text>
+            <path class="wire" d="M212 99 H315"></path><circle class="packet" cx="224" cy="99" r="7"></circle>
+            <rect class="node" x="316" y="55" width="170" height="50" rx="7"></rect><text class="label" x="350" y="86">cached decode</text>
+            <text class="tiny" x="350" y="122">one new token + past_key_values</text>
+            <rect class="node" x="316" y="156" width="170" height="50" rx="7"></rect><text class="label" x="342" y="187">no-cache decode</text>
+            <text class="tiny" x="342" y="224">whole growing sequence each step</text>
+            <path class="wire" d="M486 80 H640 M486 181 H640"></path>
+            <text class="tiny" x="574" y="70">compare time</text>
+          </svg>
+        `;
+        const maxWork = Math.max(1, ...derived.map((row) => Number(row.input_token_work_ratio) || 0));
+        $("hfCacheRows").innerHTML = rows.map((row) => `
+          <div class="result-row">
+            <b>${row.prompt_tokens} prompt</b>
+            <span>cached ${fmt(row.cached.total_ms, 1)} ms; no-cache ${fmt(row.no_cache.total_ms, 1)} ms; total speedup ${fmt(row.speedup_total, 2)}x</span>
+            <span>cached ${fmt(row.cached.ms_per_decode_token, 2)} ms/tok; no-cache ${fmt(row.no_cache.ms_per_decode_token, 2)} ms/tok; work ${fmt(row.input_token_work_ratio, 1)}x<i style="--w:${pct(row.input_token_work_ratio, maxWork)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("hf_cache_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_cache_results.json not found")))
+        .then(renderHfCacheResults)
+        .catch((error) => {
+          $("hfCacheSummary").textContent = error.message;
+        });
+      function renderHfTtftResults(payload) {
+        const rows = (payload.rows || []).filter((row) => !row.error);
+        const first = rows[0];
+        const last = rows[rows.length - 1];
+        const ttftRatio = first && last ? Number(last.result.ttft_ms) / Number(first.result.ttft_ms) : 0;
+        const memoryRatio = first && last ? Number(last.result.memory.max_allocated_gb) / Number(first.result.memory.max_allocated_gb) : 0;
+        $("hfTtftSummary").textContent = [
+          `evidence: ${payload.evidence_type || "real Hugging Face result file if CUDA is available"}`,
+          `experiment: ${payload.experiment || "real HF prompt length vs first token time"}`,
+          `model: ${payload.model_id || "unknown"}`,
+          `GPU: ${payload.gpu || "unknown"}`,
+          `torch: ${payload.torch || "unknown"}`,
+          `transformers: ${payload.transformers || "unknown"}`,
+          `prompt length grew ${fmt(Number(last?.prompt_tokens || 0) / Number(first?.prompt_tokens || 1), 0)}x`,
+          `TTFT grew ${fmt(ttftRatio, 2)}x after warmup`,
+          `peak allocated memory grew ${fmt(memoryRatio, 2)}x`,
+          `lesson: ${payload.lesson || "real model prefill processes the prompt before token 1 appears"}`
+        ].join("\\n");
+        const derived = rows.map((row) => ({
+          prompt_tokens: row.prompt_tokens,
+          ttft_ms: row.result.ttft_ms,
+          decode_ms_per_token: row.result.decode_ms_per_token,
+          decode_tokens_per_second: row.result.decode_tokens_per_second,
+          max_allocated_gb: row.result.memory.max_allocated_gb,
+          score_cells_one_layer_one_head: row.score_cells_one_layer_one_head,
+        }));
+        $("hfTtftCharts").innerHTML = [
+          chart("time to first token", derived, "ttft_ms", " ms", "#e7a64c"),
+          chart("peak GPU memory", derived, "max_allocated_gb", " GB", "#dc6656"),
+          chart("score cells, one layer/head", derived, "score_cells_one_layer_one_head", " cells", "#58d8e6")
+        ].join("");
+        $("hfTtftDiagram").innerHTML = `
+          <svg viewBox="0 0 720 260" role="img">
+            <text class="label" x="56" y="38">real model prompt path</text>
+            <rect class="node" x="58" y="74" width="150" height="56" rx="7"></rect><text class="label" x="88" y="107">prompt tokens</text>
+            <rect class="node" x="292" y="74" width="170" height="56" rx="7"></rect><text class="label" x="330" y="107">model prefill</text>
+            <rect class="node" x="548" y="74" width="130" height="56" rx="7"></rect><text class="label" x="575" y="107">token 1</text>
+            <path class="wire" d="M208 102 H548"></path><circle class="packet" cx="220" cy="102" r="8"></circle>
+            <rect x="94" y="172" width="500" height="34" rx="6" fill="#132126" stroke="#263a40"></rect>
+            <rect class="scan" x="94" y="172" width="64" height="34" rx="6"></rect>
+            <text class="tiny" x="96" y="228">longer prompt means more rows are read before first generated token appears</text>
+          </svg>
+        `;
+        const maxTtft = Math.max(1, ...rows.map((row) => Number(row.result.ttft_ms) || 0));
+        $("hfTtftRows").innerHTML = rows.map((row) => `
+          <div class="result-row">
+            <b>${row.prompt_tokens} prompt</b>
+            <span>TTFT ${fmt(row.result.ttft_ms, 2)} ms; decode ${fmt(row.result.decode_ms_per_token, 2)} ms/token; ${fmt(row.result.decode_tokens_per_second, 1)} tok/s</span>
+            <span>peak allocated ${fmt(row.result.memory.max_allocated_gb, 3)} GB; score cells ${Number(row.score_cells_one_layer_one_head).toLocaleString()}<i style="--w:${pct(row.result.ttft_ms, maxTtft)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("hf_prompt_ttft_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_prompt_ttft_results.json not found")))
+        .then(renderHfTtftResults)
+        .catch((error) => {
+          $("hfTtftSummary").textContent = error.message;
+        });
+      function renderHfOutputResults(payload) {
+        const rows = (payload.rows || []).filter((row) => !row.error);
+        const first = rows[0];
+        const last = rows[rows.length - 1];
+        const outputRatio = first && last ? Number(last.output_tokens) / Number(first.output_tokens) : 0;
+        const timeRatio = first && last ? Number(last.result.total_ms) / Number(first.result.total_ms) : 0;
+        $("hfOutputSummary").textContent = [
+          `evidence: ${payload.evidence_type || "real Hugging Face result file if CUDA is available"}`,
+          `experiment: ${payload.experiment || "real HF output length vs decode time"}`,
+          `model: ${payload.model_id || "unknown"}`,
+          `GPU: ${payload.gpu || "unknown"}`,
+          `torch: ${payload.torch || "unknown"}`,
+          `transformers: ${payload.transformers || "unknown"}`,
+          `prompt held fixed: ${last?.prompt_tokens || "n/a"} tokens`,
+          `output length grew ${fmt(outputRatio, 0)}x`,
+          `total time grew ${fmt(timeRatio, 1)}x`,
+          `lesson: ${payload.lesson || "longer real model answers repeat cached decode more times"}`
+        ].join("\\n");
+        const derived = rows.map((row) => ({
+          prompt_tokens: row.prompt_tokens,
+          output_tokens: row.output_tokens,
+          total_ms: row.result.total_ms,
+          decode_ms: row.result.decode_ms,
+          decode_ms_per_token: row.result.decode_ms_per_token,
+          tokens_per_second_after_first: row.result.tokens_per_second_after_first,
+          max_allocated_gb: row.result.memory.max_allocated_gb,
+          score_cells_one_layer_one_head: row.score_cells_one_layer_one_head,
+        }));
+        $("hfOutputCharts").innerHTML = [
+          chart("total streaming time", derived, "total_ms", " ms", "#7bd391"),
+          chart("decode ms per token", derived, "decode_ms_per_token", " ms/token", "#e7a64c"),
+          chart("tokens/sec after first", derived, "tokens_per_second_after_first", " tok/s", "#58d8e6")
+        ].join("");
+        $("hfOutputDiagram").innerHTML = `
+          <svg viewBox="0 0 720 260" role="img">
+            <text class="label" x="56" y="38">real model streaming path</text>
+            <rect class="node" x="58" y="74" width="150" height="56" rx="7"></rect><text class="label" x="91" y="107">fixed prompt</text>
+            <rect class="node" x="292" y="74" width="170" height="56" rx="7"></rect><text class="label" x="326" y="107">decode step</text>
+            <rect class="node" x="548" y="74" width="130" height="56" rx="7"></rect><text class="label" x="578" y="107">token out</text>
+            <path class="wire" d="M208 102 H548"></path><circle class="packet" cx="220" cy="102" r="8"></circle>
+            <g transform="translate(96 170)">
+              <rect fill="#132126" stroke="#263a40" x="0" y="0" width="42" height="30" rx="5"></rect>
+              <rect fill="#7bd391" x="54" y="0" width="42" height="30" rx="5"></rect>
+              <rect fill="#7bd391" x="108" y="0" width="42" height="30" rx="5" opacity=".85"></rect>
+              <rect fill="#7bd391" x="162" y="0" width="42" height="30" rx="5" opacity=".7"></rect>
+              <rect fill="#7bd391" x="216" y="0" width="42" height="30" rx="5" opacity=".55"></rect>
+              <text class="tiny" x="0" y="62">longer answer means more repeated decode ticks</text>
+            </g>
+          </svg>
+        `;
+        const maxTotal = Math.max(1, ...rows.map((row) => Number(row.result.total_ms) || 0));
+        $("hfOutputRows").innerHTML = rows.map((row) => `
+          <div class="result-row">
+            <b>${row.output_tokens} output</b>
+            <span>total ${fmt(row.result.total_ms, 1)} ms; decode ${fmt(row.result.decode_ms_per_token, 2)} ms/token; ${fmt(row.result.tokens_per_second_after_first, 1)} tok/s after first</span>
+            <span>TTFT ${fmt(row.result.ttft_ms, 2)} ms; peak ${fmt(row.result.memory.max_allocated_gb, 3)} GB; score cells ${Number(row.score_cells_one_layer_one_head).toLocaleString()}<i style="--w:${pct(row.result.total_ms, maxTotal)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("hf_output_decode_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_output_decode_results.json not found")))
+        .then(renderHfOutputResults)
+        .catch((error) => {
+          $("hfOutputSummary").textContent = error.message;
+        });
+      function renderHfBatchResults(payload) {
+        const rows = (payload.rows || []).filter((row) => !row.error);
+        const first = rows[0];
+        const last = rows[rows.length - 1];
+        const throughputRatio = first && last ? Number(last.result.aggregate_decode_tokens_per_second) / Number(first.result.aggregate_decode_tokens_per_second) : 0;
+        const memoryRatio = first && last ? Number(last.result.memory.max_allocated_gb) / Number(first.result.memory.max_allocated_gb) : 0;
+        $("hfBatchSummary").textContent = [
+          `evidence: ${payload.evidence_type || "real Hugging Face result file if CUDA is available"}`,
+          `experiment: ${payload.experiment || "real HF batch size vs cached decode throughput"}`,
+          `model: ${payload.model_id || "unknown"}`,
+          `GPU: ${payload.gpu || "unknown"}`,
+          `torch: ${payload.torch || "unknown"}`,
+          `transformers: ${payload.transformers || "unknown"}`,
+          `prompt held fixed: ${last?.prompt_tokens || "n/a"} tokens`,
+          `output held fixed: ${last?.output_tokens_per_request || "n/a"} tokens/request`,
+          `batch grew ${fmt(Number(last?.batch_size || 0) / Number(first?.batch_size || 1), 0)}x`,
+          `aggregate decode throughput grew ${fmt(throughputRatio, 1)}x`,
+          `peak allocated memory grew ${fmt(memoryRatio, 1)}x`,
+          `lesson: ${payload.lesson || "batched real decode raises total throughput while spending memory and per-request stream rate"}`
+        ].join("\n");
+        const derived = rows.map((row) => ({
+          batch_size: row.batch_size,
+          aggregate_decode_tokens_per_second: row.result.aggregate_decode_tokens_per_second,
+          per_request_decode_tokens_per_second: row.result.per_request_decode_tokens_per_second,
+          mean_decode_step_ms: row.result.mean_decode_step_ms,
+          ttft_ms: row.result.ttft_ms,
+          max_allocated_gb: row.result.memory.max_allocated_gb,
+          kv_token_slots_after_generation: row.kv_token_slots_after_generation,
+        }));
+        $("hfBatchCharts").innerHTML = [
+          chart("aggregate decode tokens/sec", derived, "aggregate_decode_tokens_per_second", " tok/s", "#7bd391"),
+          chart("per-request stream rate", derived, "per_request_decode_tokens_per_second", " tok/s", "#e7a64c"),
+          chart("peak GPU memory", derived, "max_allocated_gb", " GB", "#dc6656"),
+          chart("first-token work", derived, "ttft_ms", " ms", "#58d8e6")
+        ].join("");
+        $("hfBatchDiagram").innerHTML = `
+          <svg viewBox="0 0 720 300" role="img">
+            <text class="label" x="56" y="38">real model batch decode path</text>
+            <g transform="translate(62 70)">
+              <text class="tiny" x="0" y="-14">request lanes</text>
+              ${[0,1,2,3,4,5].map((idx) => `
+                <rect class="node" x="0" y="${idx * 28}" width="132" height="18" rx="5"></rect>
+                <circle cx="${18 + idx * 10}" cy="${idx * 28 + 9}" r="5" fill="#58d8e6" opacity="${1 - idx * .09}"></circle>
+                <path class="wire" d="M132 ${idx * 28 + 9} H300"></path>
+              `).join("")}
+              <text class="tiny" x="8" y="190">batch 32 means 32 lanes, not one longer lane</text>
+            </g>
+            <rect class="node" x="362" y="108" width="150" height="72" rx="7"></rect>
+            <text class="label" x="396" y="139">one GPU</text>
+            <text class="label" x="396" y="161">decode step</text>
+            <path class="wire" d="M512 144 H646"></path>
+            <g transform="translate(570 78)">
+              ${[0,1,2,3,4,5].map((idx) => `
+                <rect fill="#7bd391" x="${idx * 17}" y="${idx * 24}" width="14" height="14" rx="3" opacity="${1 - idx * .08}"></rect>
+              `).join("")}
+              <text class="tiny" x="-8" y="186">one token exits for each active request</text>
+            </g>
+            <rect x="80" y="244" width="560" height="22" rx="6" fill="#132126" stroke="#263a40"></rect>
+            <rect class="scan" x="80" y="244" width="74" height="22" rx="6"></rect>
+            <text class="tiny" x="82" y="286">throughput rises because one step carries more lanes; memory rises because every lane has its own KV rows</text>
+          </svg>
+        `;
+        const maxThroughput = Math.max(1, ...rows.map((row) => Number(row.result.aggregate_decode_tokens_per_second) || 0));
+        $("hfBatchRows").innerHTML = rows.map((row) => `
+          <div class="result-row">
+            <b>batch ${row.batch_size}</b>
+            <span>aggregate ${fmt(row.result.aggregate_decode_tokens_per_second, 1)} tok/s; per request ${fmt(row.result.per_request_decode_tokens_per_second, 1)} tok/s; step ${fmt(row.result.mean_decode_step_ms, 2)} ms</span>
+            <span>TTFT ${fmt(row.result.ttft_ms, 2)} ms; peak ${fmt(row.result.memory.max_allocated_gb, 3)} GB; KV slots after generation ${Number(row.kv_token_slots_after_generation).toLocaleString()}<i style="--w:${pct(row.result.aggregate_decode_tokens_per_second, maxThroughput)}"></i></span>
+          </div>
+        `).join("");
+      }
+      fetch("hf_batch_decode_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("hf_batch_decode_results.json not found")))
+        .then(renderHfBatchResults)
+        .catch((error) => {
+          $("hfBatchSummary").textContent = error.message;
+        });
+    </script>
+  </body>
+</html>

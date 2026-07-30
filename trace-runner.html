@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trace Output Runner</title>
+    <style>
+      :root {
+        --ink: #111817;
+        --paper: #f5f6f4;
+        --panel: #ffffff;
+        --soft: #edf2ef;
+        --line: #d7ddd9;
+        --muted: #596662;
+        --green: #2f7a4f;
+        --blue: #1d6f8f;
+        --red: #a8412f;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.6;
+      }
+
+      header {
+        background: var(--ink);
+        color: #eef4f2;
+      }
+
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      header .wrap {
+        padding-top: 40px;
+        padding-bottom: 34px;
+      }
+
+      .bug {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #7fd0c5;
+      }
+
+      h1 {
+        margin: 12px 0 0;
+        max-width: 820px;
+        font-size: clamp(30px, 4vw, 46px);
+        line-height: 1.08;
+      }
+
+      header p {
+        max-width: 780px;
+        margin: 16px 0 0;
+        color: #bfcbc8;
+        font-size: 17px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: rgba(245, 246, 244, 0.94);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .topbar .wrap {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .topbar a {
+        color: var(--blue);
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      main {
+        padding: 24px 0 60px;
+      }
+
+      .panel {
+        margin: 0 0 20px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      .panel h2 {
+        margin: 0;
+        font-size: 25px;
+        line-height: 1.15;
+      }
+
+      .panel > p {
+        max-width: 820px;
+        color: #25302d;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(330px, 1.1fr);
+        gap: 14px;
+        align-items: start;
+      }
+
+      .subpanel {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfb;
+      }
+
+      .subpanel h3 {
+        margin: 0 0 10px;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--blue);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px;
+      }
+
+      .metric b {
+        display: block;
+        font-family: var(--mono);
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .trace-list {
+        display: grid;
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .trace-button {
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 78px;
+        gap: 8px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .trace-button b {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .trace-button span {
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      .trace-button.active {
+        border-color: #5f9f78;
+        box-shadow: inset 0 0 0 2px rgba(47, 122, 79, 0.14);
+      }
+
+      .trace-button.fail {
+        border-color: #d99a84;
+      }
+
+      .code-box {
+        overflow: auto;
+        margin: 12px 0 0;
+        max-height: 560px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #101715;
+        color: #e8f0ed;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre;
+      }
+
+      .notes {
+        display: grid;
+        gap: 9px;
+        margin: 12px 0 0;
+      }
+
+      .notes div {
+        border-left: 3px solid var(--line);
+        padding-left: 10px;
+        color: #25302d;
+        font-size: 14px;
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--soft);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+
+      a {
+        color: var(--blue);
+      }
+
+      footer {
+        margin: 28px 0 70px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      @media (max-width: 760px) {
+        .topbar .wrap {
+          flex-direction: column;
+        }
+
+        .grid,
+        .metric-grid,
+        .trace-button {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">Trace output runner</div>
+        <h1>Latest recorded outputs from every local trace</h1>
+        <p>
+          The page reads `latest-trace-outputs.json`. Refresh that file from the
+          terminal, then use this page to inspect outputs without hunting through
+          separate terminal scrollback.
+        </p>
+      </div>
+    </header>
+    <div class="topbar">
+      <div class="wrap">
+        <a href="deepdives.html">Back to deep dives</a>
+        <a href="mechanisms.html">Mechanism diagrams</a>
+        <a href="hf-settings.html">Hugging Face settings map</a>
+        <a href="serving-settings.html">Serving settings map</a>
+      </div>
+    </div>
+    <main class="wrap">
+      <section class="panel">
+        <h2>Refresh The Recorded Outputs</h2>
+        <p>
+          Browser JavaScript cannot run local Python commands from this static
+          page. Run the suite in the terminal, then reload this page.
+        </p>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>Command</h3>
+            <div class="code-box">cd /home/manishmehta/ui-projects/llm-inference-lab
+python3 run_trace_suite.py</div>
+          </div>
+          <div class="subpanel">
+            <h3>Status</h3>
+            <div class="metric-grid">
+              <div class="metric"><b id="traceCount">0</b><span>traces recorded</span></div>
+              <div class="metric"><b id="traceFailures">0</b><span>failed traces</span></div>
+              <div class="metric"><b id="traceGenerated">not loaded</b><span>generated at</span></div>
+            </div>
+            <div class="notes">
+              <div>The suite records stdout, stderr, exit code, command, working directory, and elapsed time.</div>
+              <div>Longer traces are usually the ones that import Transformers or time repeated matrix operations.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Recorded Trace Outputs</h2>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>Trace list</h3>
+            <div id="traceList" class="trace-list"></div>
+          </div>
+          <div class="subpanel">
+            <h3 id="traceTitle">Select a trace</h3>
+            <div class="metric-grid">
+              <div class="metric"><b id="traceExit">-</b><span>exit code</span></div>
+              <div class="metric"><b id="traceElapsed">-</b><span>elapsed ms</span></div>
+              <div class="metric"><b id="traceCwd">-</b><span>working directory</span></div>
+            </div>
+            <h3>Command</h3>
+            <div id="traceCommand" class="code-box"></div>
+            <h3>Stdout</h3>
+            <div id="traceStdout" class="code-box"></div>
+            <h3>Stderr</h3>
+            <div id="traceStderr" class="code-box"></div>
+          </div>
+        </div>
+      </section>
+      <footer>
+        Generated by run_trace_suite.py. This page is a static review surface,
+        not a process manager.
+      </footer>
+    </main>
+    <script>
+      let activeIndex = 0;
+      let results = [];
+
+      function text(nodeId, value) {
+        document.getElementById(nodeId).textContent = value;
+      }
+
+      function renderTrace(index) {
+        activeIndex = index;
+        const trace = results[index];
+        document.querySelectorAll(".trace-button").forEach((button, buttonIndex) => {
+          button.classList.toggle("active", buttonIndex === index);
+        });
+        text("traceTitle", trace.title);
+        text("traceExit", trace.exit_code);
+        text("traceElapsed", trace.elapsed_ms);
+        text("traceCwd", trace.cwd);
+        text("traceCommand", `cd ${trace.cwd}\n${trace.command_text}`);
+        text("traceStdout", trace.stdout || "(empty)");
+        text("traceStderr", trace.stderr || "(empty)");
+      }
+
+      function renderList() {
+        document.getElementById("traceList").innerHTML = results.map((trace, index) => (
+          `<button type="button" class="trace-button ${trace.exit_code ? "fail" : ""}" data-index="${index}">
+            <b>${trace.title}</b>
+            <span>${trace.elapsed_ms} ms</span>
+          </button>`
+        )).join("");
+        document.querySelectorAll(".trace-button").forEach((button) => {
+          button.addEventListener("click", () => renderTrace(Number(button.dataset.index)));
+        });
+      }
+
+      async function main() {
+        const response = await fetch("latest-trace-outputs.json");
+        if (!response.ok) {
+          throw new Error(`latest-trace-outputs.json returned ${response.status}`);
+        }
+        const payload = await response.json();
+        results = payload.results || [];
+        const failures = results.filter((trace) => trace.exit_code !== 0).length;
+        text("traceCount", results.length);
+        text("traceFailures", failures);
+        text("traceGenerated", payload.generated_at_local || "unknown");
+        renderList();
+        if (results.length) {
+          renderTrace(0);
+        }
+      }
+
+      main().catch((error) => {
+        text("traceTitle", "Could not load trace outputs");
+        text("traceStdout", error.message);
+      });
+    </script>
+  </body>
+</html>

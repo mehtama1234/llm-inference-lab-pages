@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLM Inference Mechanisms</title>
+    <style>
+      :root {
+        --bg: #070b0d;
+        --panel: #0d1417;
+        --panel2: #101a1e;
+        --ink: #e7f2f0;
+        --muted: #9badab;
+        --line: #233238;
+        --cyan: #56d7e7;
+        --cyan2: #8debf3;
+        --amber: #e5a247;
+        --red: #d76554;
+        --green: #7bd392;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.55;
+        letter-spacing: 0;
+      }
+
+      header {
+        min-height: 88vh;
+        display: grid;
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(86, 215, 231, 0.07) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(86, 215, 231, 0.06) 1px, transparent 1px),
+          radial-gradient(circle at 78% 28%, rgba(229, 162, 71, 0.14), transparent 30%),
+          var(--bg);
+        background-size: 46px 46px, 46px 46px, auto, auto;
+      }
+
+      .wrap {
+        width: min(1180px, calc(100% - 36px));
+        margin: 0 auto;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr);
+        gap: 36px;
+        align-items: center;
+        padding: 52px 0;
+      }
+
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1, h2, h3, p { margin-top: 0; }
+
+      h1 {
+        margin-bottom: 18px;
+        font-size: clamp(38px, 5.4vw, 70px);
+        line-height: 0.98;
+      }
+
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3.4vw, 42px);
+        line-height: 1.05;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+
+      p { color: var(--muted); }
+
+      .hero p {
+        max-width: 720px;
+        font-size: 18px;
+      }
+
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 11, 13, 0.9);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        overflow: auto;
+        padding: 10px 0;
+      }
+
+      .nav a {
+        flex: 0 0 auto;
+        color: var(--cyan2);
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .frame {
+        border: 1px solid var(--line);
+        background: rgba(13, 20, 23, 0.88);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .scope {
+        position: relative;
+        min-height: 430px;
+        padding: 24px;
+      }
+
+      .scope::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, rgba(86, 215, 231, 0.06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(86, 215, 231, 0.06) 1px, transparent 1px);
+        background-size: 28px 28px;
+        pointer-events: none;
+      }
+
+      .scope > * { position: relative; }
+
+      main { padding: 34px 0 70px; }
+
+      .panel {
+        margin: 0 0 28px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .panel-head {
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(280px, 0.6fr);
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 18px;
+      }
+
+      .plain-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .plain-list div,
+      .readout {
+        border-left: 3px solid var(--cyan);
+        padding: 8px 0 8px 12px;
+        color: #c7d6d3;
+        font-size: 14px;
+      }
+
+      .readout b {
+        display: block;
+        color: var(--amber);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .teaching-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0 0 18px;
+      }
+
+      .teach-card {
+        min-height: 118px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+
+      .teach-card b {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--cyan2);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .teach-card span {
+        display: block;
+        color: #c7d6d3;
+        font-size: 14px;
+      }
+
+      .teach-card.proof b { color: var(--amber); }
+      .teach-card.cost b { color: var(--red); }
+      .teach-card.store b { color: var(--green); }
+
+      .instrument {
+        display: grid;
+        grid-template-columns: minmax(0, 0.72fr) minmax(300px, 0.42fr);
+        gap: 14px;
+        align-items: start;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0 0 12px;
+      }
+
+      .controls label {
+        display: grid;
+        gap: 6px;
+        color: #c7d6d3;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .controls input,
+      .controls select {
+        width: 100%;
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #070b0d;
+        color: var(--ink);
+        padding: 6px 8px;
+        font: inherit;
+      }
+
+      .ledger {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .ledger div {
+        display: grid;
+        grid-template-columns: minmax(100px, 0.55fr) minmax(0, 1fr);
+        gap: 10px;
+        padding: 9px 10px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--panel2);
+      }
+
+      .ledger b {
+        color: var(--cyan2);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .ledger span {
+        color: #c7d6d3;
+        font-size: 13px;
+      }
+
+      .metric-strip {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin: 0 0 28px;
+      }
+
+      .meter {
+        min-height: 116px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+
+      .meter b {
+        display: block;
+        color: var(--cyan2);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .meter span {
+        display: block;
+        margin: 6px 0 10px;
+        color: #c7d6d3;
+        font-size: 14px;
+      }
+
+      .meter i {
+        display: block;
+        width: var(--w, 10%);
+        height: 12px;
+        border-radius: 999px;
+        background: var(--cyan);
+        box-shadow: 0 0 16px rgba(86, 215, 231, 0.35);
+      }
+
+      .meter.hot i { background: var(--amber); box-shadow: 0 0 16px rgba(229, 162, 71, 0.32); }
+      .meter.memory i { background: var(--red); box-shadow: 0 0 16px rgba(215, 101, 84, 0.3); }
+
+      .diagram {
+        position: relative;
+        min-height: 360px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091013;
+        overflow: hidden;
+      }
+
+      .diagram svg {
+        display: block;
+        width: 100%;
+        height: 360px;
+      }
+
+      .label {
+        font-family: var(--mono);
+        font-size: 12px;
+        fill: #c9d8d5;
+      }
+
+      .tiny {
+        font-family: var(--mono);
+        font-size: 10px;
+        fill: #81938f;
+      }
+
+      .wire {
+        fill: none;
+        stroke: var(--cyan);
+        stroke-width: 2;
+        stroke-linecap: round;
+        opacity: 0.8;
+      }
+
+      .node {
+        fill: #111d21;
+        stroke: #375059;
+        stroke-width: 1.4;
+      }
+
+      .signal {
+        fill: var(--cyan);
+        filter: drop-shadow(0 0 8px rgba(86, 215, 231, 0.6));
+      }
+
+      .amber { fill: var(--amber); }
+      .cyan { fill: var(--cyan); }
+      .green { fill: var(--green); }
+      .red { fill: var(--red); }
+      .stroke-amber { stroke: var(--amber); }
+      .stroke-cyan { stroke: var(--cyan); }
+      .stroke-green { stroke: var(--green); }
+      .stroke-red { stroke: var(--red); }
+
+      .active .loop-dot { animation: loopDot 5.2s linear infinite; }
+      .active .pulse-cell { animation: pulseCell 1.4s ease-in-out infinite; }
+      .active .scan { animation: scan 3.4s linear infinite; }
+      .active .decode-dot { animation: decodeDot 2.8s ease-in-out infinite; }
+      .active .fill-bar { animation: fillBar 3.6s ease-in-out infinite; transform-origin: left; }
+      .active .packet { animation: packetMove 3.8s ease-in-out infinite; }
+      .active .byte-drop { animation: byteDrop 2.8s ease-in-out infinite; }
+      .active .queue-token { animation: queueStep 4.2s ease-in-out infinite; }
+
+      @keyframes loopDot {
+        0% { transform: translate(80px, 80px); }
+        25% { transform: translate(430px, 80px); }
+        50% { transform: translate(430px, 260px); }
+        75% { transform: translate(80px, 260px); }
+        100% { transform: translate(80px, 80px); }
+      }
+
+      @keyframes pulseCell {
+        0%, 100% { opacity: 0.22; }
+        50% { opacity: 1; }
+      }
+
+      @keyframes scan {
+        0% { transform: translateX(0); opacity: 0.2; }
+        20%, 70% { opacity: 1; }
+        100% { transform: translateX(440px); opacity: 0.2; }
+      }
+
+      @keyframes decodeDot {
+        0%, 100% { transform: translate(75px, 190px); }
+        55% { transform: translate(498px, 190px); }
+      }
+
+      @keyframes fillBar {
+        0%, 100% { transform: scaleX(0.18); }
+        50% { transform: scaleX(1); }
+      }
+
+      @keyframes packetMove {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(240px); }
+      }
+
+      @keyframes byteDrop {
+        0%, 100% { opacity: 0.2; transform: translateY(-18px); }
+        45%, 70% { opacity: 1; transform: translateY(80px); }
+      }
+
+      @keyframes queueStep {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(188px); }
+      }
+
+      .footer-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 860px) {
+        .hero,
+        .panel-head {
+          grid-template-columns: 1fr;
+        }
+
+        .metric-strip {
+          grid-template-columns: 1fr;
+        }
+
+        .teaching-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .instrument,
+        .controls {
+          grid-template-columns: 1fr;
+        }
+
+        .scope,
+        .diagram,
+        .diagram svg {
+          min-height: 300px;
+          height: 300px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .active .loop-dot,
+        .active .pulse-cell,
+        .active .scan,
+        .active .decode-dot,
+        .active .fill-bar,
+        .active .packet,
+        .active .byte-drop,
+        .active .queue-token {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap hero">
+        <div>
+          <div class="bug">mechanism layer</div>
+          <h1>Watch inference work move.</h1>
+          <p>
+            The big problem is not one trick. A model must turn text into the
+            next token, keep the past state that future tokens need, and share a
+            limited GPU across requests. These diagrams show the moving parts.
+          </p>
+          <div class="plain-list">
+            <div>Each section starts with the problem, then shows the method used to solve it.</div>
+            <div>The numbers come from the Colab L4 run when `gpu_experiment_results.json` is present.</div>
+            <div>The design contract is in `VISUAL_MECHANISM_TEACHING_PLAN.md`: problem, objects, change, stored state, cost, measured result, and code path.</div>
+          </div>
+        </div>
+        <div class="frame scope" aria-label="Inference mechanism overview">
+          <svg viewBox="0 0 560 360" role="img">
+            <rect class="node" x="55" y="55" width="150" height="70" rx="7"></rect>
+            <text class="label" x="80" y="85">text</text>
+            <text class="tiny" x="80" y="105">token IDs</text>
+            <rect class="node" x="355" y="55" width="150" height="70" rx="7"></rect>
+            <text class="label" x="380" y="85">layer math</text>
+            <text class="tiny" x="380" y="105">matmul + attention</text>
+            <rect class="node" x="355" y="235" width="150" height="70" rx="7"></rect>
+            <text class="label" x="380" y="265">GPU memory</text>
+            <text class="tiny" x="380" y="285">weights + KV cache</text>
+            <rect class="node" x="55" y="235" width="150" height="70" rx="7"></rect>
+            <text class="label" x="80" y="265">next token</text>
+            <text class="tiny" x="80" y="285">repeat until stop</text>
+            <path class="wire" d="M205 90 H355 M430 125 V235 M355 270 H205 M130 235 V125"></path>
+            <circle class="signal loop-dot" cx="0" cy="0" r="8"></circle>
+          </svg>
+        </div>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="deepdives.html">deep dives</a>
+        <a href="scale-concepts.html">scale concepts</a>
+        <a href="practical-experiments.html">experiments</a>
+        <a href="gpu-experiments.html">GPU results</a>
+        <a href="production-systems.html">production systems</a>
+        <a href="#loop">00 loop</a>
+        <a href="#tokens">01 tokens</a>
+        <a href="#matmul">02 matmul</a>
+        <a href="#attention">03 attention</a>
+        <a href="#kv">04 KV cache</a>
+        <a href="#precision">05 precision</a>
+        <a href="#batching">06 batching</a>
+        <a href="#fit">07 fit</a>
+      </div>
+    </div>
+
+    <main class="wrap">
+      <section id="measured" class="metric-strip" aria-label="Measured Colab result graph strips">
+        <div class="meter"><b>precision</b><span id="meterPrecision">loading measured speed</span><i id="meterPrecisionBar"></i></div>
+        <div class="meter hot"><b>prefill vs decode</b><span id="meterAttention">loading measured time</span><i id="meterAttentionBar"></i></div>
+        <div class="meter memory"><b>KV memory</b><span id="meterKv">loading measured bytes</span><i id="meterKvBar"></i></div>
+        <div class="meter"><b>batching</b><span id="meterBatch">loading measured throughput</span><i id="meterBatchBar"></i></div>
+      </section>
+
+      <section id="loop" class="panel watch">
+        <div class="panel-head">
+          <div>
+            <div class="bug">00 / full loop</div>
+            <h2>The whole job is a repeated next-token loop.</h2>
+            <p>
+              The model does not write the full answer in one step. It receives
+              current tokens, runs the layers, scores possible next tokens,
+              selects one, appends it, and repeats.
+            </p>
+          </div>
+          <div class="readout"><b>Why this matters</b>Every later cost is paid inside this loop: arithmetic time, memory reads, KV cache growth, and queue delay.</div>
+        </div>
+        <div class="teaching-grid">
+          <div class="teach-card"><b>Problem</b><span>Produce an answer when the model can only choose one next token per model step.</span></div>
+          <div class="teach-card"><b>Objects</b><span>Current token row, model layers, next-token scores, selected token, updated token row.</span></div>
+          <div class="teach-card"><b>Motion</b><span>The dot marks one model step. It moves from tokens to layers to scores to append, then repeats.</span></div>
+          <div class="teach-card store"><b>Stored after</b><span>The selected token is added to the sequence. Later sections show the stored key and value rows too.</span></div>
+          <div class="teach-card cost"><b>Cost</b><span>Each loop pays time. Longer text also grows the stored state used by later steps.</span></div>
+          <div class="teach-card proof"><b>Proof</b><span>The batch result later shows why one step returning many tokens matters for throughput.</span></div>
+          <div class="teach-card proof"><b>Real HF output</b><span>Qwen2.5-0.5B on L4: 16 output tokens took 412.9 ms; 512 output tokens took 12,430.1 ms because decode repeated many more times.</span></div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 720 360">
+            <rect class="node" x="65" y="92" width="135" height="58" rx="7"></rect><text class="label" x="96" y="125">prompt</text>
+            <rect class="node" x="295" y="92" width="135" height="58" rx="7"></rect><text class="label" x="322" y="125">layers</text>
+            <rect class="node" x="520" y="92" width="135" height="58" rx="7"></rect><text class="label" x="548" y="125">scores</text>
+            <rect class="node" x="295" y="245" width="135" height="58" rx="7"></rect><text class="label" x="314" y="278">append token</text>
+            <path class="wire" d="M200 121 H295 M430 121 H520 M588 150 V274 H430 M295 274 H132 V150"></path>
+            <circle class="signal loop-dot" cx="0" cy="0" r="8"></circle>
+            <text class="tiny" x="66" y="318">one pass returns one new token, then the path runs again</text>
+          </svg>
+        </div>
+      </section>
+
+      <section id="tokens" class="panel watch">
+        <div class="panel-head">
+          <div>
+            <div class="bug">01 / text to numbers</div>
+            <h2>Text must become stored rows before math can run.</h2>
+            <p>
+              The tokenizer maps text pieces to integer IDs. Each ID selects one
+              row from the embedding table. That row is the starting vector for
+              the model.
+            </p>
+          </div>
+          <div class="readout"><b>Problem solved</b>GPUs run number programs. Token IDs are the bridge from text to the model's number tables.</div>
+        </div>
+        <div class="teaching-grid">
+          <div class="teach-card"><b>Problem</b><span>Text cannot be multiplied. It must become integer IDs that select stored number rows.</span></div>
+          <div class="teach-card"><b>Objects</b><span>Text piece, token ID, embedding table row, vector at a sequence position.</span></div>
+          <div class="teach-card"><b>Motion</b><span>The moving packet shows lookup: text piece to ID, then ID to one table row.</span></div>
+          <div class="teach-card store"><b>Stored after</b><span>The model now has a shaped tensor: batch x tokens x hidden size.</span></div>
+          <div class="teach-card cost"><b>Cost</b><span>More tokens mean more rows to process and less room left in the context limit.</span></div>
+          <div class="teach-card proof"><b>Proof</b><span>The local traces print token IDs and embedding output shapes. This section does not need a GPU timing result.</span></div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 720 360">
+            <rect class="node" x="45" y="55" width="180" height="68" rx="7"></rect><text class="label" x="70" y="88">"GPU"</text><text class="tiny" x="70" y="108">text piece</text>
+            <path class="wire" d="M225 89 H325"></path><circle class="signal packet" cx="246" cy="89" r="7"></circle>
+            <rect class="node" x="325" y="55" width="130" height="68" rx="7"></rect><text class="label" x="352" y="88">49218</text><text class="tiny" x="350" y="108">token ID</text>
+            <path class="wire" d="M455 89 H555"></path>
+            <rect class="node" x="555" y="40" width="112" height="96" rx="7"></rect><text class="label" x="578" y="76">row</text><text class="tiny" x="574" y="100">0.4 -0.2 ...</text>
+            <g transform="translate(82 190)">
+              <rect class="pulse-cell cyan" x="0" y="0" width="42" height="42" rx="4"></rect>
+              <rect class="pulse-cell" style="animation-delay:.15s" fill="#263840" x="50" y="0" width="42" height="42" rx="4"></rect>
+              <rect class="pulse-cell amber" style="animation-delay:.3s" x="100" y="0" width="42" height="42" rx="4"></rect>
+              <rect fill="#263840" x="150" y="0" width="42" height="42" rx="4"></rect>
+              <text class="tiny" x="0" y="72">vector numbers now feed the first layer</text>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section id="matmul" class="panel watch">
+        <div class="panel-head">
+          <div>
+            <div class="bug">02 / matmul</div>
+            <h2>Matmul packs many multiply-adds into one regular shape.</h2>
+            <p>
+              A layer has learned weights. The current token vectors are
+              multiplied by those weights. Large regular shapes let the GPU keep
+              more compute units busy.
+            </p>
+          </div>
+          <div id="matmulReadout" class="readout"><b>Colab result</b>Loading measured matmul rows.</div>
+        </div>
+        <div class="teaching-grid">
+          <div class="teach-card"><b>Problem</b><span>A layer must use stored weights to turn current vectors into new vectors.</span></div>
+          <div class="teach-card"><b>Objects</b><span>Input rows, weight columns, one output cell, many multiply-add operations.</span></div>
+          <div class="teach-card"><b>Motion</b><span>The scan marks repeated work over the weight matrix. The pulsing cells mark many output values being produced.</span></div>
+          <div class="teach-card store"><b>Stored after</b><span>The output matrix becomes the next set of token vectors for the layer path.</span></div>
+          <div class="teach-card cost"><b>Cost</b><span>Time comes from operation count and from reading the input and weight numbers.</span></div>
+          <div class="teach-card proof"><b>Proof</b><span>The Colab run compares FP32, FP16, and BF16 matmul speed for known matrix sizes.</span></div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 720 360">
+            <g transform="translate(52 78)">
+              <text class="label" x="0" y="-18">input vectors</text>
+              <rect class="pulse-cell cyan" x="0" y="0" width="42" height="42"></rect><rect class="pulse-cell cyan" x="0" y="52" width="42" height="42" style="animation-delay:.2s"></rect><rect class="pulse-cell cyan" x="0" y="104" width="42" height="42" style="animation-delay:.4s"></rect>
+            </g>
+            <text class="label" x="142" y="150">x</text>
+            <g transform="translate(190 42)">
+              <text class="label" x="0" y="18">weight matrix</text>
+              <rect fill="#1b2a2f" x="0" y="42" width="260" height="210"></rect>
+              <rect class="scan" fill="rgba(86,215,231,.55)" x="0" y="42" width="28" height="210"></rect>
+              <g fill="#32464d">
+                <rect x="20" y="62" width="24" height="18"></rect><rect x="60" y="62" width="24" height="18"></rect><rect x="100" y="62" width="24" height="18"></rect><rect x="140" y="62" width="24" height="18"></rect><rect x="180" y="62" width="24" height="18"></rect><rect x="220" y="62" width="24" height="18"></rect>
+                <rect x="20" y="112" width="24" height="18"></rect><rect x="60" y="112" width="24" height="18"></rect><rect x="100" y="112" width="24" height="18"></rect><rect x="140" y="112" width="24" height="18"></rect><rect x="180" y="112" width="24" height="18"></rect><rect x="220" y="112" width="24" height="18"></rect>
+                <rect x="20" y="162" width="24" height="18"></rect><rect x="60" y="162" width="24" height="18"></rect><rect x="100" y="162" width="24" height="18"></rect><rect x="140" y="162" width="24" height="18"></rect><rect x="180" y="162" width="24" height="18"></rect><rect x="220" y="162" width="24" height="18"></rect>
+                <rect x="20" y="212" width="24" height="18"></rect><rect x="60" y="212" width="24" height="18"></rect><rect x="100" y="212" width="24" height="18"></rect><rect x="140" y="212" width="24" height="18"></rect><rect x="180" y="212" width="24" height="18"></rect><rect x="220" y="212" width="24" height="18"></rect>
+              </g>
+            </g>
+            <text class="label" x="480" y="150">=</text>
+            <g transform="translate(535 78)">
+              <text class="label" x="0" y="-18">new vectors</text>
+              <rect class="pulse-cell green" x="0" y="0" width="42" height="42"></rect><rect class="pulse-cell green" x="0" y="52" width="42" height="42" style="animation-delay:.22s"></rect><rect class="pulse-cell green" x="0" y="104" width="42" height="42" style="animation-delay:.44s"></rect>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section id="attention" class="panel watch">
+        <div class="panel-head">
+          <div>
+            <div class="bug">03 / attention</div>
+            <h2>Prefill builds a large score table. Decode reads one row.</h2>
+            <p>
+              Attention scores query rows against key rows. During prefill the
+              prompt has many query rows. During cached decode the new token has
+              one query row and reads stored keys.
+            </p>
+          </div>
+          <div id="attentionReadout" class="readout"><b>Colab result</b>Loading measured attention rows.</div>
+        </div>
+        <div class="teaching-grid">
+          <div class="teach-card"><b>Problem</b><span>Each position needs a way to use earlier positions when updating its vector.</span></div>
+          <div class="teach-card"><b>Objects</b><span>Query rows ask. Key rows are scored. Value rows are mixed after scoring.</span></div>
+          <div class="teach-card"><b>Motion</b><span>The left grid shows many query rows. The right row shows cached decode with one new query row.</span></div>
+          <div class="teach-card store"><b>Stored after</b><span>Cached decode keeps earlier key and value rows so only the new row must be added.</span></div>
+          <div class="teach-card cost"><b>Cost</b><span>Prefill creates many score cells. Decode creates one score row but still reads the stored history.</span></div>
+          <div class="teach-card proof"><b>Proof</b><span>At 4096 positions, the measured prefill and cached-decode times show the shape change.</span></div>
+          <div class="teach-card proof"><b>Real HF proof</b><span>Qwen2.5-0.5B on L4: first-token time rose from 27.09 ms at 64 prompt tokens to 36.69 ms at 1536 prompt tokens after warmup.</span></div>
+        </div>
+        <div class="controls">
+          <label>
+            mode
+            <select id="attentionMode">
+              <option value="prefill">prefill: whole prompt</option>
+              <option value="decode">cached decode: one new token</option>
+            </select>
+          </label>
+          <label>
+            prompt positions <span id="attentionPositionsValue">16</span>
+            <input id="attentionPositions" type="range" min="4" max="32" step="4" value="16" />
+          </label>
+          <label>
+            bytes per stored number <span id="attentionBytesValue">2</span>
+            <input id="attentionBytes" type="range" min="2" max="4" step="2" value="2" />
+          </label>
+        </div>
+        <div class="instrument">
+          <div class="diagram" id="attentionInstrument" aria-label="Interactive attention prefill and cached decode diagram"></div>
+          <div>
+            <div id="attentionLedger" class="ledger"></div>
+            <div id="attentionWhatChanged" class="readout"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="kv" class="panel watch">
+        <div class="panel-head">
+          <div>
+            <div class="bug">04 / KV cache</div>
+            <h2>The cache saves repeated work by spending GPU memory.</h2>
+            <p>
+              After each token, the model stores key and value rows for every
+              layer. Later decode steps reuse those rows instead of rebuilding
+              them from the whole prompt.
+            </p>
+          </div>
+          <div id="kvReadout" class="readout"><b>Colab result</b>Loading KV memory rows.</div>
+        </div>
+        <div class="teaching-grid">
+          <div class="teach-card"><b>Problem</b><span>Later token steps should not rebuild all earlier key and value rows from scratch.</span></div>
+          <div class="teach-card"><b>Objects</b><span>Layer count, K rows, V rows, positions, heads, head size, batch, bytes per number.</span></div>
+          <div class="teach-card"><b>Motion</b><span>The bars fill as stored positions grow. A longer context means longer stored rows.</span></div>
+          <div class="teach-card store"><b>Stored after</b><span>Every decoded token adds key and value data for later decode steps.</span></div>
+          <div class="teach-card cost"><b>Cost</b><span>The speed gain spends GPU memory. More positions or more requests use more KV memory.</span></div>
+          <div class="teach-card proof"><b>Proof</b><span>The Colab run shows FP16 KV bytes rising from 512 MB to 4 GB as positions rise.</span></div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 720 360">
+            <text class="label" x="55" y="45">positions stored in KV cache</text>
+            <rect class="node" x="65" y="82" width="585" height="56" rx="7"></rect>
+            <rect class="fill-bar cyan" x="65" y="82" width="585" height="56" rx="7"></rect>
+            <text class="label" x="80" y="116">K rows</text>
+            <rect class="node" x="65" y="170" width="585" height="56" rx="7"></rect>
+            <rect class="fill-bar amber" x="65" y="170" width="585" height="56" rx="7" style="animation-delay:.4s"></rect>
+            <text class="label" x="80" y="204">V rows</text>
+            <path class="wire stroke-green" d="M140 265 H580"></path>
+            <text class="tiny" x="140" y="294">longer context means longer stored rows in every layer</text>
+          </svg>
+        </div>
+      </section>
+
+      <section id="precision" class="panel watch">
+        <div class="panel-head">
+          <div>
+            <div class="bug">05 / precision</div>
+            <h2>Number format changes bytes moved and math path used.</h2>
+            <p>
+              FP32 stores each number in 4 bytes. FP16 and BF16 store each
+              number in 2 bytes. That changes memory use and can select faster
+              GPU hardware paths.
+            </p>
+          </div>
+          <div id="precisionReadout" class="readout"><b>Colab result</b>Loading precision rows.</div>
+        </div>
+        <div class="teaching-grid">
+          <div class="teach-card"><b>Problem</b><span>The model must store and move many numbers. The byte size of each number changes memory pressure.</span></div>
+          <div class="teach-card"><b>Objects</b><span>Stored number, bytes per number, FP32, FP16, BF16, total bytes.</span></div>
+          <div class="teach-card"><b>Motion</b><span>FP32 drops four byte blocks per number. FP16 and BF16 drop two byte blocks per number.</span></div>
+          <div class="teach-card store"><b>Stored after</b><span>The same count of values occupies less memory when each value uses fewer bytes.</span></div>
+          <div class="teach-card cost"><b>Cost</b><span>Lower-byte formats can be faster and smaller, but they carry less numeric detail.</span></div>
+          <div class="teach-card proof"><b>Proof</b><span>The measured matmul rows show FP16 and BF16 speed paths on the L4 GPU.</span></div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 720 360">
+            <text class="label" x="70" y="52">same count of numbers, different bytes per number</text>
+            <g transform="translate(80 98)">
+              <text class="label" x="0" y="-16">FP32</text>
+              <rect class="byte-drop cyan" x="0" y="0" width="36" height="36"></rect><rect class="byte-drop cyan" x="44" y="0" width="36" height="36" style="animation-delay:.12s"></rect><rect class="byte-drop cyan" x="88" y="0" width="36" height="36" style="animation-delay:.24s"></rect><rect class="byte-drop cyan" x="132" y="0" width="36" height="36" style="animation-delay:.36s"></rect>
+              <text class="tiny" x="0" y="148">4 bytes per number</text>
+            </g>
+            <g transform="translate(400 98)">
+              <text class="label" x="0" y="-16">FP16 or BF16</text>
+              <rect class="byte-drop amber" x="0" y="0" width="36" height="36"></rect><rect class="byte-drop amber" x="44" y="0" width="36" height="36" style="animation-delay:.18s"></rect>
+              <text class="tiny" x="0" y="148">2 bytes per number</text>
+            </g>
+            <path class="wire" d="M245 115 H360"></path>
+            <text class="tiny" x="280" y="100">less storage</text>
+          </svg>
+        </div>
+      </section>
+
+      <section id="batching" class="panel watch">
+        <div class="panel-head">
+          <div>
+            <div class="bug">06 / batching</div>
+            <h2>Batching makes one GPU step return more tokens.</h2>
+            <p>
+              Decode for one request adds one token. A server can place several
+              requests into the same step, so the GPU does more useful work
+              before the next scheduling decision.
+            </p>
+          </div>
+          <div id="batchReadout" class="readout"><b>Colab result</b>Loading batch rows.</div>
+        </div>
+        <div class="teaching-grid">
+          <div class="teach-card"><b>Problem</b><span>One decode request returns one token, which may not give the GPU enough work in one step.</span></div>
+          <div class="teach-card"><b>Objects</b><span>Waiting requests, active batch, GPU step, one returned token per active request.</span></div>
+          <div class="teach-card"><b>Motion</b><span>Request dots enter the same GPU step, then the step emits several output tokens.</span></div>
+          <div class="teach-card store"><b>Stored after</b><span>Unfinished requests keep their KV cache and return for another decode step.</span></div>
+          <div class="teach-card cost"><b>Cost</b><span>Batching can raise tokens per second, but requests may wait and the batch uses more KV memory.</span></div>
+          <div class="teach-card proof"><b>Proof</b><span>Real HF run on L4: batch 1 reached 39.5 aggregate decode tok/s; batch 32 reached 1225.7 tok/s while each request stayed near 38 tok/s.</span></div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 720 360">
+            <text class="label" x="55" y="48">waiting requests</text>
+            <g transform="translate(70 78)">
+              <rect class="node" x="0" y="0" width="92" height="42" rx="6"></rect><text class="tiny" x="20" y="27">req A</text>
+              <rect class="node" x="0" y="54" width="92" height="42" rx="6"></rect><text class="tiny" x="20" y="81">req B</text>
+              <rect class="node" x="0" y="108" width="92" height="42" rx="6"></rect><text class="tiny" x="20" y="135">req C</text>
+            </g>
+            <path class="wire" d="M170 100 H355 M170 154 H355 M170 208 H355"></path>
+            <circle class="signal queue-token" cx="184" cy="100" r="7"></circle>
+            <circle class="signal queue-token" cx="184" cy="154" r="7" style="animation-delay:.25s"></circle>
+            <circle class="signal queue-token" cx="184" cy="208" r="7" style="animation-delay:.5s"></circle>
+            <rect class="node" x="365" y="80" width="145" height="150" rx="8"></rect>
+            <text class="label" x="405" y="145">GPU step</text>
+            <text class="tiny" x="393" y="170">one launch</text>
+            <path class="wire stroke-green" d="M510 155 H650"></path>
+            <text class="label" x="560" y="140">tokens out</text>
+          </svg>
+        </div>
+      </section>
+
+      <section id="fit" class="panel watch">
+        <div class="panel-head">
+          <div>
+            <div class="bug">07 / fit and pressure</div>
+            <h2>The serving problem is a fit problem under time.</h2>
+            <p>
+              A request needs weights loaded, KV cache space, and enough GPU
+              work capacity to return tokens at the target pace. The server's
+              job is to keep useful work running without running out of memory.
+            </p>
+          </div>
+          <div id="fitReadout" class="readout"><b>Measured run</b>Loading device memory.</div>
+        </div>
+        <div class="teaching-grid">
+          <div class="teach-card"><b>Problem</b><span>A request can run only if weights, KV cache, and temporary work fit in GPU memory.</span></div>
+          <div class="teach-card"><b>Objects</b><span>Weights, KV cache, temporary work, headroom, context length, batch size.</span></div>
+          <div class="teach-card"><b>Motion</b><span>The packet crosses choices that change memory fit: number format, cache size, batch size, and limits.</span></div>
+          <div class="teach-card store"><b>Stored after</b><span>Weights stay loaded. KV cache grows while each active request generates tokens.</span></div>
+          <div class="teach-card cost"><b>Cost</b><span>If the memory bar crosses capacity, the setup fails or must change model, context, batch, or placement.</span></div>
+          <div class="teach-card proof"><b>Proof</b><span>The L4 run reports about 22 GB of GPU memory, so every fit estimate must fit inside that fixed budget.</span></div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 720 360">
+            <rect class="node" x="70" y="72" width="580" height="60" rx="7"></rect>
+            <rect class="cyan" x="70" y="72" width="280" height="60" rx="7"></rect>
+            <text class="label" x="95" y="108">weights</text>
+            <rect class="amber" x="350" y="72" width="170" height="60"></rect>
+            <text class="label" x="378" y="108">KV cache</text>
+            <rect class="green" x="520" y="72" width="80" height="60"></rect>
+            <text class="tiny" x="535" y="108">work</text>
+            <rect class="red" x="600" y="72" width="50" height="60" rx="7"></rect>
+            <text class="tiny" x="608" y="108">headroom</text>
+            <text class="label" x="70" y="180">approaches used</text>
+            <path class="wire" d="M90 205 H615"></path>
+            <circle class="signal packet" cx="100" cy="205" r="7"></circle>
+            <text class="tiny" x="92" y="240">lower precision</text>
+            <text class="tiny" x="232" y="240">KV cache</text>
+            <text class="tiny" x="345" y="240">batching</text>
+            <text class="tiny" x="465" y="240">limits</text>
+          </svg>
+        </div>
+      </section>
+
+      <p class="footer-note">
+        This page is a mechanism view. Use the main lab for small controls, the
+        deep dives for longer explanations, and the GPU results page for the
+        measured Colab run.
+      </p>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      function fmt(value, digits = 1) {
+        if (value === undefined || value === null || Number.isNaN(Number(value))) return "n/a";
+        return Number(value).toFixed(digits);
+      }
+
+      function bytes(value) {
+        const n = Number(value) || 0;
+        if (n >= 1024 ** 3) return `${fmt(n / 1024 ** 3, 2)} GB`;
+        if (n >= 1024 ** 2) return `${fmt(n / 1024 ** 2, 1)} MB`;
+        return `${fmt(n, 0)} B`;
+      }
+
+      function bestBy(rows, key) {
+        return rows.reduce((best, item) => {
+          const value = Number(item[key]);
+          if (!Number.isFinite(value)) return best;
+          return !best || value > Number(best[key]) ? item : best;
+        }, null);
+      }
+
+      function findRow(rows, match) {
+        return rows.find((item) => Object.entries(match).every(([key, value]) => item[key] === value));
+      }
+
+      function setMeter(id, text, width) {
+        $(`meter${id}`).textContent = text;
+        $(`meter${id}Bar`).style.setProperty("--w", `${Math.max(6, Math.min(100, width))}%`);
+      }
+
+      let attentionRows = [];
+
+      function ledgerRow(label, value) {
+        return `<div><b>${label}</b><span>${value}</span></div>`;
+      }
+
+      function renderAttentionInstrument() {
+        const mode = $("attentionMode").value;
+        const positions = Number($("attentionPositions").value);
+        const storedBytes = Number($("attentionBytes").value);
+        const isPrefill = mode === "prefill";
+        const queryRows = isPrefill ? positions : 1;
+        const keyRows = positions;
+        const rawScoreCells = queryRows * keyRows;
+        const allowedScoreCells = isPrefill ? (positions * (positions + 1)) / 2 : positions;
+        const maskedScoreCells = rawScoreCells - allowedScoreCells;
+        const layers = 32;
+        const kvHeads = 32;
+        const headDim = 128;
+        const batch = 1;
+        const kvBytes = layers * 2 * positions * kvHeads * headDim * batch * storedBytes;
+        const measuredPrefill = findRow(attentionRows, { mode: "prefill", positions: 4096 });
+        const measuredDecode = findRow(attentionRows, { mode: "cached_decode", positions: 4096 });
+        $("attentionPositionsValue").textContent = String(positions);
+        $("attentionBytesValue").textContent = String(storedBytes);
+
+        const gridSize = isPrefill ? positions : keyRows;
+        const cell = Math.max(7, Math.min(24, Math.floor(248 / gridSize)));
+        const gap = 2;
+        const left = isPrefill ? 66 : 88;
+        const top = isPrefill ? 82 : 162;
+        const cells = [];
+        if (isPrefill) {
+          for (let q = 0; q < positions; q += 1) {
+            for (let k = 0; k < positions; k += 1) {
+              const future = k > q;
+              const x = left + k * (cell + gap);
+              const y = top + q * (cell + gap);
+              const fill = future ? "#2a2425" : "#213239";
+              const stroke = future ? "#56312f" : "#314851";
+              const cls = !future && (q === k || (q + k) % 5 === 0) ? "pulse-cell" : "";
+              const delay = ((q + k) % 7) * 0.08;
+              cells.push(`<rect class="${cls}" x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="${fill}" stroke="${stroke}" style="animation-delay:${delay}s"></rect>`);
+            }
+          }
+        } else {
+          for (let k = 0; k < positions; k += 1) {
+            const x = left + k * (cell + gap);
+            const delay = (k % 9) * 0.08;
+            cells.push(`<rect class="pulse-cell" x="${x}" y="${top}" width="${cell}" height="${cell}" rx="2" fill="#3a2f21" stroke="#624a28" style="animation-delay:${delay}s"></rect>`);
+          }
+        }
+
+        const scoreWidth = gridSize * (cell + gap) - gap;
+        const queryLabel = isPrefill
+          ? `${positions} query rows`
+          : "1 new query row";
+        const modeText = isPrefill
+          ? "Prefill handles the prompt. Every prompt position has a query row. The future cells are blocked by the causal rule."
+          : "Cached decode handles one new token. The new query row scores all stored key rows, then one new K row and one new V row are stored.";
+        const measuredText = measuredPrefill && measuredDecode
+          ? `Measured reference at 4096 positions: prefill ${fmt(measuredPrefill.ms, 3)} ms, cached decode ${fmt(measuredDecode.ms, 3)} ms.`
+          : "Measured 4096-position attention rows are not loaded.";
+
+        $("attentionInstrument").innerHTML = `
+          <svg viewBox="0 0 720 360" role="img">
+            <text class="label" x="54" y="42">${isPrefill ? "prefill score table" : "cached decode score row"}</text>
+            <text class="tiny" x="54" y="62">${queryLabel}; ${keyRows} key rows; ${rawScoreCells.toLocaleString()} raw score cells</text>
+            <g>${cells.join("")}</g>
+            <rect class="scan" x="${left}" y="${top}" width="${Math.max(8, cell)}" height="${isPrefill ? scoreWidth : cell}" fill="rgba(86,215,231,.48)"></rect>
+            <text class="tiny" x="${left}" y="${top + scoreWidth + 26}">${isPrefill ? "dark cells are future positions blocked before probability" : "one row reads stored keys from earlier positions"}</text>
+            <g transform="translate(430 92)">
+              <rect class="node" x="0" y="0" width="210" height="54" rx="7"></rect>
+              <text class="label" x="22" y="32">stored K rows: ${keyRows}</text>
+              <rect class="node" x="0" y="82" width="210" height="54" rx="7"></rect>
+              <text class="label" x="22" y="114">stored V rows: ${isPrefill ? "built now" : keyRows}</text>
+              <path class="wire stroke-amber" d="M104 54 V82"></path>
+              <circle class="signal decode-dot" cx="0" cy="0" r="0"></circle>
+            </g>
+          </svg>`;
+
+        $("attentionLedger").innerHTML = [
+          ledgerRow("mode", isPrefill ? "prefill: whole prompt" : "cached decode: one new token"),
+          ledgerRow("query rows", queryRows.toLocaleString()),
+          ledgerRow("key rows read", keyRows.toLocaleString()),
+          ledgerRow("raw score cells", rawScoreCells.toLocaleString()),
+          ledgerRow("allowed score cells", allowedScoreCells.toLocaleString()),
+          ledgerRow("future cells blocked", maskedScoreCells.toLocaleString()),
+          ledgerRow("KV bytes shown", bytes(kvBytes)),
+          ledgerRow("formula", `32 layers * K/V 2 * ${positions} positions * 32 heads * 128 head_dim * batch 1 * ${storedBytes} bytes`)
+        ].join("");
+
+        $("attentionWhatChanged").innerHTML = `<b>What changed</b>${modeText} ${measuredText} The small grid is for seeing the rule; the measured row shows the same rule at real context size.`;
+      }
+
+      function renderResults(payload) {
+        const results = payload.results || {};
+        const matmul = results.matmul || [];
+        const attention = results.attention || [];
+        const kv = results.kv_bytes || [];
+        const batches = results.batch_decode || [];
+        const fp32 = bestBy(matmul.filter((row) => row.dtype === "float32"), "tflops");
+        const fp16 = bestBy(matmul.filter((row) => row.dtype === "float16"), "tflops");
+        const bf16 = bestBy(matmul.filter((row) => row.dtype === "bfloat16"), "tflops");
+        const prefill4096 = findRow(attention, { mode: "prefill", positions: 4096 });
+        const decode4096 = findRow(attention, { mode: "cached_decode", positions: 4096 });
+        const kv4096 = findRow(kv, { dtype: "fp16", positions: 4096 });
+        const kv32768 = findRow(kv, { dtype: "fp16", positions: 32768 });
+        const batch1 = findRow(batches, { batch: 1 });
+        const batch64 = findRow(batches, { batch: 64 });
+        const precisionRatio = fp32 && fp16 ? Number(fp16.tflops) / Number(fp32.tflops) : 0;
+        const attentionRatio = prefill4096 && decode4096 ? Number(prefill4096.ms) / Number(decode4096.ms) : 0;
+        const kvRatio = kv4096 && kv32768 ? Number(kv32768.bytes) / Number(kv4096.bytes) : 0;
+        const batchRatio = batch1 && batch64 ? Number(batch64.tokens_per_second) / Number(batch1.tokens_per_second) : 0;
+        setMeter("Precision", `FP16 was ${fmt(precisionRatio, 1)}x the FP32 TFLOP/s in the best rows.`, precisionRatio * 42);
+        setMeter("Attention", `4096-token prefill took ${fmt(attentionRatio, 0)}x the cached decode time.`, Math.min(100, attentionRatio / 2));
+        setMeter("Kv", `32768 positions used ${fmt(kvRatio, 0)}x the KV bytes of 4096 positions.`, kvRatio * 12.5);
+        setMeter("Batch", `Batch 64 returned ${fmt(batchRatio, 1)}x the tokens/sec of batch 1.`, Math.min(100, batchRatio * 1.5));
+        $("matmulReadout").innerHTML = `<b>Colab result</b>Best FP32: ${fmt(fp32?.tflops)} TFLOP/s. Best FP16: ${fmt(fp16?.tflops)} TFLOP/s. The same kind of work changed speed when the number format changed.`;
+        $("attentionReadout").innerHTML = `<b>Colab result</b>At 4096 positions, prefill took ${fmt(prefill4096?.ms, 3)} ms. Cached decode took ${fmt(decode4096?.ms, 3)} ms because it scored one query row.`;
+        $("kvReadout").innerHTML = `<b>Colab result</b>FP16 KV cache used ${bytes(kv4096?.bytes)} at 4096 positions and ${bytes(kv32768?.bytes)} at 32768 positions. More positions mean more stored rows.`;
+        $("precisionReadout").innerHTML = `<b>Colab result</b>BF16 reached ${fmt(bf16?.tflops)} TFLOP/s. FP16 reached ${fmt(fp16?.tflops)} TFLOP/s. Both use 2 bytes per number.`;
+        $("batchReadout").innerHTML = `<b>Colab result</b>Batch 1 reached ${fmt(batch1?.tokens_per_second, 0)} tokens/sec. Batch 64 reached ${fmt(batch64?.tokens_per_second, 0)} tokens/sec because one step returned many tokens.`;
+        $("fitReadout").innerHTML = `<b>Measured run</b>${payload.gpu || "GPU"} reported ${fmt(payload.memory_before?.total_gb, 1)} GB of GPU memory. Context, batch, and precision decide how much of it is consumed.`;
+        attentionRows = attention;
+        renderAttentionInstrument();
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => entry.target.classList.toggle("active", entry.isIntersecting));
+      }, { threshold: 0.35 });
+      document.querySelectorAll(".watch, .scope").forEach((node) => observer.observe(node));
+
+      ["attentionMode", "attentionPositions", "attentionBytes"].forEach((id) => {
+        $(id).addEventListener("input", renderAttentionInstrument);
+      });
+      renderAttentionInstrument();
+
+      fetch("gpu_experiment_results.json", { cache: "no-store" })
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error("missing local result")))
+        .then(renderResults)
+        .catch(() => fetch("gpu_experiment_results.sample.json", { cache: "no-store" }).then((response) => response.json()).then(renderResults));
+    </script>
+  </body>
+</html>

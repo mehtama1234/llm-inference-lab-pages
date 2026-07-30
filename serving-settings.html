@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Serving Runtime Settings Map</title>
+    <style>
+      :root {
+        --ink: #111817;
+        --paper: #f5f6f4;
+        --panel: #ffffff;
+        --soft: #edf2ef;
+        --line: #d7ddd9;
+        --muted: #596662;
+        --green: #2f7a4f;
+        --blue: #1d6f8f;
+        --amber: #a66a13;
+        --red: #a8412f;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.6;
+      }
+
+      header {
+        background: var(--ink);
+        color: #eef4f2;
+      }
+
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      header .wrap {
+        padding-top: 40px;
+        padding-bottom: 34px;
+      }
+
+      .bug {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #7fd0c5;
+      }
+
+      h1 {
+        margin: 12px 0 0;
+        max-width: 820px;
+        font-size: clamp(30px, 4vw, 46px);
+        line-height: 1.08;
+      }
+
+      header p {
+        max-width: 800px;
+        margin: 16px 0 0;
+        color: #bfcbc8;
+        font-size: 17px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: rgba(245, 246, 244, 0.94);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .topbar .wrap {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .topbar a {
+        color: var(--blue);
+        font-size: 13px;
+        text-decoration: none;
+      }
+
+      main {
+        padding: 24px 0 60px;
+      }
+
+      .panel {
+        margin: 0 0 20px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      .panel h2 {
+        margin: 0;
+        font-size: 25px;
+        line-height: 1.15;
+      }
+
+      .panel > p {
+        max-width: 820px;
+        color: #25302d;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(330px, 1.05fr);
+        gap: 14px;
+        align-items: start;
+      }
+
+      .subpanel {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfb;
+      }
+
+      .subpanel h3 {
+        margin: 0 0 10px;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--blue);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .subpanel label {
+        display: grid;
+        gap: 6px;
+        margin: 12px 0;
+        color: #25302d;
+        font-size: 14px;
+      }
+
+      .subpanel input,
+      .subpanel select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        padding: 9px 10px;
+      }
+
+      .control-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px;
+      }
+
+      .metric b {
+        display: block;
+        font-family: var(--mono);
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .runtime-flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .flow-card {
+        min-height: 94px;
+        display: grid;
+        gap: 5px;
+        align-content: start;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .flow-card b,
+      .runtime-row b,
+      .tune-row b {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .flow-card span,
+      .runtime-row span,
+      .tune-row span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .flow-card.active,
+      .runtime-row.active {
+        border-color: #5f9f78;
+        box-shadow: inset 0 0 0 2px rgba(47, 122, 79, 0.14);
+      }
+
+      .runtime-map,
+      .tune-map {
+        display: grid;
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .source-map {
+        display: grid;
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .runtime-row {
+        display: grid;
+        grid-template-columns: 160px 120px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: #25302d;
+        font-size: 12px;
+      }
+
+      .tune-row {
+        display: grid;
+        grid-template-columns: 130px minmax(0, 1fr) 120px;
+        gap: 10px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: #25302d;
+        font-size: 12px;
+      }
+
+      .source-row {
+        display: grid;
+        grid-template-columns: 158px 112px 188px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: #25302d;
+        font-size: 12px;
+      }
+
+      .source-row b {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .source-row code {
+        display: inline-block;
+        margin: 2px 0;
+      }
+
+      .source-row span {
+        color: var(--muted);
+      }
+
+      .command-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 12px 0;
+      }
+
+      .code-box {
+        overflow: auto;
+        margin: 12px 0 0;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #101715;
+        color: #e8f0ed;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .notes {
+        display: grid;
+        gap: 9px;
+        margin: 12px 0 0;
+      }
+
+      .notes div {
+        border-left: 3px solid var(--line);
+        padding-left: 10px;
+        color: #25302d;
+        font-size: 14px;
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: var(--soft);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+
+      a {
+        color: var(--blue);
+      }
+
+      footer {
+        margin: 28px 0 70px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      @media (max-width: 760px) {
+        .topbar .wrap {
+          flex-direction: column;
+        }
+
+        .grid,
+        .runtime-flow,
+        .runtime-row,
+        .tune-row,
+        .source-row,
+        .command-grid,
+        .control-row,
+        .metric-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">Serving runtime settings</div>
+        <h1>How Transformers, TGI, and vLLM settings fit together</h1>
+        <p>
+          Transformers settings control model loading and generation inside one
+          Python process. TGI and vLLM settings control request routing,
+          batching, cache memory, and multi-device serving around model workers.
+        </p>
+      </div>
+    </header>
+    <div class="topbar">
+      <div class="wrap">
+        <a href="deepdives.html">Back to deep dives</a>
+        <a href="mechanisms.html">Mechanism diagrams</a>
+        <a href="hf-settings.html">Hugging Face settings map</a>
+        <a href="trace-runner.html">Trace outputs</a>
+        <a href="#sources">Official docs used</a>
+      </div>
+    </div>
+    <main class="wrap">
+      <section class="panel">
+        <h2>First Sort By Runtime Layer</h2>
+        <p>
+          A setting only makes sense after you know which process reads it. A
+          `generate()` argument changes one local model call. A TGI router flag
+          changes request admission and batching. A vLLM engine flag changes KV
+          cache space, scheduling, parallelism, or model execution.
+        </p>
+        <div class="runtime-flow" aria-label="Serving runtime layers">
+          <div id="runtimeFlow0" class="flow-card active"><b>client</b><span>sends prompt and output limit</span></div>
+          <div id="runtimeFlow1" class="flow-card"><b>router</b><span>validates, queues, and batches requests</span></div>
+          <div id="runtimeFlow2" class="flow-card"><b>scheduler</b><span>chooses prefill and decode work</span></div>
+          <div id="runtimeFlow3" class="flow-card"><b>worker</b><span>runs model kernels and stores KV cache</span></div>
+          <div id="runtimeFlow4" class="flow-card"><b>metrics</b><span>reports wait, TTFT, ITL, throughput, and preemption</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Runtime Settings Map</h2>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>Transformers</h3>
+            <div class="runtime-map">
+              <div id="runtimeSet0" class="runtime-row active"><b>max_new_tokens</b><span>generate</span><span>Caps generated tokens. It changes how long the decode loop can run.</span></div>
+              <div id="runtimeSet1" class="runtime-row"><b>cache_implementation</b><span>generate</span><span>Selects dynamic, static, offloaded, or quantized cache behavior.</span></div>
+              <div id="runtimeSet2" class="runtime-row"><b>dtype</b><span>load</span><span>Changes parameter bytes and compute dtype if supported.</span></div>
+              <div id="runtimeSet3" class="runtime-row"><b>device_map</b><span>load</span><span>Places modules on CPU, GPU, disk, or split devices.</span></div>
+            </div>
+          </div>
+          <div class="subpanel">
+            <h3>TGI</h3>
+            <div class="runtime-map">
+              <div id="runtimeSet4" class="runtime-row"><b>max_total_tokens</b><span>router</span><span>Sets per-request token budget: prompt plus generated tokens.</span></div>
+              <div id="runtimeSet5" class="runtime-row"><b>max_batch_prefill_tokens</b><span>router</span><span>Limits prompt tokens admitted into a prefill operation.</span></div>
+              <div id="runtimeSet6" class="runtime-row"><b>max_batch_total_tokens</b><span>router</span><span>Sets total potential tokens inside a batch.</span></div>
+              <div id="runtimeSet7" class="runtime-row"><b>waiting_served_ratio</b><span>router</span><span>Controls when waiting requests can interrupt running decode work for prefill.</span></div>
+              <div id="runtimeSet8" class="runtime-row"><b>max_waiting_tokens</b><span>router</span><span>Controls how long waiting requests can be delayed before they must be considered.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>vLLM</h3>
+            <div class="runtime-map">
+              <div id="runtimeSet9" class="runtime-row"><b>gpu_memory_utilization</b><span>cache</span><span>Sets the fraction of GPU memory vLLM can use for the model executor and KV cache.</span></div>
+              <div id="runtimeSet10" class="runtime-row"><b>kv_cache_memory_bytes</b><span>cache</span><span>Sets KV cache bytes directly and overrides automatic sizing from GPU utilization.</span></div>
+              <div id="runtimeSet11" class="runtime-row"><b>kv_cache_dtype</b><span>cache</span><span>Changes dtype used to store KV cache values.</span></div>
+              <div id="runtimeSet12" class="runtime-row"><b>max_num_batched_tokens</b><span>scheduler</span><span>Caps tokens processed in one scheduler iteration.</span></div>
+              <div id="runtimeSet13" class="runtime-row"><b>max_num_seqs</b><span>scheduler</span><span>Caps active sequences per batch.</span></div>
+              <div id="runtimeSet14" class="runtime-row"><b>enable_prefix_caching</b><span>cache</span><span>Allows reuse of KV states for repeated prompt prefixes.</span></div>
+              <div id="runtimeSet15" class="runtime-row"><b>tensor_parallel_size</b><span>placement</span><span>Splits model work across GPUs.</span></div>
+              <div id="runtimeSet16" class="runtime-row"><b>data_parallel_size</b><span>placement</span><span>Runs multiple engine replicas. `max_num_seqs` applies per data-parallel rank.</span></div>
+            </div>
+          </div>
+          <div class="subpanel">
+            <h3>Tuning rules from docs</h3>
+            <div class="tune-map">
+              <div class="tune-row"><b>KV pressure</b><span>Increase vLLM `gpu_memory_utilization`, decrease `max_num_seqs`, or decrease `max_num_batched_tokens`.</span><span>memory</span></div>
+              <div class="tune-row"><b>TTFT high</b><span>More prefill budget can reduce first-token wait for large prompts, if memory allows.</span><span>prefill</span></div>
+              <div class="tune-row"><b>ITL high</b><span>Smaller prefill chunks can avoid slowing running decode steps.</span><span>decode</span></div>
+              <div class="tune-row"><b>GPU full</b><span>Use dtype, quantization, offload, tensor parallelism, or smaller active batch limits.</span><span>fit</span></div>
+              <div class="tune-row"><b>repeated prompts</b><span>Prefix caching can reduce repeated prefill work when prompt prefixes match.</span><span>cache</span></div>
+            </div>
+            <div class="notes">
+              <div>Do not treat all latency settings as the same. Some change first-token delay. Some change gaps between streamed tokens. Some change memory fit.</div>
+              <div>Batch controls are service controls. They decide what work reaches the model worker together.</div>
+              <div>Cache controls are memory controls. They decide what earlier token state can be reused and where it is stored.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Command Shapes</h2>
+        <p>
+          These commands are examples of where the settings belong. They are not
+          meant to run on this CPU-only machine as written because TGI and vLLM
+          serving normally require a supported accelerator for these workloads.
+        </p>
+        <div class="command-grid">
+          <div class="subpanel">
+            <h3>Transformers local process</h3>
+            <div class="code-box">model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    dtype=torch.float16,
+    device_map="auto",
+)
+out = model.generate(
+    **inputs,
+    max_new_tokens=128,
+    cache_implementation="static",
+)</div>
+          </div>
+          <div class="subpanel">
+            <h3>TGI router and model server</h3>
+            <div class="code-box">text-generation-launcher \
+  --model-id $MODEL \
+  --max-total-tokens 4096 \
+  --max-batch-prefill-tokens 4096 \
+  --max-batch-total-tokens 8192 \
+  --waiting-served-ratio 0.3</div>
+          </div>
+          <div class="subpanel">
+            <h3>vLLM engine</h3>
+            <div class="code-box">vllm serve $MODEL \
+  --gpu-memory-utilization 0.92 \
+  --max-num-batched-tokens 8192 \
+  --max-num-seqs 256 \
+  --kv-cache-dtype auto \
+  --enable-prefix-caching</div>
+          </div>
+          <div class="subpanel">
+            <h3>vLLM multi-GPU placement</h3>
+            <div class="code-box">vllm serve $MODEL \
+  --tensor-parallel-size 2 \
+  --data-parallel-size 4 \
+  --max-num-seqs 128</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Live Flag Experiment</h2>
+        <p>
+          These controls apply the same simple token and KV cache math as
+          `trace_serving_flags.py`. The request set is fixed so each flag change
+          has a clear effect.
+        </p>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>TGI token limits</h3>
+            <div class="control-row">
+              <label>
+                max_total_tokens
+                <input id="liveMaxTotalTokens" type="number" min="512" max="8192" step="256" value="2048" />
+              </label>
+              <label>
+                max_batch_prefill_tokens
+                <input id="liveMaxBatchPrefill" type="number" min="512" max="12000" step="256" value="4096" />
+              </label>
+            </div>
+            <label>
+              max_batch_total_tokens
+              <input id="liveMaxBatchTotal" type="number" min="512" max="16000" step="256" value="6144" />
+            </label>
+            <h3>vLLM cache and scheduler limits</h3>
+            <div class="control-row">
+              <label>
+                gpu_memory_utilization
+                <input id="liveGpuUtil" type="number" min="0.50" max="0.99" step="0.01" value="0.90" />
+              </label>
+              <label>
+                kv_cache_memory_bytes
+                <select id="liveKvBytes">
+                  <option value="0" selected>auto</option>
+                  <option value="6442450944">6.00 GB</option>
+                  <option value="9663676416">9.00 GB</option>
+                  <option value="12884901888">12.00 GB</option>
+                </select>
+              </label>
+            </div>
+            <div class="control-row">
+              <label>
+                max_num_seqs
+                <input id="liveMaxSeqs" type="number" min="16" max="512" step="16" value="256" />
+              </label>
+              <label>
+                max_num_batched_tokens
+                <input id="liveMaxBatchedTokens" type="number" min="512" max="20000" step="512" value="8192" />
+              </label>
+            </div>
+          </div>
+          <div class="subpanel">
+            <h3>Live result</h3>
+            <div class="metric-grid">
+              <div class="metric"><b id="liveFitCount">0/4</b><span>requests fit</span></div>
+              <div class="metric"><b id="liveBatchCount">0</b><span>admitted to first batch</span></div>
+              <div class="metric"><b id="liveKvBudget">0 GB</b><span>KV cache budget</span></div>
+            </div>
+            <div class="metric-grid">
+              <div class="metric"><b id="liveCachedPositions">0</b><span>cached token positions</span></div>
+              <div class="metric"><b id="livePerSeq">0</b><span>positions per active seq</span></div>
+              <div class="metric"><b id="livePressure">-</b><span>KV pressure</span></div>
+            </div>
+            <div id="liveFlagNotes" class="notes"></div>
+            <div id="liveFlagOutput" class="code-box"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 id="source-backed-flag-map">Source-Backed Flag Map</h2>
+        <p>
+          These rows connect serving flags to the mechanism they change in
+          `trace_serving_flags.py`. Read the flag as a limit on work entering the
+          system, work batched together, or KV positions kept in memory.
+        </p>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>TGI flags</h3>
+            <div class="source-map" aria-label="TGI flag source-backed mechanism map">
+              <div class="source-row">
+                <b>max_total_tokens</b>
+                <span>queue fit</span>
+                <span><code>trace_serving_flags.py:46</code><code>trace_serving_flags.py:57</code></span>
+                <span>Checks one request before batching: prompt tokens plus requested output tokens must fit.</span>
+              </div>
+              <div class="source-row">
+                <b>max_batch_prefill_tokens</b>
+                <span>prefill</span>
+                <span><code>trace_serving_flags.py:67</code><code>trace_serving_flags.py:71</code><code>trace_serving_flags.py:73</code></span>
+                <span>Limits prompt tokens admitted together, so it changes first-token work for the batch.</span>
+              </div>
+              <div class="source-row">
+                <b>max_batch_total_tokens</b>
+                <span>scheduler</span>
+                <span><code>trace_serving_flags.py:68</code><code>trace_serving_flags.py:72</code><code>trace_serving_flags.py:73</code></span>
+                <span>Limits possible prompt plus output tokens for the admitted batch.</span>
+              </div>
+            </div>
+          </div>
+          <div class="subpanel">
+            <h3>vLLM flags</h3>
+            <div class="source-map" aria-label="vLLM flag source-backed mechanism map">
+              <div class="source-row">
+                <b>gpu_memory_utilization</b>
+                <span>KV budget</span>
+                <span><code>trace_serving_flags.py:97</code><code>trace_serving_flags.py:98</code></span>
+                <span>Sets usable GPU memory, then automatic KV cache budget is what remains after model weights.</span>
+              </div>
+              <div class="source-row">
+                <b>kv_cache_memory_bytes</b>
+                <span>KV budget</span>
+                <span><code>trace_serving_flags.py:99</code><code>trace_serving_flags.py:107</code></span>
+                <span>Overrides automatic KV sizing and directly sets cache space.</span>
+              </div>
+              <div class="source-row">
+                <b>kv_cache_dtype_bytes</b>
+                <span>KV pressure</span>
+                <span><code>trace_serving_flags.py:100</code><code>trace_serving_flags.py:115</code></span>
+                <span>Changes bytes per cached token position through layers, K/V tensors, heads, and head dim.</span>
+              </div>
+              <div class="source-row">
+                <b>max_num_seqs</b>
+                <span>scheduler</span>
+                <span><code>trace_serving_flags.py:102</code><code>trace_serving_flags.py:117</code></span>
+                <span>Divides total cached positions across active sequences.</span>
+              </div>
+              <div class="source-row">
+                <b>max_num_batched_tokens</b>
+                <span>decode</span>
+                <span><code>trace_serving_flags.py:124</code><code>trace_serving_flags.py:125</code></span>
+                <span>Must fit inside cache capacity; otherwise the scheduler can ask for more token work than cache can hold.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Run The Flag Simulator</h2>
+        <p>
+          This local script applies TGI-style token limits and vLLM-style KV
+          cache limits to fixed requests. It does not need TGI or vLLM installed.
+          The point is to see what the flags change before running a real server.
+        </p>
+        <div class="grid">
+          <div class="subpanel">
+            <h3>Command</h3>
+            <div class="code-box">cd /home/manishmehta/projects/nanoGPT
+.venv/bin/python trace_serving_flags.py</div>
+            <h3>What to look for</h3>
+            <div class="notes">
+              <div>Baseline TGI limits reject `retrieval` and `long-doc` because their total tokens are above `max_total_tokens`.</div>
+              <div>Tuned TGI limits admit longer requests, but `agent-run` waits because the batch token budget fills first.</div>
+              <div>vLLM KV cache capacity grows from 7.60 GB to 9.00 GB in the tuned case, but the toy setup still has high KV pressure.</div>
+              <div>`max_num_seqs` changes how many active sequences share the cache budget.</div>
+            </div>
+          </div>
+          <div class="subpanel">
+            <h3>Latest output from this machine</h3>
+            <div class="code-box">requests
+request | prompt tokens | max new tokens | total tokens
+short-chat | 320 | 128 | 448
+retrieval | 1800 | 256 | 2056
+long-doc | 3400 | 512 | 3912
+agent-run | 900 | 768 | 1668
+
+baseline serving flags
+1. TGI-style token limits
+settings
+max_total_tokens: 2048
+max_batch_prefill_tokens: 4096
+max_batch_total_tokens: 6144
+
+per-request fit
+request | prompt | max_new | total | result
+short-chat | 320 | 128 | 448 | fits
+retrieval | 1800 | 256 | 2056 | reject or lower output
+long-doc | 3400 | 512 | 3912 | reject or lower output
+agent-run | 900 | 768 | 1668 | fits
+
+batch admission
+admitted: ['short-chat', 'agent-run']
+prefill tokens admitted: 1220
+potential total tokens admitted: 2116
+waiting: []
+
+2. vLLM-style KV capacity
+settings
+gpu_memory_gb: 24
+model_weight_gb: 14
+gpu_memory_utilization: 0.9
+kv_cache_memory_bytes: auto
+kv_cache_dtype_bytes: 2
+max_num_seqs: 256
+max_num_batched_tokens: 8192
+
+derived
+usable memory budget: 21.60 GB
+KV cache budget: 7.60 GB
+KV bytes per token position: 512.00 KB
+total cached token positions: 15564
+cached positions per active sequence if full: 60
+
+pressure readout
+KV pressure: high, long requests may be preempted or rejected
+batch token cap fits inside total cache capacity
+
+tuned serving flags
+1. TGI-style token limits
+settings
+max_total_tokens: 4096
+max_batch_prefill_tokens: 6144
+max_batch_total_tokens: 10000
+
+per-request fit
+request | prompt | max_new | total | result
+short-chat | 320 | 128 | 448 | fits
+retrieval | 1800 | 256 | 2056 | fits
+long-doc | 3400 | 512 | 3912 | fits
+agent-run | 900 | 768 | 1668 | fits
+
+batch admission
+admitted: ['short-chat', 'retrieval', 'long-doc']
+prefill tokens admitted: 5520
+potential total tokens admitted: 6416
+waiting: ['agent-run']
+
+2. vLLM-style KV capacity
+settings
+gpu_memory_gb: 24
+model_weight_gb: 14
+gpu_memory_utilization: 0.95
+kv_cache_memory_bytes: 9.00 GB
+kv_cache_dtype_bytes: 2
+max_num_seqs: 128
+max_num_batched_tokens: 4096
+
+derived
+usable memory budget: 22.80 GB
+KV cache budget: 9.00 GB
+KV bytes per token position: 512.00 KB
+total cached token positions: 18432
+cached positions per active sequence if full: 144
+
+pressure readout
+KV pressure: high, long requests may be preempted or rejected
+batch token cap fits inside total cache capacity</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sources" class="panel">
+        <h2>Official Docs Used</h2>
+        <div class="notes">
+          <div><a href="https://huggingface.co/docs/transformers/main_classes/text_generation">Transformers generation docs</a>: output length and cache settings.</div>
+          <div><a href="https://huggingface.co/docs/transformers/main_classes/model">Transformers model loading docs</a>: dtype, device map, and offload settings.</div>
+          <div><a href="https://huggingface.co/docs/text-generation-inference/basic_tutorials/launcher">TGI launcher docs</a>: total token, prefill token, waiting ratio, and batch token controls.</div>
+          <div><a href="https://huggingface.co/docs/text-generation-inference/architecture">TGI architecture docs</a>: router and model server roles.</div>
+          <div><a href="https://docs.vllm.ai/en/stable/configuration/engine_args/">vLLM engine arguments</a>: KV cache memory, cache dtype, prefix caching, and engine limits.</div>
+          <div><a href="https://docs.vllm.ai/en/stable/configuration/optimization/">vLLM optimization docs</a>: KV pressure, preemption, chunked prefill, TTFT, and ITL tradeoffs.</div>
+          <div><a href="https://docs.vllm.ai/en/latest/serving/data_parallel_deployment/">vLLM data parallel docs</a>: data parallel ranks, load balancing, and per-rank sequence limits.</div>
+        </div>
+      </section>
+      <footer>
+        Use this page after Labs 8 through 12. It connects memory, batching,
+        cache, matmul, serving metrics, and library settings.
+      </footer>
+    </main>
+    <script>
+      const liveRequests = [
+        { id: "short-chat", prompt: 320, maxNew: 128 },
+        { id: "retrieval", prompt: 1800, maxNew: 256 },
+        { id: "long-doc", prompt: 3400, maxNew: 512 },
+        { id: "agent-run", prompt: 900, maxNew: 768 }
+      ];
+
+      function bytesLabel(value) {
+        if (value < 1024 * 1024 * 1024) {
+          return `${(value / (1024 * 1024)).toFixed(2)} MB`;
+        }
+        return `${(value / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+      }
+
+      function clampNumber(id, min, max) {
+        const node = document.getElementById(id);
+        const value = Math.max(min, Math.min(max, Number(node.value) || min));
+        node.value = value;
+        return value;
+      }
+
+      function updateLiveFlags() {
+        const maxTotal = clampNumber("liveMaxTotalTokens", 512, 8192);
+        const maxPrefill = clampNumber("liveMaxBatchPrefill", 512, 12000);
+        const maxBatchTotal = clampNumber("liveMaxBatchTotal", 512, 16000);
+        const gpuUtil = clampNumber("liveGpuUtil", 0.50, 0.99);
+        const kvOverride = Number(document.getElementById("liveKvBytes").value);
+        const maxSeqs = clampNumber("liveMaxSeqs", 16, 512);
+        const maxBatchedTokens = clampNumber("liveMaxBatchedTokens", 512, 20000);
+        const accepted = [];
+        const rows = [];
+        for (const request of liveRequests) {
+          const total = request.prompt + request.maxNew;
+          const fits = total <= maxTotal;
+          rows.push(`${request.id}: prompt ${request.prompt}, max_new ${request.maxNew}, total ${total}, ${fits ? "fits" : "reject or lower output"}`);
+          if (fits) {
+            accepted.push({ ...request, total });
+          }
+        }
+
+        let promptTotal = 0;
+        let possibleTotal = 0;
+        const batch = [];
+        for (const request of accepted) {
+          if (promptTotal + request.prompt <= maxPrefill && possibleTotal + request.total <= maxBatchTotal) {
+            batch.push(request);
+            promptTotal += request.prompt;
+            possibleTotal += request.total;
+          }
+        }
+        const waiting = accepted.filter((request) => !batch.includes(request));
+
+        const gpuMemoryBytes = 24 * 1024 * 1024 * 1024;
+        const modelBytes = 14 * 1024 * 1024 * 1024;
+        const usable = gpuMemoryBytes * gpuUtil;
+        const automaticKvBudget = Math.max(0, usable - modelBytes);
+        const kvBudget = kvOverride || automaticKvBudget;
+        const bytesPerPosition = 32 * 2 * 32 * 128 * 2;
+        const cachedPositions = Math.floor(kvBudget / bytesPerPosition);
+        const positionsPerSeq = Math.floor(cachedPositions / maxSeqs);
+        const pressure = positionsPerSeq < 1024 ? "high" : "ok";
+
+        document.getElementById("liveFitCount").textContent = `${accepted.length}/4`;
+        document.getElementById("liveBatchCount").textContent = batch.length;
+        document.getElementById("liveKvBudget").textContent = bytesLabel(kvBudget);
+        document.getElementById("liveCachedPositions").textContent = cachedPositions.toLocaleString();
+        document.getElementById("livePerSeq").textContent = positionsPerSeq.toLocaleString();
+        document.getElementById("livePressure").textContent = pressure;
+
+        document.getElementById("liveFlagNotes").innerHTML = [
+          `TGI per-request fit uses prompt plus max_new_tokens and compares that total to max_total_tokens.`,
+          `The first admitted batch has ${promptTotal} prompt tokens and ${possibleTotal} possible total tokens.`,
+          waiting.length
+            ? `${waiting.map((request) => request.id).join(", ")} waits because the batch budget is full.`
+            : `No accepted request is waiting after the first batch in this setting.`,
+          kvOverride
+            ? `vLLM KV cache size is set directly by kv_cache_memory_bytes.`
+            : `vLLM KV cache size is automatic: GPU budget from gpu_memory_utilization minus model weights.`
+        ].map((note) => `<div>${note}</div>`).join("");
+
+        document.getElementById("liveFlagOutput").textContent = [
+          "requests",
+          ...rows,
+          "",
+          "first batch",
+          `admitted: [${batch.map((request) => request.id).join(", ")}]`,
+          `waiting: [${waiting.map((request) => request.id).join(", ")}]`,
+          `prefill tokens admitted: ${promptTotal}`,
+          `potential total tokens admitted: ${possibleTotal}`,
+          "",
+          "vLLM KV cache",
+          `usable memory budget: ${bytesLabel(usable)}`,
+          `KV cache budget: ${bytesLabel(kvBudget)}`,
+          `KV bytes per token position: ${bytesLabel(bytesPerPosition)}`,
+          `total cached token positions: ${cachedPositions}`,
+          `cached positions per active sequence: ${positionsPerSeq}`,
+          `KV pressure: ${pressure}`
+        ].join("\n");
+      }
+
+      function rotate(ids, ms) {
+        let step = 0;
+        setInterval(() => {
+          ids.forEach((id, index) => {
+            document.getElementById(id).classList.toggle("active", index === step);
+          });
+          step = (step + 1) % ids.length;
+        }, ms);
+      }
+
+      [
+        "liveMaxTotalTokens",
+        "liveMaxBatchPrefill",
+        "liveMaxBatchTotal",
+        "liveGpuUtil",
+        "liveKvBytes",
+        "liveMaxSeqs",
+        "liveMaxBatchedTokens"
+      ].forEach((id) => {
+        const node = document.getElementById(id);
+        node.addEventListener("input", updateLiveFlags);
+        node.addEventListener("change", updateLiveFlags);
+      });
+
+      updateLiveFlags();
+      rotate(["runtimeFlow0", "runtimeFlow1", "runtimeFlow2", "runtimeFlow3", "runtimeFlow4"], 1200);
+      rotate([
+        "runtimeSet0",
+        "runtimeSet1",
+        "runtimeSet2",
+        "runtimeSet3",
+        "runtimeSet4",
+        "runtimeSet5",
+        "runtimeSet6",
+        "runtimeSet7",
+        "runtimeSet8",
+        "runtimeSet9",
+        "runtimeSet10",
+        "runtimeSet11",
+        "runtimeSet12",
+        "runtimeSet13",
+        "runtimeSet14",
+        "runtimeSet15",
+        "runtimeSet16"
+      ], 900);
+    </script>
+  </body>
+</html>
