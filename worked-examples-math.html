@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Worked Math Examples: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1220px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1000px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 940px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 960px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .example {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 210px 1.1fr 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .row b { color: var(--ink); }
+      .row span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      @media (max-width: 1000px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">worked math examples</div>
+        <h1>Small numbers make the inference formulas inspectable.</h1>
+        <p>
+          These examples use toy dimensions and round numbers. They are not
+          benchmark values. They are hand-checkable calculations that show why
+          attention, KV cache, batching, queues, LoRA, and speculation behave
+          the way the larger experiments suggest.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="first-principles-study-path.html">study path</a>
+        <a href="math-glossary.html">math glossary</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="kv-cache-math.html">KV cache math</a>
+        <a href="serving-runtime-math.html">serving runtime math</a>
+        <a href="adapter-training-math.html">adapter training math</a>
+        <a href="experiment-claim-matrix.html">experiment claim matrix</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="#attention">attention</a>
+        <a href="#kv">KV bytes</a>
+        <a href="#batch">batching</a>
+        <a href="#queue">queue</a>
+        <a href="#lora">LoRA</a>
+        <a href="#spec">speculation</a>
+      </div>
+    </div>
+
+    <main>
+      <section class="panel wrap">
+        <div class="bug">how to read</div>
+        <h2>Each example has the same shape.</h2>
+        <p class="lead">
+          Start with the toy inputs, compute the formula, then read the inference
+          consequence. The goal is not to memorize these numbers. The goal is to
+          see which term in the formula changes the serving behavior.
+        </p>
+        <div class="grid">
+          <div class="card"><b>Arithmetic</b><span>Dot products, softmax, logits, LoRA parameters.</span></div>
+          <div class="card"><b>Bytes</b><span>KV cache, quantization, active positions, available room.</span></div>
+          <div class="card"><b>Waiting</b><span>Queue stability, p95 risk, decode steps, accepted draft tokens.</span></div>
+        </div>
+      </section>
+
+      <section id="attention" class="panel wrap">
+        <div class="bug">attention example</div>
+        <h2>Dot products become attention weights.</h2>
+        <p class="lead">
+          Suppose one query compares against three keys. Use a small head width
+          so the scale is easy: <code>d_head = 4</code>, so <code>sqrt(d_head) = 2</code>.
+        </p>
+        <div class="formula">raw dot scores: [4, 2, 0]
+scaled scores: [4/2, 2/2, 0/2] = [2, 1, 0]
+softmax denominator: exp(2) + exp(1) + exp(0) = 7.39 + 2.72 + 1 = 11.11
+attention weights: [0.67, 0.24, 0.09]</div>
+        <div class="example">
+          <div class="row">
+            <b>Largest dot product</b>
+            <span>The first prior token aligns best with the query.</span>
+            <span>Softmax gives it about 67 percent of the read weight.</span>
+            <span>The output vector is mostly that value vector, but still mixes the others.</span>
+          </div>
+          <div class="row">
+            <b>Why scaling matters</b>
+            <span>Without divide-by-2, scores would be [4, 2, 0].</span>
+            <span>Softmax would become about [0.87, 0.12, 0.02].</span>
+            <span>The read becomes much sharper, which can make training and generation less stable.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="kv" class="panel wrap">
+        <div class="bug">KV bytes example</div>
+        <h2>One active request can have a predictable cache bill.</h2>
+        <p class="lead">
+          Use a small model-shaped example: 24 layers, 2 K/V tensors, 2,048
+          active positions, 8 KV heads, 128 head dimension, and 2 bytes per
+          number.
+        </p>
+        <div class="formula">KV bytes =
+24 * 2 * 2048 * 8 * 128 * 2
+= 201,326,592 bytes
+= about 192 MiB for one active request</div>
+        <div class="example">
+          <div class="row">
+            <b>10 active requests</b>
+            <span>10 * 192 MiB = about 1.9 GiB of KV cache.</span>
+            <span>This is separate from model weights and runtime workspace.</span>
+            <span>The loaded model can fit while traffic still exhausts memory.</span>
+          </div>
+          <div class="row">
+            <b>Double context</b>
+            <span>4,096 positions doubles the cache to about 384 MiB per request.</span>
+            <span>KV memory is linear in active positions.</span>
+            <span>This is why prompt and output caps are capacity controls.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="batch" class="panel wrap">
+        <div class="bug">batching example</div>
+        <h2>Batching helps until KV memory or queue wait becomes the limiter.</h2>
+        <div class="formula">available KV room: 8 GiB
+estimated KV per active request: 192 MiB
+maximum active requests by KV alone: floor(8192 / 192) = 42
+
+if runtime cap is max_active_sequences = 32:
+admission cap is 32, not 42</div>
+        <div class="example">
+          <div class="row">
+            <b>Capacity is min of gates</b>
+            <span>Memory says up to 42 requests.</span>
+            <span>Runtime sequence cap says 32 requests.</span>
+            <span>The true safe cap is the smaller gate.</span>
+          </div>
+          <div class="row">
+            <b>Why not max it out</b>
+            <span>At 32 active requests, throughput may rise.</span>
+            <span>But TTFT and p95 can worsen if queued prompts wait too long.</span>
+            <span>Capacity planning needs latency, not only tokens/sec.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="queue" class="panel wrap">
+        <div class="bug">queue example</div>
+        <h2>Overload is arithmetic before it is an incident.</h2>
+        <div class="formula">server sustainable service rate: mu = 20 requests/sec
+incoming traffic: lambda = 24 requests/sec
+excess: lambda - mu = 4 requests/sec
+
+after 60 seconds:
+rough backlog growth = 4 * 60 = 240 requests</div>
+        <div class="example">
+          <div class="row">
+            <b>What users see</b>
+            <span>Queue wait grows even if every individual model step still works.</span>
+            <span>p95 latency worsens first, then timeouts and retries appear.</span>
+            <span>More retries can increase effective arrival rate.</span>
+          </div>
+          <div class="row">
+            <b>What control does</b>
+            <span>Admission and rate limits reduce lambda.</span>
+            <span>Batching and runtime tuning can raise mu.</span>
+            <span>Stable service needs lambda below measured mu for the workload.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="lora" class="panel wrap">
+        <div class="bug">LoRA example</div>
+        <h2>Low rank can cut trainable parameters by orders of magnitude.</h2>
+        <p class="lead">
+          Suppose a projection matrix has <code>d_in = 4096</code> and
+          <code>d_out = 4096</code>. A full update trains every matrix entry. A
+          rank-8 LoRA update trains two thin matrices.
+        </p>
+        <div class="formula">full update params:
+4096 * 4096 = 16,777,216
+
+LoRA rank 8 params:
+8 * (4096 + 4096) = 65,536
+
+ratio:
+16,777,216 / 65,536 = 256x fewer trainable values</div>
+        <div class="example">
+          <div class="row">
+            <b>Why it fits</b>
+            <span>Optimizer state and gradients track far fewer trainable values.</span>
+            <span>This is why notebook adapter training can fit where full fine-tuning cannot.</span>
+            <span>It is a memory and training-workflow win.</span>
+          </div>
+          <div class="row">
+            <b>What it does not prove</b>
+            <span>Small adapter files do not prove quality.</span>
+            <span>Quality needs held-out evaluation and baseline comparison.</span>
+            <span>Serving speed still needs a separate runtime test.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="spec" class="panel wrap">
+        <div class="bug">speculative decoding example</div>
+        <h2>Speculation pays only when accepted tokens beat draft overhead.</h2>
+        <div class="formula">baseline target decode:
+4 target steps produce 4 tokens
+
+speculative case:
+draft proposes 4 tokens
+target verifies them in 1 step
+accepted prefix = 3 tokens
+target correction produces 1 more token
+
+effective target work:
+about 2 target steps for 4 output tokens, plus draft overhead</div>
+        <div class="example">
+          <div class="row">
+            <b>Good case</b>
+            <span>Accepted tokens per verification step is high.</span>
+            <span>The expensive target model runs fewer sequential steps.</span>
+            <span>Latency can improve if draft overhead is small.</span>
+          </div>
+          <div class="row">
+            <b>Bad case</b>
+            <span>Only 1 of 4 draft tokens is accepted.</span>
+            <span>The target still has to do most decode work.</span>
+            <span>The draft model becomes extra work rather than saved work.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
