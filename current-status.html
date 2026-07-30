@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Current Status: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1080px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card strong {
+        display: block;
+        color: var(--ink);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 230px repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row.ready { border-color: rgba(121, 212, 147, .45); }
+      .row.mixed { border-color: rgba(232, 166, 75, .45); }
+      .row.locked { border-color: rgba(219, 101, 85, .45); }
+      @media (max-width: 1150px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">current status</div>
+        <h1>The lab has finished the Colab learning loop; the remaining proof is the same-host serving comparison.</h1>
+        <p>
+          This page is the compact state of the whole experiment program. It
+          says what has returned, what claims are allowed, what is still locked,
+          and why the next meaningful action is no longer "run more Colab" but
+          "run the matched TGI/vLLM host campaign."
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="public-static-audit.html">static audit</a>
+        <a href="result-provenance.html">provenance</a>
+        <a href="artifact-inventory.html">artifact inventory</a>
+        <a href="hf-results-synthesis.html">HF results</a>
+        <a href="unsloth-results-synthesis.html">Unsloth results</a>
+        <a href="vllm-results-synthesis.html">vLLM results</a>
+        <a href="host-replay-runbook.html">host replay</a>
+        <a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>
+        <a href="next-runs-board.html">next runs</a>
+        <a href="#state">state</a>
+        <a href="#done">done</a>
+        <a href="#locked">locked</a>
+        <a href="#goal">end goal</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="state" class="panel wrap">
+        <div class="bug">one-screen state</div>
+        <h2>Current top next action: matched TGI/vLLM same-workload runtime proof.</h2>
+        <p class="lead">
+          The local machine has Docker but is not the proof host because
+          <code>nvidia-smi</code> and Docker GPU access are not proven locally.
+          The handoff bundle is ready. The required surface is a Linux NVIDIA
+          GPU host with Docker Engine and NVIDIA Container Toolkit.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>Colab scripts</b><strong>42 / 42</strong><span>All Colab scripts have returned result handoffs.</span></div>
+          <div class="card method"><b>source URLs</b><strong>56 / 56</strong><span>All checked source references are reachable.</span></div>
+          <div class="card trade"><b>end-to-end criteria</b><strong>4 / 8</strong><span>Four satisfied, one ready, three locked.</span></div>
+          <div class="card warn"><b>speed claim</b><strong>locked</strong><span><code>ready_for_speed_claim</code> is false.</span></div>
+        </div>
+        <div class="formula">top next command on the NVIDIA host:
+sha256sum -c gpu_host_run_bundle.sha256
+tar -xzf gpu_host_run_bundle.tar.gz
+bash run_complete_gpu_host_campaign.sh
+
+local import after return:
+bash receive_gpu_host_returns.sh</div>
+      </section>
+
+      <section id="done" class="panel wrap">
+        <div class="bug">what is done</div>
+        <h2>The learning evidence is broad enough for scoped mechanism claims.</h2>
+        <div class="row ready">
+          <b>Hugging Face lane</b>
+          <span><span class="tag">status</span><br />returned and synthesized.</span>
+          <span><span class="tag">evidence</span><br />Cache strategy, quantization fit, speculative decoding, prompt/batch/output behavior.</span>
+          <span><span class="tag">allowed claim</span><br />Model-level knobs move different bottlenecks under the saved Colab setup.</span>
+          <span><span class="tag">page</span><br /><a href="hf-results-synthesis.html">HF results</a>.</span>
+        </div>
+        <div class="row ready">
+          <b>Unsloth lane</b>
+          <span><span class="tag">status</span><br />setup, SFT, GRPO, reload, and quality probe verified.</span>
+          <span><span class="tag">evidence</span><br />NVIDIA L4 runs, SFT 8/8 steps, GRPO 2/2 steps, adapters saved and reload-tested.</span>
+          <span><span class="tag">allowed claim</span><br />Colab can produce portable LoRA artifacts under explicit quality limits.</span>
+          <span><span class="tag">page</span><br /><a href="unsloth-results-synthesis.html">Unsloth results</a>.</span>
+        </div>
+        <div class="row ready">
+          <b>vLLM lane</b>
+          <span><span class="tag">status</span><br />Colab pressure probes returned.</span>
+          <span><span class="tag">evidence</span><br />Slots, arrival knee, max batched tokens, prompt/output pressure, prefix cache, streaming.</span>
+          <span><span class="tag">allowed claim</span><br />vLLM Colab evidence explains queue, active-sequence, and KV pressure behavior.</span>
+          <span><span class="tag">page</span><br /><a href="vllm-results-synthesis.html">vLLM results</a>.</span>
+        </div>
+        <div class="row ready">
+          <b>Source and math lane</b>
+          <span><span class="tag">status</span><br />ranked and published.</span>
+          <span><span class="tag">evidence</span><br />Nine source families ranked; source/shared ladder verified.</span>
+          <span><span class="tag">allowed claim</span><br />The public site connects mechanisms to first-principles math and falsifiable runs.</span>
+          <span><span class="tag">page</span><br /><a href="mechanism-experiment-deep-map.html">mechanism map</a>.</span>
+        </div>
+      </section>
+
+      <section id="locked" class="panel wrap">
+        <div class="bug">what is locked</div>
+        <h2>The top locked decision is still the TGI versus vLLM production runtime winner.</h2>
+        <p class="lead">
+          The lock is not a paperwork issue. It is an experimental-control
+          issue. TGI and vLLM must be measured on the same host with the same
+          model, workload, client, GPU inventory, run ID, and metric fields.
+        </p>
+        <div class="row locked">
+          <b>Missing result files</b>
+          <span><span class="tag">TGI</span><br /><code>tgi_gpu_vm_results.json</code>.</span>
+          <span><span class="tag">vLLM</span><br /><code>vllm_matched_runtime_results.json</code>.</span>
+          <span><span class="tag">return</span><br /><code>gpu_host_return_files.tar.gz</code>.</span>
+          <span><span class="tag">page</span><br /><a href="tgi-vllm-locked-comparison.html">locked comparison</a>.</span>
+        </div>
+        <div class="row mixed">
+          <b>External blockers</b>
+          <span><span class="tag">local</span><br />Docker daemon works, but local NVIDIA proof is absent.</span>
+          <span><span class="tag">host</span><br />Need <code>nvidia-smi</code>, NVIDIA container runtime, and Docker <code>--gpus all</code>.</span>
+          <span><span class="tag">cloud</span><br />GCP/JetStream gates are not ready: no gcloud auth/project/model bucket proof.</span>
+          <span><span class="tag">state</span><br />waiting for external GPU host.</span>
+        </div>
+        <div class="grid">
+          <div class="card warn"><b>No winner yet</b><span>No TGI-vLLM speed or production recommendation is allowed.</span></div>
+          <div class="card warn"><b>No TensorRT table yet</b><span>TensorRT-LLM needs its own measured container result after the base host proof.</span></div>
+          <div class="card warn"><b>No JetStream table yet</b><span>JetStream/GKE needs cloud prerequisites and a measured deployment result.</span></div>
+          <div class="card method"><b>Handoff ready</b><span>The host bundle is ready; the missing piece is the actual NVIDIA Docker host run.</span></div>
+        </div>
+      </section>
+
+      <section id="goal" class="panel wrap">
+        <div class="bug">meaty end-to-end goal</div>
+        <h2>The goal is to prove an optimization ladder, not collect unrelated runs.</h2>
+        <p class="lead">
+          The lab is trying to show a causal chain from one formatted request to
+          a defensible serving decision: source mechanism, mathematical
+          prediction, controlled run, result artifact, allowed claim, and locked
+          non-claim.
+        </p>
+        <div class="formula">end-to-end proof:
+formatted request
+-> token and prompt shape
+-> prefill/decode and KV accounting
+-> HF model-level mechanism evidence
+-> Unsloth adapter workflow boundary
+-> vLLM serving pressure evidence
+-> matched TGI/vLLM host proof
+-> bounded production runtime decision
+
+current top unmet criterion:
+Matched TGI/vLLM host proof has returned</div>
+        <div class="grid">
+          <div class="card method"><b>Use Colab for</b><span>Mechanism learning, HF knobs, Unsloth adapters, vLLM pressure, and scoped GPU evidence.</span></div>
+          <div class="card trade"><b>Use the host for</b><span>The fair TGI/vLLM comparison that Colab cannot prove because TGI needs Docker GPU access.</span></div>
+          <div class="card warn"><b>After host return</b><span>Update provenance, locked comparison, readiness, capstone decision, and next runs only if gates pass.</span></div>
+          <div class="card measure"><b>Public route</b><span>Start with <a href="public-reader-map.html">reader map</a>, then <a href="current-status.html">current status</a>, then the result syntheses.</span></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
