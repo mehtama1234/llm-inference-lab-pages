@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KV Cache Math: LLM Inference</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 980px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 920px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 940px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .step {
+        display: grid;
+        grid-template-columns: 205px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .step b { color: var(--ink); }
+      .step span { color: var(--muted); font-size: 14px; }
+      .diagram {
+        min-height: 340px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        overflow: hidden;
+      }
+      svg { width: 100%; height: 100%; display: block; }
+      .node { fill: #132126; stroke: #31484e; stroke-width: 1.5; }
+      .node2 { fill: #10272b; stroke: #3c6a72; stroke-width: 1.5; }
+      .wire { fill: none; stroke: #45676f; stroke-width: 2; }
+      .label { fill: var(--ink); font: 13px var(--mono); }
+      .tiny { fill: var(--muted); font: 11px var(--mono); }
+      .cyan { fill: var(--cyan); }
+      .green { fill: var(--green); }
+      .amber { fill: var(--amber); }
+      .red { fill: var(--red); }
+      @media (max-width: 900px) {
+        .grid, .two, .step { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">KV cache math deep dive</div>
+        <h1>KV cache turns repeated computation into a growing memory bill.</h1>
+        <p>
+          This page explains the mathematical reason KV cache works, why it is
+          the center of the memory wall, and why PagedAttention, prefix caching,
+          continuous batching, quantization, and admission limits are different
+          answers to the same cache equation.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="big-picture-inference.html">big picture</a>
+        <a href="production-systems.html">production</a>
+        <a href="#frame">frame</a>
+        <a href="#formula">formula</a>
+        <a href="#reuse">reuse</a>
+        <a href="#wall">memory wall</a>
+        <a href="#paged">paged</a>
+        <a href="#prefix">prefix</a>
+        <a href="#batching">batching</a>
+        <a href="#claims">claims</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="frame" class="panel wrap">
+        <div class="bug">core idea</div>
+        <h2>During decode, the new token needs the old keys and values, not the old raw text.</h2>
+        <p class="lead">
+          In a transformer layer, each token produces key and value tensors.
+          Once the prompt has been processed, those tensors are fixed for that
+          request. Decode can therefore keep them and reuse them instead of
+          rebuilding them from the whole prefix at every step.
+        </p>
+        <div class="formula">for each layer and head:
+K_old, V_old = cache for visible previous positions
+q_new, k_new, v_new = projections for the newest token
+scores = q_new K_all^T / sqrt(d_head)
+output = softmax(scores) V_all
+append k_new, v_new to cache</div>
+        <div class="grid">
+          <div class="card method">
+            <b>What is saved</b>
+            <span>Projection work for older positions and the need to feed the full growing prefix every decode step.</span>
+          </div>
+          <div class="card trade">
+            <b>What is spent</b>
+            <span>GPU memory to store K and V for every active position, layer, and KV head.</span>
+          </div>
+          <div class="card warn">
+            <b>What remains</b>
+            <span>The new query still reads the visible cached positions, so long context still has a decode cost.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="formula" class="panel wrap">
+        <div class="bug">byte formula</div>
+        <h2>The cache bill is linear in active tokens, layers, KV width, and bytes per number.</h2>
+        <div class="formula">KV bytes per active request =
+layers
+* 2                         # K and V
+* active_positions
+* kv_heads
+* head_dim
+* bytes_per_number
+
+KV bytes for server =
+sum_over_active_requests(KV bytes per request)
++ allocator overhead
++ fragmentation or reserved-but-unused slots</div>
+        <div class="step">
+          <b>Layers</b>
+          <span>Each transformer layer has its own attention calculation.</span>
+          <span>More layers means more separate K/V tensors per token position.</span>
+        </div>
+        <div class="step">
+          <b>Positions</b>
+          <span>Prompt tokens and generated tokens both occupy cache positions.</span>
+          <span>A 4k prompt plus 1k generated tokens is 5k active positions for that request near the end.</span>
+        </div>
+        <div class="step">
+          <b>KV heads and head dim</b>
+          <span>Full multi-head attention stores K/V for each head. GQA/MQA store fewer K/V heads.</span>
+          <span>This is why model architecture changes serving memory even when parameter count looks similar.</span>
+        </div>
+        <div class="step">
+          <b>Bytes per number</b>
+          <span>FP16/BF16 use 2 bytes per stored value; lower precision cache formats can use fewer.</span>
+          <span>That lowers capacity pressure only if quality and runtime overhead remain acceptable.</span>
+        </div>
+      </section>
+
+      <section id="reuse" class="panel wrap">
+        <div class="bug">why cache works</div>
+        <h2>KV cache is valid because prior K/V rows are deterministic once computed.</h2>
+        <p class="lead">
+          With fixed weights, fixed prompt token IDs, fixed position scheme, and
+          fixed previous tokens, the old K/V tensors do not change when the
+          model asks for the next token. Reusing them gives the same attention
+          inputs for old positions.
+        </p>
+        <div class="formula">without cache at decode step t:
+run model on x_1 ... x_t to rebuild old K/V and score next token
+
+with cache at decode step t:
+run model on x_t only, read cached K/V for x_1 ... x_(t-1), then append K/V for x_t</div>
+        <div class="two">
+          <div class="card method">
+            <b>Mathematical claim</b>
+            <span>The cache is not an approximation. It stores intermediate values that the model would otherwise recompute.</span>
+          </div>
+          <div class="card warn">
+            <b>Systems claim</b>
+            <span>The runtime must preserve exact position order, dtype expectations, attention mask behavior, and request ownership.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="wall" class="panel wrap">
+        <div class="bug">memory wall</div>
+        <h2>The cache solves repeated work and creates the serving memory wall.</h2>
+        <div class="grid">
+          <div class="card measure">
+            <b>Long prompt</b>
+            <span>More positions before the first output token. TTFT rises and the cache starts larger.</span>
+          </div>
+          <div class="card measure">
+            <b>Long output</b>
+            <span>Each generated token appends one more K/V position per layer. Memory grows through the stream.</span>
+          </div>
+          <div class="card measure">
+            <b>More users</b>
+            <span>Cache bills add across active requests. The same loaded model can fit at idle and OOM under traffic.</span>
+          </div>
+        </div>
+        <div class="formula">available KV room =
+GPU memory
+- model weights
+- runtime workspace
+- activation scratch
+- safety margin</div>
+        <p>
+          This is the reason active-sequence limits, max-total-token limits,
+          batch-token limits, prompt limits, and eviction policies are not
+          arbitrary flags. They are guardrails around this subtraction.
+        </p>
+      </section>
+
+      <section id="paged" class="panel wrap">
+        <div class="bug">PagedAttention</div>
+        <h2>PagedAttention changes allocation, not attention meaning.</h2>
+        <div class="two">
+          <div>
+            <p>
+              Attention needs K/V rows in logical token order. It does not
+              require every request's K/V rows to sit in one contiguous physical
+              memory region. PagedAttention splits K/V storage into fixed-size
+              blocks and uses a table to translate logical block order into
+              physical block locations.
+            </p>
+            <div class="formula">logical position -> logical block + offset
+block table[request, logical block] -> physical block
+physical block + offset -> K/V row to read</div>
+          </div>
+          <div class="diagram" aria-label="Paged KV block diagram">
+            <svg viewBox="0 0 760 340" role="img">
+              <text class="label cyan" x="45" y="42">request logical order</text>
+              <rect class="node2" x="45" y="62" width="78" height="56" rx="8" />
+              <rect class="node2" x="132" y="62" width="78" height="56" rx="8" />
+              <rect class="node2" x="219" y="62" width="78" height="56" rx="8" />
+              <text class="tiny" x="65" y="94">L0</text>
+              <text class="tiny" x="152" y="94">L1</text>
+              <text class="tiny" x="239" y="94">L2</text>
+              <path class="wire" d="M84 120 C110 155 145 165 185 185" />
+              <path class="wire" d="M171 120 C190 150 235 160 315 185" />
+              <path class="wire" d="M258 120 C300 150 395 160 565 185" />
+              <text class="label amber" x="45" y="170">block table</text>
+              <rect class="node" x="150" y="160" width="80" height="50" rx="8" />
+              <text class="tiny" x="168" y="190">L0 -> P4</text>
+              <rect class="node" x="280" y="160" width="80" height="50" rx="8" />
+              <text class="tiny" x="298" y="190">L1 -> P1</text>
+              <rect class="node" x="530" y="160" width="80" height="50" rx="8" />
+              <text class="tiny" x="548" y="190">L2 -> P7</text>
+              <text class="label green" x="45" y="255">physical GPU KV blocks can be non-contiguous</text>
+              <rect class="node" x="45" y="275" width="70" height="42" rx="6" />
+              <rect class="node2" x="130" y="275" width="70" height="42" rx="6" />
+              <rect class="node" x="215" y="275" width="70" height="42" rx="6" />
+              <rect class="node" x="300" y="275" width="70" height="42" rx="6" />
+              <rect class="node2" x="385" y="275" width="70" height="42" rx="6" />
+              <rect class="node" x="470" y="275" width="70" height="42" rx="6" />
+              <rect class="node" x="555" y="275" width="70" height="42" rx="6" />
+              <rect class="node2" x="640" y="275" width="70" height="42" rx="6" />
+              <text class="tiny" x="65" y="301">P0</text>
+              <text class="tiny" x="150" y="301">P1</text>
+              <text class="tiny" x="235" y="301">P2</text>
+              <text class="tiny" x="320" y="301">P3</text>
+              <text class="tiny" x="405" y="301">P4</text>
+              <text class="tiny" x="490" y="301">P5</text>
+              <text class="tiny" x="575" y="301">P6</text>
+              <text class="tiny" x="660" y="301">P7</text>
+            </svg>
+          </div>
+        </div>
+        <div class="step">
+          <b>Why it helps</b>
+          <span>Uneven request lengths waste less memory when allocation happens in reusable blocks.</span>
+          <span>More useful KV rows can fit in the same GPU memory, so the runtime can often admit larger batches.</span>
+        </div>
+        <div class="step">
+          <b>What it cannot do</b>
+          <span>It does not reduce the mathematical need to read visible K/V rows.</span>
+          <span>If latency is dominated by another bottleneck, paging alone will not prove a speed win.</span>
+        </div>
+      </section>
+
+      <section id="prefix" class="panel wrap">
+        <div class="bug">prefix cache</div>
+        <h2>Prefix caching works only when the prefix is identical at the token level.</h2>
+        <p class="lead">
+          Two prompts that look close to a human may not share a cacheable
+          prefix. The tokens, chat template, system prompt, tool block, and
+          prefix boundary must match. When they do, completed K/V blocks for the
+          shared prefix can be reused.
+        </p>
+        <div class="formula">cache hit condition:
+same model revision
++ same tokenizer
++ same token IDs through a block boundary
++ same position scheme
++ same attention/cache settings</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Good fit</b>
+            <span>Shared system prompts, repeated tool schemas, common RAG header blocks, and stable instruction prefixes.</span>
+          </div>
+          <div class="card trade">
+            <b>Bad fit</b>
+            <span>Personalized first tokens, changing timestamps, unstable templates, or different tokenizer behavior.</span>
+          </div>
+          <div class="card warn">
+            <b>Claim boundary</b>
+            <span>A prefix-cache hit proves skipped prefill for matching prefixes, not faster unrelated prompts.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="batching" class="panel wrap">
+        <div class="bug">serving pressure</div>
+        <h2>Continuous batching is useful only inside the KV capacity envelope.</h2>
+        <div class="formula">admit request if:
+prompt_tokens + max_new_tokens <= max_total_tokens
+batch_prefill_tokens_after_admission <= max_batch_prefill_tokens
+active_sequences_after_admission <= max_sequences
+estimated_KV_bytes_after_admission <= available_KV_room</div>
+        <div class="step">
+          <b>Batching upside</b>
+          <span>More active requests can share GPU work and amortize loaded weights.</span>
+          <span>This improves throughput when the GPU was underfilled.</span>
+        </div>
+        <div class="step">
+          <b>Batching downside</b>
+          <span>Each active request owns separate KV rows, so cache memory grows with concurrency.</span>
+          <span>Past the knee, queue wait and OOM risk rise faster than useful throughput.</span>
+        </div>
+        <div class="step">
+          <b>Why host proof matters</b>
+          <span>Colab can teach the mechanism, but the capacity knee depends on exact GPU memory, runtime implementation, launch flags, model, and workload.</span>
+          <span>That is why the matched TGI/vLLM host run remains the fair speed proof.</span>
+        </div>
+      </section>
+
+      <section id="claims" class="panel wrap">
+        <div class="bug">source and claim map</div>
+        <h2>KV cache is where papers, docs, and experiments meet.</h2>
+        <div class="step">
+          <b>HF cache docs</b>
+          <span><a href="https://huggingface.co/docs/transformers/main/cache_explanation">Hugging Face caching docs</a> explain the repeated matrix-work problem in autoregressive generation.</span>
+          <span>Our model-level cache probes test this as a local generation mechanism.</span>
+        </div>
+        <div class="step">
+          <b>NVIDIA optimization</b>
+          <span><a href="https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/">NVIDIA's inference optimization article</a> frames prefill as parallel work and decode as memory-bound work, then gives the KV memory formula.</span>
+          <span>Our byte accounting and host-bundle work use this as the bridge from math to GPU fit.</span>
+        </div>
+        <div class="step">
+          <b>PagedAttention</b>
+          <span><a href="https://arxiv.org/abs/2309.06180">The vLLM PagedAttention paper</a> targets the fact that KV cache is large, dynamic, and easy to waste.</span>
+          <span>Our vLLM pressure experiments and pending matched host run test whether allocation and batching improvements matter for our workload.</span>
+        </div>
+        <div class="step">
+          <b>Public evidence rule</b>
+          <span>The math page can say why the method should work.</span>
+          <span>The final result page can only say it worked after same-model, same-workload, same-host evidence returns.</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
