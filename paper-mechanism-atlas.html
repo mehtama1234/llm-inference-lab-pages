@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Paper Mechanism Atlas: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1080px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .paper {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 14px;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 12px;
+      }
+      .paper h3 {
+        margin: 0 0 10px;
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 13px;
+      }
+      .paper .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .claims {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .claims div {
+        min-height: 118px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+      }
+      .claims b {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--ink);
+        font-size: 12px;
+        font-family: var(--mono);
+      }
+      .claims span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .card {
+        min-height: 132px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .method { border-color: rgba(121, 212, 147, .45); }
+      .trade { border-color: rgba(232, 166, 75, .45); }
+      .warn { border-color: rgba(219, 101, 85, .45); }
+      .measure { border-color: rgba(88, 216, 230, .45); }
+      @media (max-width: 1100px) {
+        .grid, .paper, .claims { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">paper mechanism atlas</div>
+        <h1>The papers are one chain: reduce the cost of choosing the next token without changing what was tested.</h1>
+        <p>
+          This page is the deeper bridge between first principles, papers,
+          docs, notebooks, and our experiments. For each source family it names
+          the mathematical object, why the mechanism works, where the proof
+          breaks, and the exact lab evidence needed before the idea becomes a
+          public claim.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="source-math-deep-dives.html">source math deep dives</a>
+        <a href="mechanism-experiment-deep-map.html">mechanism map</a>
+        <a href="formula-sheet.html">formula sheet</a>
+        <a href="capstone-finish-line.html">finish line</a>
+        <a href="#frame">frame</a>
+        <a href="#model">model math</a>
+        <a href="#memory">memory math</a>
+        <a href="#serving">serving math</a>
+        <a href="#adaptation">adaptation math</a>
+        <a href="#evidence">evidence math</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="frame" class="panel wrap">
+        <div class="bug">common spine</div>
+        <h2>Every method moves one term in the same constrained objective.</h2>
+        <p class="lead">
+          The user experiences one thing: time until useful tokens arrive. The
+          system pays for several things at once: weight reads, attention over
+          prior tokens, KV storage, scheduler decisions, network/client waits,
+          and any adapter or reward-induced behavior change. The useful question
+          is not "which tool is best?" It is "which term is binding for this
+          workload?"
+        </p>
+        <div class="formula">serving objective for one workload:
+minimize P50/P95 waiting and error probability
+subject to:
+  y_t ~ model(next token | prompt, y_<t)
+  weight_bytes + KV_bytes(active_tokens) + runtime_overhead <= GPU_memory
+  per_step_time = max(compute_time, memory_read_time, scheduler_gap, communication_time)
+  evidence_scope = same model + same tokenizer + same prompts + same host + same client</div>
+        <div class="grid">
+          <div class="card measure"><b>Model math</b><span>Attention, logits, and sampling define the function being served.</span></div>
+          <div class="card method"><b>Systems math</b><span>KV layout, batching, kernels, and queues decide how much useful work fits per second.</span></div>
+          <div class="card warn"><b>Evidence math</b><span>A faster number is only meaningful if the compared systems solved the same constrained problem.</span></div>
+        </div>
+      </section>
+
+      <section id="model" class="panel wrap">
+        <div class="bug">model math</div>
+        <h2>Transformer and attention papers define the cost we keep trying to rearrange.</h2>
+        <div class="paper">
+          <div>
+            <h3>Transformer attention</h3>
+            <div class="meta">
+              Source: <a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a>.
+            </div>
+          </div>
+          <div>
+            <div class="formula">Q = X W_Q
+K = X W_K
+V = X W_V
+attention(X) = softmax(Q K^T / sqrt(d_head)) V</div>
+            <div class="claims">
+              <div><b>object changed</b><span>A token is no longer processed only by local recurrence. It can form weighted mixtures of all visible prior token vectors.</span></div>
+              <div><b>why it works</b><span>The dot product is a similarity score. Softmax turns scores into a probability-like weighting, so the model can route information by content.</span></div>
+              <div><b>cost created</b><span>Prefill scores all prompt-token pairs. Decode scores one new query against every cached key. Context length therefore becomes a direct runtime and memory variable.</span></div>
+              <div><b>lab proof</b><span>Token counts, prompt shape, KV bytes, and latency must be measured together. A prompt change is a systems change.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="paper">
+          <div>
+            <h3>FlashAttention-style kernels</h3>
+            <div class="meta">
+              Source: <a href="https://arxiv.org/abs/2205.14135">FlashAttention</a>.
+            </div>
+          </div>
+          <div>
+            <div class="formula">same mathematical output:
+softmax(Q K^T / sqrt(d)) V
+
+different execution:
+tile Q, K, V
+keep partial softmax statistics on chip
+avoid materializing the full attention matrix in slow memory</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The formula is not changed. The memory traffic pattern is changed.</span></div>
+              <div><b>why it works</b><span>Softmax can be accumulated block by block if the running max and normalizer are tracked exactly enough.</span></div>
+              <div><b>failure boundary</b><span>If attention is not the bottleneck, a better attention kernel may not move end-to-end latency.</span></div>
+              <div><b>lab proof</b><span>Compare prefill-heavy and decode-heavy workloads separately. Kernel speed is not the same claim as server speed.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="paper">
+          <div>
+            <h3>Speculative decoding</h3>
+            <div class="meta">
+              Sources: <a href="https://arxiv.org/abs/2211.17192">speculative sampling</a> and Hugging Face generation references.
+            </div>
+          </div>
+          <div>
+            <div class="formula">draft proposes k tokens:
+z_1...z_k ~ q(.)
+
+target verifies:
+p(z_i | context, accepted_prefix)
+
+speedup needs:
+accepted_tokens_per_target_call > 1
+draft_cost + verify_cost < repeated_target_decode_cost</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The target model still defines the distribution. A cheaper draft model proposes candidate steps.</span></div>
+              <div><b>why it works</b><span>When the draft often agrees with the target, one target pass can validate multiple tokens.</span></div>
+              <div><b>failure boundary</b><span>Low acceptance, expensive draft work, or memory pressure can erase the gain.</span></div>
+              <div><b>lab proof</b><span>Our HF speculative runs can prove target-call reduction, not a universal latency win.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="memory" class="panel wrap">
+        <div class="bug">memory math</div>
+        <h2>PagedAttention, quantization, and prefix caching all attack memory pressure from different angles.</h2>
+        <div class="paper">
+          <div>
+            <h3>vLLM PagedAttention</h3>
+            <div class="meta">
+              Source: <a href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for Large Language Model Serving with PagedAttention</a>.
+            </div>
+          </div>
+          <div>
+            <div class="formula">KV_bytes =
+layers * tokens * kv_heads * head_dim * 2 * bytes_per_element
+
+logical token block -> physical GPU block
+admission improves when wasted_reserved_KV drops</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The KV cache allocation. Logical sequence order is separated from contiguous physical memory.</span></div>
+              <div><b>why it works</b><span>Serving has many sequences with uneven lengths. Block tables reduce fragmentation and make admission closer to actual active-token demand.</span></div>
+              <div><b>failure boundary</b><span>If compute or client timing dominates, lower KV waste may not improve user-visible latency.</span></div>
+              <div><b>lab proof</b><span>vLLM pressure probes should vary active slots, prompt length, output length, and prefix reuse.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="paper">
+          <div>
+            <h3>Quantization and QLoRA</h3>
+            <div class="meta">
+              Source: <a href="https://arxiv.org/abs/2305.14314">QLoRA</a> plus Hugging Face bitsandbytes paths.
+            </div>
+          </div>
+          <div>
+            <div class="formula">weight_memory ~= parameter_count * bits_per_weight / 8
+
+quantized inference helps if:
+memory_saved reduces paging/OOM/bandwidth pressure
+and dequantization overhead does not dominate</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The representation of weights, not the abstract matrix multiply the model wants to compute.</span></div>
+              <div><b>why it works</b><span>Weights often tolerate lower precision because learned representations are redundant enough for small rounding errors.</span></div>
+              <div><b>failure boundary</b><span>Quantization can hurt quality, add dequantization cost, or fail to help if KV memory is the binding term.</span></div>
+              <div><b>lab proof</b><span>HF quantization fit proves memory feasibility and load behavior; quality and serving speed need separate probes.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="paper">
+          <div>
+            <h3>Prefix caching</h3>
+            <div class="meta">
+              Sources: vLLM prefix caching docs and local prefix-cache probes.
+            </div>
+          </div>
+          <div>
+            <div class="formula">if prompt = shared_prefix + request_suffix:
+prefill(shared_prefix) can be reused
+
+savings ~= repeated_prefix_tokens * prefill_cost_per_token
+minus lookup/hash/cache overhead</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The cache key for repeated prefix KV, not the model distribution.</span></div>
+              <div><b>why it works</b><span>Identical prefix tokens produce the same cached keys and values for a fixed model state and template.</span></div>
+              <div><b>failure boundary</b><span>Template drift, low prefix reuse, or short prompts can make cache overhead larger than savings.</span></div>
+              <div><b>lab proof</b><span>Run repeated-prefix and unique-prefix traffic side by side. Tokenization must be frozen.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="serving" class="panel wrap">
+        <div class="bug">serving math</div>
+        <h2>TGI, vLLM, TensorRT-LLM, and JetStream are policies over the same queue and memory equations.</h2>
+        <div class="paper">
+          <div>
+            <h3>TGI and continuous batching</h3>
+            <div class="meta">
+              Sources: <a href="https://huggingface.co/docs/text-generation-inference/index">Hugging Face TGI</a> and continuous batching references.
+            </div>
+          </div>
+          <div>
+            <div class="formula">request latency =
+queue_wait + prefill_time(prompt_tokens) + decode_steps * per_step_time(active_batch)
+
+continuous batching tries to keep:
+active_GPU_work / wall_time high</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The server schedule around prefill, decode, streaming, admission, and metrics.</span></div>
+              <div><b>why it works</b><span>Decode steps are small and repeated. Serving many active requests together amortizes GPU work and reduces idle gaps.</span></div>
+              <div><b>failure boundary</b><span>Batching can improve throughput while hurting tail latency if queueing grows faster than service rate.</span></div>
+              <div><b>lab proof</b><span>The matched host campaign must capture TTFT, output latency, token rate, errors, and admission behavior.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="paper">
+          <div>
+            <h3>TensorRT-LLM and engine optimization</h3>
+            <div class="meta">
+              Sources: NVIDIA TensorRT-LLM docs and runbook references.
+            </div>
+          </div>
+          <div>
+            <div class="formula">speedup source =
+kernel fusion + lower precision + static engine planning + parallel execution
+
+valid only inside:
+supported model architecture + built engine shape + hardware target</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The compiled execution plan for the same model graph.</span></div>
+              <div><b>why it works</b><span>Known shapes and fused kernels reduce launch overhead, memory traffic, and wasted generic framework work.</span></div>
+              <div><b>failure boundary</b><span>Engine build time, unsupported shapes, unsupported ops, or small workloads can dominate.</span></div>
+              <div><b>lab proof</b><span>TensorRT belongs after the TGI/vLLM host proof because it needs a measured baseline and a compatible GPU host.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="paper">
+          <div>
+            <h3>JetStream and cloud serving</h3>
+            <div class="meta">
+              Sources: Google serving notebooks and GKE/JetStream handoff references.
+            </div>
+          </div>
+          <div>
+            <div class="formula">cloud serving objective =
+runtime_latency + network_latency + orchestration_overhead + cost_per_token
+
+claim scope includes:
+region + accelerator + image + model bucket + client location</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The deployment surface and accelerator/runtime boundary.</span></div>
+              <div><b>why it works</b><span>A managed or accelerator-specific path can improve utilization and operations when the workload matches the serving assumptions.</span></div>
+              <div><b>failure boundary</b><span>Cloud setup, auth, bucket layout, network path, and autoscaling policy become part of the measured system.</span></div>
+              <div><b>lab proof</b><span>JetStream is a second-order followup until the same-host TGI/vLLM capstone proof returns.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="adaptation" class="panel wrap">
+        <div class="bug">adaptation math</div>
+        <h2>Unsloth belongs in the inference story because behavior changes must be separated from serving-speed claims.</h2>
+        <div class="paper">
+          <div>
+            <h3>LoRA</h3>
+            <div class="meta">
+              Source: <a href="https://arxiv.org/abs/2106.09685">LoRA</a> and Unsloth SFT notebooks.
+            </div>
+          </div>
+          <div>
+            <div class="formula">full update:
+W' = W + Delta W
+
+LoRA update:
+Delta W = B A
+rank(Delta W) <= r
+trainable_params ~= r * (input_dim + output_dim)</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The trainable update space. The base model is frozen; the adapter learns a low-rank correction.</span></div>
+              <div><b>why it works</b><span>Many task changes do not need a full-rank movement through parameter space. A low-rank direction can steer behavior with far fewer trainable weights.</span></div>
+              <div><b>failure boundary</b><span>If the needed change is not well represented at rank r, adapter training can plateau or overfit.</span></div>
+              <div><b>lab proof</b><span>Our Unsloth SFT runs prove setup, adapter archive creation, hashing, reload, and bounded behavior change.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="paper">
+          <div>
+            <h3>GRPO-style reward learning</h3>
+            <div class="meta">
+              Sources: Unsloth GRPO notebooks and local reward-contract probes.
+            </div>
+          </div>
+          <div>
+            <div class="formula">sample a group of outputs for one prompt:
+y_1...y_g
+
+score each output:
+r_i = reward(y_i)
+
+relative advantage:
+A_i = (r_i - mean(r_group)) / std(r_group)
+
+update increases probability of above-group outputs
+while constraining drift from the reference policy</div>
+            <div class="claims">
+              <div><b>object changed</b><span>The probability assigned to sampled behaviors, guided by relative rewards inside a group.</span></div>
+              <div><b>why it works</b><span>The baseline is the group itself. That reduces dependence on a separate critic and turns reward differences into directional pressure.</span></div>
+              <div><b>failure boundary</b><span>A bad reward function teaches the wrong thing precisely. Tiny runs prove the plumbing, not general reasoning quality.</span></div>
+              <div><b>lab proof</b><span>Our GRPO mini-runs prove reward-contract shape and training workflow; held-out quality remains locked because the measured delta is zero.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="evidence" class="panel wrap">
+        <div class="bug">evidence math</div>
+        <h2>The capstone is a proof discipline: one mechanism, one claim, one boundary.</h2>
+        <p class="lead">
+          The mathematical through-line is that optimization claims are
+          conditional. A method works when it relaxes the active constraint for
+          the workload. It fails or becomes irrelevant when another term is
+          binding.
+        </p>
+        <div class="formula">claim unlock rule:
+if mechanism changes term T
+and workload is bottlenecked by T
+and experiment holds other terms fixed
+and metric moves in the predicted direction
+then publish a bounded claim
+else publish a diagnostic or keep the claim locked</div>
+        <div class="grid">
+          <div class="card method"><b>HF and Colab evidence</b><span>Good for proving loading, tokenization, cache behavior, quantization fit, speculative acceptance, and adapter workflow.</span></div>
+          <div class="card warn"><b>Locked host evidence</b><span>TGI/vLLM production winner stays locked until both runtimes return same-workload host measurements.</span></div>
+          <div class="card trade"><b>Next after capstone</b><span>TensorRT-LLM, JetStream, adapter serving, and longer quality probes should run only after the core runtime proof is imported.</span></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
