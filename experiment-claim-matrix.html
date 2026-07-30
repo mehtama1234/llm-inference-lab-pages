@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Experiment Claim Matrix: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1000px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 940px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 960px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .matrix {
+        display: grid;
+        gap: 12px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 190px repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .row b { color: var(--ink); }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      @media (max-width: 1100px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">experiment claim matrix</div>
+        <h1>Every experiment should say exactly what it proves and what it does not prove.</h1>
+        <p>
+          This page connects our experiment lanes to the math pages. Each row
+          names the question, the changed variable, the measured object, the
+          allowed claim, the locked claim, and the next evidence gate.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="math-glossary.html">math glossary</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="kv-cache-math.html">KV cache math</a>
+        <a href="serving-runtime-math.html">serving runtime math</a>
+        <a href="adapter-training-math.html">adapter training math</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="production-systems.html">production</a>
+        <a href="#rules">rules</a>
+        <a href="#matrix">matrix</a>
+        <a href="#locks">locked claims</a>
+        <a href="#next">next evidence</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="rules" class="panel wrap">
+        <div class="bug">claim discipline</div>
+        <h2>A run is useful only when the claim is narrower than the evidence.</h2>
+        <p class="lead">
+          The same output file can support a mechanism claim, a workflow claim,
+          a fit claim, a quality claim, or a speed claim. Those are different
+          claims. Mixing them is how experiments become misleading.
+        </p>
+        <div class="formula">experiment report =
+question
++ changed variable
++ constants held fixed
++ measured object
++ artifact evidence
++ allowed claim
++ locked claim
++ next gate</div>
+        <div class="grid">
+          <div class="card"><b>Mechanism proof</b><span>Explains why a method changes computation, bytes, waiting, or trainable parameters.</span></div>
+          <div class="card"><b>Workflow proof</b><span>Shows a script, notebook, archive, reload, or handoff path ran end to end.</span></div>
+          <div class="card"><b>Benchmark proof</b><span>Compares measured runtime behavior under controlled same-workload conditions.</span></div>
+        </div>
+      </section>
+
+      <section id="matrix" class="panel wrap">
+        <div class="bug">matrix</div>
+        <h2>Experiment lanes mapped to math, evidence, and claim boundary.</h2>
+        <div class="matrix">
+          <div class="row">
+            <b>Tokenizer and template</b>
+            <span><span class="tag">question</span><br />How does text become a token bill?</span>
+            <span><span class="tag">changed</span><br />Plain prompt, chat template, tool/RAG-shaped context.</span>
+            <span><span class="tag">measured</span><br />Token count, context fit, repeated prefix shape.</span>
+            <span><span class="tag">allowed</span><br />Prompt formatting changes prefill work and cache eligibility.</span>
+            <span><span class="tag">locked</span><br />No quality or speed claim from token counts alone.</span>
+            <span><span class="tag">math</span><br /><a href="math-glossary.html#model">token</a>, <a href="attention-math.html#vectors">embedding</a>.</span>
+          </div>
+          <div class="row">
+            <b>HF cache strategy</b>
+            <span><span class="tag">question</span><br />When does storing past K/V beat recomputation?</span>
+            <span><span class="tag">changed</span><br />Cache mode and generation settings.</span>
+            <span><span class="tag">measured</span><br />Decode work shape, memory growth, reloadability of result.</span>
+            <span><span class="tag">allowed</span><br />KV cache is a recomputation-to-memory tradeoff.</span>
+            <span><span class="tag">locked</span><br />No production capacity claim without runtime-host proof.</span>
+            <span><span class="tag">math</span><br /><a href="kv-cache-math.html">KV cache math</a>.</span>
+          </div>
+          <div class="row">
+            <b>HF quantization fit</b>
+            <span><span class="tag">question</span><br />Can fewer bytes make the model or workload fit?</span>
+            <span><span class="tag">changed</span><br />Precision or quantized loading path.</span>
+            <span><span class="tag">measured</span><br />Weight memory, load path, available headroom.</span>
+            <span><span class="tag">allowed</span><br />Quantization can be a fit policy.</span>
+            <span><span class="tag">locked</span><br />It is not automatically a speed or quality win.</span>
+            <span><span class="tag">math</span><br /><a href="math-glossary.html#cache">bytes</a>, <a href="kv-cache-math.html#wall">memory wall</a>.</span>
+          </div>
+          <div class="row">
+            <b>Speculative decoding</b>
+            <span><span class="tag">question</span><br />Can draft tokens reduce expensive target decode calls?</span>
+            <span><span class="tag">changed</span><br />Draft model/proposal length/acceptance behavior.</span>
+            <span><span class="tag">measured</span><br />Accepted tokens, rejected suffix, extra draft overhead.</span>
+            <span><span class="tag">allowed</span><br />Win depends on acceptance rate minus draft cost.</span>
+            <span><span class="tag">locked</span><br />No universal speedup claim across models or workloads.</span>
+            <span><span class="tag">math</span><br /><a href="attention-math.html#sampling">decoding policy</a>.</span>
+          </div>
+          <div class="row">
+            <b>vLLM Colab pressure</b>
+            <span><span class="tag">question</span><br />Which serving resource hits first?</span>
+            <span><span class="tag">changed</span><br />Active sequences, prompt length, output cap, prefix cache, streaming.</span>
+            <span><span class="tag">measured</span><br />Queue pressure, batch pressure, KV block pressure, latency shape.</span>
+            <span><span class="tag">allowed</span><br />vLLM mechanisms can be observed under notebook constraints.</span>
+            <span><span class="tag">locked</span><br />No final vLLM-vs-TGI winner from Colab alone.</span>
+            <span><span class="tag">math</span><br /><a href="serving-runtime-math.html">runtime math</a>, <a href="kv-cache-math.html#paged">paged KV</a>.</span>
+          </div>
+          <div class="row">
+            <b>Unsloth SFT</b>
+            <span><span class="tag">question</span><br />Can Colab create and reload a LoRA adapter?</span>
+            <span><span class="tag">changed</span><br />Frozen base plus trainable low-rank adapter.</span>
+            <span><span class="tag">measured</span><br />Adapter archive, manifest, hash, fresh-session reload.</span>
+            <span><span class="tag">allowed</span><br />Workflow and artifact portability proof.</span>
+            <span><span class="tag">locked</span><br />No broad quality proof from tiny SFT.</span>
+            <span><span class="tag">math</span><br /><a href="adapter-training-math.html#lora">LoRA</a>, <a href="adapter-training-math.html#loss">SFT loss</a>.</span>
+          </div>
+          <div class="row">
+            <b>Unsloth GRPO</b>
+            <span><span class="tag">question</span><br />Can reward-shaped grouped completions run end to end?</span>
+            <span><span class="tag">changed</span><br />Reward contract, grouped completions, tiny adapter update.</span>
+            <span><span class="tag">measured</span><br />Reward API shape, adapter artifact, reload, held-out probe.</span>
+            <span><span class="tag">allowed</span><br />GRPO workflow contract proof.</span>
+            <span><span class="tag">locked</span><br />No durable reasoning or reward-generalization claim.</span>
+            <span><span class="tag">math</span><br /><a href="adapter-training-math.html#grpo">GRPO</a>.</span>
+          </div>
+          <div class="row">
+            <b>Matched TGI/vLLM host</b>
+            <span><span class="tag">question</span><br />On the same host and workload, which runtime behaves better and where?</span>
+            <span><span class="tag">changed</span><br />Runtime: TGI versus vLLM. Constants: model, workload, host, client.</span>
+            <span><span class="tag">measured</span><br />TTFT, ITL, p95, completion latency, throughput, queue wait, GPU memory, logs.</span>
+            <span><span class="tag">allowed</span><br />Narrow same-host runtime comparison.</span>
+            <span><span class="tag">locked</span><br />No claim until returned archive passes contracts.</span>
+            <span><span class="tag">math</span><br /><a href="capstone-serving-decision.html">capstone decision</a>.</span>
+          </div>
+          <div class="row">
+            <b>TensorRT-LLM follow-up</b>
+            <span><span class="tag">question</span><br />Does engine build complexity pay back for repeated traffic?</span>
+            <span><span class="tag">changed</span><br />General runtime versus optimized engine path.</span>
+            <span><span class="tag">measured</span><br />Build/setup time, throughput, latency, supported shapes, operational cost.</span>
+            <span><span class="tag">allowed</span><br />Payback estimate after host baseline exists.</span>
+            <span><span class="tag">locked</span><br />No payback claim before baseline and engine run.</span>
+            <span><span class="tag">math</span><br /><a href="serving-runtime-math.html#runtime">runtime flags</a>.</span>
+          </div>
+          <div class="row">
+            <b>JetStream/GKE follow-up</b>
+            <span><span class="tag">question</span><br />What changes when the serving path moves to managed cloud infrastructure?</span>
+            <span><span class="tag">changed</span><br />Deployment envelope: project, quota, bucket, cluster, service.</span>
+            <span><span class="tag">measured</span><br />Provisioning gates, endpoint health, request proof, operational readiness.</span>
+            <span><span class="tag">allowed</span><br />Cloud portability and deployment-readiness proof.</span>
+            <span><span class="tag">locked</span><br />No cloud performance claim without measured cloud benchmark.</span>
+            <span><span class="tag">math</span><br /><a href="paper-math-map.html">paper/source map</a>.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="locks" class="panel wrap">
+        <div class="bug">locked claims</div>
+        <h2>The important negative space is explicit.</h2>
+        <div class="grid">
+          <div class="card"><b>No runtime winner yet</b><span>The final TGI/vLLM speed claim remains locked until the host archive returns and passes fair-comparison contracts.</span></div>
+          <div class="card"><b>No broad adapter quality yet</b><span>Unsloth SFT/GRPO runs prove setup, artifacts, reload, and bounded probes, not general quality.</span></div>
+          <div class="card"><b>No cloud performance yet</b><span>JetStream/GKE handoff can prove deployment readiness before it proves latency or throughput.</span></div>
+        </div>
+      </section>
+
+      <section id="next" class="panel wrap">
+        <div class="bug">next evidence</div>
+        <h2>The next evidence gate is still the matched host return.</h2>
+        <p class="lead">
+          This matrix is complete enough to publish because it explains the
+          allowed and locked claims. The missing benchmark evidence is the
+          returned NVIDIA Docker host archive for the matched TGI/vLLM run.
+        </p>
+        <div class="formula">host gate:
+sha256sum -c gpu_host_run_bundle.sha256
+tar -xzf gpu_host_run_bundle.tar.gz
+bash run_complete_gpu_host_campaign.sh
+
+return:
+gpu_host_return_files.tar.gz</div>
+      </section>
+    </main>
+  </body>
+</html>
