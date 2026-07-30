@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Experiment Learning Synthesis: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1080px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 124px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card strong {
+        display: block;
+        color: var(--ink);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 210px repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row.ready { border-color: rgba(121, 212, 147, .45); }
+      .row.mixed { border-color: rgba(232, 166, 75, .45); }
+      .row.locked { border-color: rgba(219, 101, 85, .45); }
+      @media (max-width: 1150px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">experiment learning synthesis</div>
+        <h1>The experiments taught the bottleneck map; the host run must still choose the serving path.</h1>
+        <p>
+          This page condenses the lab runs into one learning report. The purpose
+          is to separate what the Colab/Hugging Face/Unsloth/vLLM work already
+          proves from what remains locked until the matched TGI/vLLM host
+          campaign returns.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="current-status.html">current status</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="hf-results-synthesis.html">HF results</a>
+        <a href="unsloth-results-synthesis.html">Unsloth results</a>
+        <a href="vllm-results-synthesis.html">vLLM results</a>
+        <a href="experiment-claim-matrix.html">claim matrix</a>
+        <a href="mechanism-derivation-workbook.html">derivation workbook</a>
+        <a href="capstone-finish-line.html">finish line</a>
+        <a href="#state">state</a>
+        <a href="#hf">HF</a>
+        <a href="#unsloth">Unsloth</a>
+        <a href="#vllm">vLLM</a>
+        <a href="#cross">cross-lessons</a>
+        <a href="#locked">locked</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="state" class="panel wrap">
+        <div class="bug">state</div>
+        <h2>Colab is mostly complete because it answered the mechanism questions it was good at answering.</h2>
+        <p class="lead">
+          The lab has returned all tracked Colab scripts. That gives enough
+          evidence for scoped mechanism, workflow, fit, and pressure claims. It
+          does not give enough evidence for a production runtime winner because
+          the final comparison needs TGI and vLLM on the same Docker GPU host.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>Colab scripts</b><strong>42 / 42</strong><span>Returned handoffs for the tracked notebook-style runs.</span></div>
+          <div class="card method"><b>Learning checkpoints</b><strong>6 / 6</strong><span>The audited learning checkpoints are ready.</span></div>
+          <div class="card trade"><b>End-to-end proof</b><strong>4 / 8</strong><span>Four criteria satisfied; host proof remains the top unmet criterion.</span></div>
+          <div class="card warn"><b>Speed winner</b><strong>locked</strong><span>No TGI/vLLM production winner before host return gates pass.</span></div>
+        </div>
+        <div class="formula">allowed now:
+mechanism claims + workflow claims + bounded Colab GPU observations
+
+not allowed yet:
+final TGI/vLLM runtime winner
+universal runtime superiority
+adapter production-serving speed
+general GRPO reasoning improvement</div>
+      </section>
+
+      <section id="hf" class="panel wrap">
+        <div class="bug">Hugging Face lane</div>
+        <h2>HF taught that the input format, cache policy, batch shape, precision, and draft model each move a different term.</h2>
+        <div class="row ready">
+          <b>Prompt/template work</b>
+          <span><span class="tag">object</span><br />Token bill before generation starts.</span>
+          <span><span class="tag">lesson</span><br />Chat formatting and RAG context are compute and memory inputs, not harmless wrapper text.</span>
+          <span><span class="tag">claim</span><br />Prompt shape changes prefill work and KV rows.</span>
+          <span><span class="tag">page</span><br /><a href="hf-results-synthesis.html">HF results</a>.</span>
+        </div>
+        <div class="row ready">
+          <b>KV cache work</b>
+          <span><span class="tag">object</span><br />Stored keys and values for prior positions.</span>
+          <span><span class="tag">lesson</span><br />Caching is an exact recomputation trade: less projection work, more retained memory.</span>
+          <span><span class="tag">claim</span><br />Cache behavior can be explained with KV bytes and decode steps.</span>
+          <span><span class="tag">math</span><br /><a href="mechanism-derivation-workbook.html#kv">KV derivation</a>.</span>
+        </div>
+        <div class="row mixed">
+          <b>Quantization and speculation</b>
+          <span><span class="tag">object</span><br />Weight bytes or target-model forward calls.</span>
+          <span><span class="tag">lesson</span><br />Fit, acceptance, and speed are separate claims even when one run measures all three.</span>
+          <span><span class="tag">claim</span><br />Bounded mechanism evidence, not universal latency proof.</span>
+          <span><span class="tag">math</span><br /><a href="mechanism-derivation-workbook.html#quant">quantization</a>, <a href="mechanism-derivation-workbook.html#speculation">speculation</a>.</span>
+        </div>
+      </section>
+
+      <section id="unsloth" class="panel wrap">
+        <div class="bug">Unsloth lane</div>
+        <h2>Unsloth taught the adapter workflow boundary: training proof is not quality proof and not serving proof.</h2>
+        <div class="row ready">
+          <b>SFT adapter</b>
+          <span><span class="tag">evidence</span><br />Short SFT completed, adapter archive produced, files hashable.</span>
+          <span><span class="tag">lesson</span><br />LoRA makes behavior changes portable because it stores a small low-rank update, not a second full model.</span>
+          <span><span class="tag">allowed</span><br />Colab can create a reloadable adapter artifact.</span>
+          <span><span class="tag">page</span><br /><a href="unsloth-results-synthesis.html">Unsloth results</a>.</span>
+        </div>
+        <div class="row mixed">
+          <b>GRPO mini-run</b>
+          <span><span class="tag">evidence</span><br />Reward contract and tiny training loop ran.</span>
+          <span><span class="tag">lesson</span><br />Group-relative reward pressure needs reward variance and held-out improvement before quality claims broaden.</span>
+          <span><span class="tag">allowed</span><br />Workflow and reward-contract proof.</span>
+          <span><span class="tag">locked</span><br />Held-out quality delta was zero, so broad reasoning quality stays locked.</span>
+        </div>
+        <div class="row locked">
+          <b>Serving adapters</b>
+          <span><span class="tag">missing</span><br />Adapter serving under the production runtime boundary.</span>
+          <span><span class="tag">lesson</span><br />Training an adapter changes the model function; serving it efficiently is another systems problem.</span>
+          <span><span class="tag">locked</span><br />No adapter speed claim from training success.</span>
+          <span><span class="tag">next</span><br />Run after core host proof.</span>
+        </div>
+      </section>
+
+      <section id="vllm" class="panel wrap">
+        <div class="bug">vLLM lane</div>
+        <h2>vLLM taught that serving pressure is queue math plus active KV memory.</h2>
+        <div class="row ready">
+          <b>Active slots</b>
+          <span><span class="tag">object</span><br />How many requests can occupy decode work at once.</span>
+          <span><span class="tag">lesson</span><br />Too few active slots can turn GPU work into queue wait.</span>
+          <span><span class="tag">allowed</span><br />Capacity is shaped by admission and scheduling, not model math alone.</span>
+          <span><span class="tag">page</span><br /><a href="vllm-results-synthesis.html">vLLM results</a>.</span>
+        </div>
+        <div class="row ready">
+          <b>Prefix and shape pressure</b>
+          <span><span class="tag">object</span><br />Shared prefill work and active KV bytes.</span>
+          <span><span class="tag">lesson</span><br />Prefix reuse helps only when tokenized prefixes really repeat; output caps and prompt length shift the pressure point.</span>
+          <span><span class="tag">allowed</span><br />vLLM behavior can be explained by PagedAttention, batching, and queue stability.</span>
+          <span><span class="tag">math</span><br /><a href="mechanism-derivation-workbook.html#batching">batching derivation</a>.</span>
+        </div>
+        <div class="row locked">
+          <b>TGI comparison</b>
+          <span><span class="tag">missing</span><br />Same-host TGI row and matched vLLM row.</span>
+          <span><span class="tag">lesson</span><br />A vLLM Colab result can explain vLLM mechanisms but cannot rank vLLM against TGI.</span>
+          <span><span class="tag">locked</span><br />No runtime winner before fair host comparison.</span>
+          <span><span class="tag">page</span><br /><a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>.</span>
+        </div>
+      </section>
+
+      <section id="cross" class="panel wrap">
+        <div class="bug">cross-experiment lessons</div>
+        <h2>The whole lab reduces to five recurring questions.</h2>
+        <div class="formula">For every inference experiment, ask:
+1. What token sequence is being served?
+2. What bytes must fit and move?
+3. What work is prefill, decode, queue, or overhead?
+4. What function changed: base model, adapter, runtime, scheduler, or deployment surface?
+5. What claim is allowed by this exact evidence?</div>
+        <div class="grid">
+          <div class="card method"><b>Mechanism first</b><span>The math page should predict which metric moves before the run starts.</span></div>
+          <div class="card measure"><b>Evidence second</b><span>The result page should say whether that metric moved under fixed conditions.</span></div>
+          <div class="card trade"><b>Claim third</b><span>The public writeup should name the allowed claim and the locked non-claim.</span></div>
+          <div class="card warn"><b>Capstone last</b><span>The production decision waits for the host proof because that is the first surface that can compare TGI and vLLM fairly.</span></div>
+        </div>
+      </section>
+
+      <section id="locked" class="panel wrap">
+        <div class="bug">remaining lock</div>
+        <h2>The next meaty action is still the matched host campaign.</h2>
+        <p class="lead">
+          More Colab runs can be useful later, but they are not the shortest
+          path to the capstone. The missing evidence is the returned NVIDIA
+          Docker host archive with matched TGI and vLLM results.
+        </p>
+        <div class="formula">host proof command:
+bash run_complete_gpu_host_campaign.sh
+
+unlock condition:
+gpu_host_return_files.tar.gz imported
+return contracts pass
+fair comparison gate passes
+ready_for_speed_claim = true</div>
+        <div class="row locked">
+          <b>Finish line</b>
+          <span><span class="tag">public page</span><br /><a href="capstone-finish-line.html">capstone-finish-line.html</a>.</span>
+          <span><span class="tag">first update</span><br /><a href="result-provenance.html">result-provenance.html</a>.</span>
+          <span><span class="tag">comparison shell</span><br /><a href="tgi-vllm-locked-comparison.html">tgi-vllm-locked-comparison.html</a>.</span>
+          <span><span class="tag">status</span><br />Final speed claim remains locked.</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
