@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capstone Publication Outline: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1080px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 124px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card strong {
+        display: block;
+        color: var(--ink);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .section {
+        display: grid;
+        grid-template-columns: 220px 1fr 1fr 1fr;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .section b { color: var(--ink); }
+      .section span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .section .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .section.ready { border-color: rgba(121, 212, 147, .45); }
+      .section.locked { border-color: rgba(219, 101, 85, .45); }
+      .section.draft { border-color: rgba(232, 166, 75, .45); }
+      @media (max-width: 1150px) {
+        .grid, .section { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">capstone publication outline</div>
+        <h1>The final public report is a bounded serving decision, with one evidence slot still empty.</h1>
+        <p>
+          This outline assembles the lab into the article we are trying to
+          publish: the problem, the math, the source-backed approaches, the
+          experiments, the locked host comparison, and the post-return update
+          path. It is intentionally strict about what can be written before the
+          matched TGI/vLLM host archive returns.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="current-status.html">current status</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="capstone-case-file.html">case file</a>
+        <a href="capstone-readiness-checklist.html">readiness</a>
+        <a href="capstone-finish-line.html">finish line</a>
+        <a href="experiment-learning-synthesis.html">learning synthesis</a>
+        <a href="source-driven-run-backlog.html">source backlog</a>
+        <a href="#shape">shape</a>
+        <a href="#sections">sections</a>
+        <a href="#host-slot">host slot</a>
+        <a href="#publish">publish rule</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="shape" class="panel wrap">
+        <div class="bug">report shape</div>
+        <h2>The article should make one hard promise: every conclusion is tied to its evidence boundary.</h2>
+        <p class="lead">
+          The report should not read like a catalog of tools. It should read
+          like a proof chain: what problem are we solving, what mathematics
+          creates the bottlenecks, what approaches target each bottleneck, what
+          experiments returned, and what production decision is allowed.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>Problem</b><strong>1</strong><span>Serve a support/RAG streaming workload with defensible latency, capacity, and claim boundaries.</span></div>
+          <div class="card measure"><b>Approach families</b><strong>6</strong><span>HF, Unsloth, vLLM, TGI, TensorRT-LLM, JetStream/cloud.</span></div>
+          <div class="card trade"><b>Evidence state</b><strong>mixed</strong><span>Colab and local learning evidence is ready; host comparison is not.</span></div>
+          <div class="card warn"><b>Final winner</b><strong>locked</strong><span>No TGI/vLLM winner until the host archive and fairness gates pass.</span></div>
+        </div>
+        <div class="formula">final article thesis:
+LLM inference optimization is not one trick.
+It is a controlled reduction of token work, KV bytes, scheduler waiting,
+adapter training cost, deployment overhead, and overload risk for one workload.
+
+current proof gap:
+matched TGI/vLLM host runtime evidence</div>
+      </section>
+
+      <section id="sections" class="panel wrap">
+        <div class="bug">article sections</div>
+        <h2>Use these sections as the final public writeup skeleton.</h2>
+        <div class="section ready">
+          <b>1. Big-picture problem</b>
+          <span><span class="tag">argument</span><br />A request becomes tokens, tokens become vector work, and serving turns that work into queueing and memory pressure.</span>
+          <span><span class="tag">source pages</span><br /><a href="big-picture-inference.html">big picture</a>, <a href="end-to-end-synthesis.html">end-to-end synthesis</a>.</span>
+          <span><span class="tag">state</span><br />Ready for publication.</span>
+        </div>
+        <div class="section ready">
+          <b>2. Mathematical foundation</b>
+          <span><span class="tag">argument</span><br />Attention, KV cache, batching, quantization, LoRA, and GRPO each move a different term.</span>
+          <span><span class="tag">source pages</span><br /><a href="paper-mechanism-atlas.html">paper atlas</a>, <a href="mechanism-derivation-workbook.html">derivation workbook</a>.</span>
+          <span><span class="tag">state</span><br />Ready for publication.</span>
+        </div>
+        <div class="section ready">
+          <b>3. Source-backed approaches</b>
+          <span><span class="tag">argument</span><br />The references converge on a ladder: prompt shape, model-level knobs, KV memory, scheduler pressure, runtime health, deployment overhead.</span>
+          <span><span class="tag">source pages</span><br /><a href="source-driven-run-backlog.html">source backlog</a>, <a href="source-math-deep-dives.html">source deep dives</a>.</span>
+          <span><span class="tag">state</span><br />Ready for publication.</span>
+        </div>
+        <div class="section ready">
+          <b>4. Returned experiments</b>
+          <span><span class="tag">argument</span><br />HF, Unsloth, and vLLM runs prove mechanism, workflow, and bounded pressure lessons.</span>
+          <span><span class="tag">source pages</span><br /><a href="experiment-learning-synthesis.html">learning synthesis</a>, <a href="experiment-claim-matrix.html">claim matrix</a>.</span>
+          <span><span class="tag">state</span><br />Ready with scoped claims.</span>
+        </div>
+        <div class="section locked">
+          <b>5. Runtime comparison</b>
+          <span><span class="tag">argument</span><br />TGI and vLLM must be compared on the same workload, model, GPU host, client, and run ID.</span>
+          <span><span class="tag">source pages</span><br /><a href="host-replay-runbook.html">host replay</a>, <a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>.</span>
+          <span><span class="tag">state</span><br />Locked until host return.</span>
+        </div>
+        <div class="section draft">
+          <b>6. Final serving decision</b>
+          <span><span class="tag">argument</span><br />Choose a runtime only inside the measured workload and host boundary, with explicit non-claims.</span>
+          <span><span class="tag">source pages</span><br /><a href="capstone-serving-decision.html">decision</a>, <a href="capstone-case-file.html">case file</a>.</span>
+          <span><span class="tag">state</span><br />Draft until runtime comparison unlocks.</span>
+        </div>
+      </section>
+
+      <section id="host-slot" class="panel wrap">
+        <div class="bug">empty evidence slot</div>
+        <h2>The empty slot is specific: returned host evidence plus five reporting updates.</h2>
+        <p class="lead">
+          The final report should not hide this gap. The gap is the most
+          important part of the current status because it tells us exactly what
+          would convert the public article from a learning report into a
+          defended serving recommendation.
+        </p>
+        <div class="formula">host command:
+bash run_complete_gpu_host_campaign.sh
+
+expected return lane:
+gpu_host_return_files.tar.gz
+gpu_host_return_files.sha256
+gpu_host_return_archive_manifest.json
+tgi_gpu_vm_results.json
+vllm_matched_runtime_results.json
+
+current rule:
+ready_for_speed_claim = false</div>
+        <div class="section locked">
+          <b>Update 1</b>
+          <span><span class="tag">page</span><br /><a href="result-provenance.html">result-provenance.html</a>.</span>
+          <span><span class="tag">write</span><br />Archive, checksum, manifest, logs, GPU metadata, and measured result provenance.</span>
+          <span><span class="tag">if fail</span><br />Publish diagnostic evidence and keep speed claim locked.</span>
+        </div>
+        <div class="section locked">
+          <b>Update 2</b>
+          <span><span class="tag">page</span><br /><a href="tgi-vllm-locked-comparison.html">tgi-vllm-locked-comparison.html</a>.</span>
+          <span><span class="tag">write</span><br />Measured TTFT, latency, token rate, errors, setup, and fairness metadata.</span>
+          <span><span class="tag">if mismatch</span><br />No winner; rerun with matching metadata.</span>
+        </div>
+        <div class="section locked">
+          <b>Updates 3-5</b>
+          <span><span class="tag">pages</span><br />readiness, decision, next runs.</span>
+          <span><span class="tag">write</span><br />Promote only the gates proven by returned evidence.</span>
+          <span><span class="tag">if pass</span><br />Write bounded runtime recommendation for this workload and host.</span>
+        </div>
+      </section>
+
+      <section id="publish" class="panel wrap">
+        <div class="bug">publication rule</div>
+        <h2>Publish the current report as a learning report; publish the final recommendation only after host proof.</h2>
+        <p class="lead">
+          The public site is already useful because it teaches the math, the
+          paper mechanisms, the experiment boundaries, and the current evidence
+          state. The final serving recommendation is a separate promotion that
+          requires the host return.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>Publish now</b><span>First-principles explanation, source map, returned Colab/vLLM/Unsloth lessons, backlog, and locked capstone state.</span></div>
+          <div class="card warn"><b>Do not publish yet</b><span>Any sentence saying TGI or vLLM is faster for production.</span></div>
+          <div class="card trade"><b>After return</b><span>Replace the locked comparison shell with measured rows only if fairness gates pass.</span></div>
+          <div class="card measure"><b>Keep public-safe</b><span>Publish static interpreted HTML only; raw JSON, archives, notebooks, and credentials stay private.</span></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
