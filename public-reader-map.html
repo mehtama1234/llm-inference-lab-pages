@@ -197,6 +197,7 @@
         <a href="gpu-host-execution-worksheet.html">host worksheet</a>
         <a href="post-host-publication-protocol.html">post-host protocol</a>
         <a href="runtime-metric-decision-rubric.html">metric rubric</a>
+        <a href="post-host-experiment-ladder.html">post-host ladder</a>
         <a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>
         <a href="next-runs-board.html">next runs</a>
         <a href="#fast">fast route</a>
@@ -365,6 +366,12 @@
           <b><a href="source-driven-run-backlog.html">Source-driven run backlog</a></b>
           <span><span class="tag">answers</span><br />What do the source families collectively suggest we should run next?</span>
           <span><span class="tag">use when</span><br />You are deciding between host proof, post-host followups, TensorRT, JetStream, and overload controls.</span>
+          <span><span class="tag">next</span><br /><a href="post-host-experiment-ladder.html">Post-host experiment ladder</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="post-host-experiment-ladder.html">Post-host experiment ladder</a></b>
+          <span><span class="tag">answers</span><br />Which prompt, quantization, streaming, overload, adapter, TensorRT, and JetStream runs come after the host baseline?</span>
+          <span><span class="tag">use when</span><br />You want followups ordered by the baseline metric they would try to move.</span>
           <span><span class="tag">next</span><br /><a href="hf-results-synthesis.html">HF results synthesis</a>.</span>
         </div>
         <div class="route">
@@ -407,7 +414,7 @@
           <b><a href="runtime-metric-decision-rubric.html">Runtime metric decision rubric</a></b>
           <span><span class="tag">answers</span><br />How do TTFT, ITL, throughput, errors, queue wait, and memory become a bounded serving decision?</span>
           <span><span class="tag">use when</span><br />The host metrics have returned and you need to decide TGI, vLLM, no winner, or keep locked.</span>
-          <span><span class="tag">next</span><br /><a href="tgi-vllm-locked-comparison.html">TGI/vLLM locked comparison</a>.</span>
+          <span><span class="tag">next</span><br /><a href="post-host-experiment-ladder.html">Post-host experiment ladder</a>.</span>
         </div>
         <div class="route">
           <b><a href="tgi-vllm-locked-comparison.html">TGI/vLLM locked comparison</a></b>
