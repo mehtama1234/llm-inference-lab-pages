@@ -3,156 +3,360 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Result Provenance Audit</title>
+    <title>Result Provenance Audit: LLM Inference Lab</title>
     <style>
       :root {
-        --bg:#081012; --panel:#0f191c; --panel2:#132126; --ink:#e8f4f1; --muted:#9fb0ad;
-        --line:#263a40; --cyan:#58d8e6; --amber:#e7a64c; --red:#dc6656; --green:#7bd391;
-        --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-        --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
       }
-      * { box-sizing:border-box; }
-      body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.58; }
-      .wrap { width:min(1180px, calc(100% - 36px)); margin:0 auto; }
-      header { padding:48px 0 34px; border-bottom:1px solid var(--line); background:linear-gradient(90deg,rgba(88,216,230,.06) 1px,transparent 1px),linear-gradient(0deg,rgba(88,216,230,.05) 1px,transparent 1px),var(--bg); background-size:42px 42px; }
-      .bug { color:var(--cyan); font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; }
-      h1,h2,p { margin-top:0; }
-      h1 { max-width:920px; margin:12px 0 14px; font-size:clamp(36px,5vw,62px); line-height:1; }
-      h2 { font-size:clamp(24px,3vw,36px); line-height:1.08; }
-      p { color:var(--muted); }
-      header p { max-width:850px; font-size:18px; }
-      .nav { position:sticky; top:0; z-index:4; background:rgba(8,16,18,.92); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
-      .nav .wrap { display:flex; gap:10px; overflow:auto; padding:10px 0; }
-      .nav a { flex:0 0 auto; color:#a4eef4; border:1px solid var(--line); border-radius:7px; padding:7px 10px; text-decoration:none; font-family:var(--mono); font-size:12px; }
-      main { padding:28px 0 70px; }
-      .panel { margin:0 0 26px; padding:24px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
-      .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
-      .metric,.row,.badge { padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--panel2); }
-      .metric b,.row b,.badge b { display:block; color:var(--cyan); font-family:var(--mono); font-size:12px; margin-bottom:6px; }
-      .metric span,.row span,.badge span { display:block; color:#c8d8d5; font-size:14px; }
-      .runbox { margin-top:14px; white-space:pre-wrap; color:#dbe8e5; font-family:var(--mono); font-size:12px; padding:12px; border:1px solid var(--line); border-radius:8px; background:#0a1417; }
-      .rows { display:grid; gap:8px; margin-top:14px; }
-      .row { display:grid; grid-template-columns:220px 210px minmax(0,1fr) 110px; gap:10px; align-items:start; }
-      .kind { font-family:var(--mono); color:#081012; border-radius:6px; padding:4px 7px; display:inline-block; background:var(--cyan); font-size:12px; }
-      .kind.real { background:var(--green); }
-      .kind.sim { background:var(--amber); }
-      .kind.trace { background:#8fc8ff; }
-      .kind.mixed { background:#d6b0ff; }
-      .kind.audit { background:#b8c6c9; }
-      .kind.source { background:#9fe6dd; }
-      a { color:#a4eef4; overflow-wrap:anywhere; }
-      @media (max-width:900px) { .grid,.row { grid-template-columns:1fr; } }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1040px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card strong {
+        display: block;
+        color: var(--ink);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 230px 190px 1fr 1fr;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); overflow-wrap: anywhere; }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row.real { border-color: rgba(121, 212, 147, .45); }
+      .row.mixed { border-color: rgba(232, 166, 75, .45); }
+      .row.locked { border-color: rgba(219, 101, 85, .45); }
+      .row.audit { border-color: rgba(88, 216, 230, .45); }
+      @media (max-width: 1150px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
     </style>
   </head>
   <body>
     <header>
       <div class="wrap">
         <div class="bug">result provenance audit</div>
-        <h1>Know which numbers are real measurements and which are teaching traces.</h1>
+        <h1>Every number in the lab needs a provenance label before it becomes a claim.</h1>
         <p>
-          This page labels selected result files by evidence type: real GPU
-          measurements, local simulations, deterministic teaching traces,
-          source-backed studies, mixed records, and local audits.
+          This static public page summarizes the local provenance audit without
+          publishing raw JSON artifacts. It separates real GPU measurements,
+          mixed measured-and-derived records, validation contracts, local
+          simulations, runbooks, source studies, binary artifacts, and locked
+          host-return claims.
         </p>
       </div>
     </header>
+
     <div class="nav">
       <div class="wrap">
         <a href="index.html">lab</a>
-        <a href="result-writeup-template.html">result writeup template</a>
-        <a href="practical-experiments.html">experiments</a>
-        <a href="hf-practical.html">HF practical</a>
-        <a href="production-systems.html">production systems</a>
-        <a href="teaching-audit.html">teaching audit</a>
-        <a href="concept-checklist.html">concept checklist</a>
+        <a href="public-reader-map.html">reader map</a>
         <a href="artifact-inventory.html">artifact inventory</a>
-        <a href="#artifacts">artifacts</a>
+        <a href="mechanism-experiment-deep-map.html">mechanism map</a>
+        <a href="result-writeup-template.html">result template</a>
+        <a href="experiment-claim-matrix.html">claim matrix</a>
+        <a href="hf-results-synthesis.html">HF results</a>
+        <a href="unsloth-results-synthesis.html">Unsloth results</a>
+        <a href="vllm-results-synthesis.html">vLLM results</a>
+        <a href="host-replay-runbook.html">host replay</a>
+        <a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>
+        <a href="#counts">counts</a>
+        <a href="#rule">rule</a>
+        <a href="#ledger">ledger</a>
+        <a href="#host">host lock</a>
       </div>
     </div>
-    <main class="wrap">
-      <section class="panel">
-        <div class="bug">summary</div>
-        <h2>Evidence Counts</h2>
-        <div id="summaryGrid" class="grid"></div>
-        <div id="summaryText" class="runbox">loading result_provenance_audit_results.json</div>
-        <div id="classGrid" class="grid" style="margin-top:14px"></div>
-      </section>
-      <section class="panel">
-        <div class="bug">actual versus planned</div>
-        <h2>Actual Experiments Are Not The Same As Runbooks</h2>
-        <p>
-          A real experiment has measured runtime output from a GPU or a measured
-          GPU result plus explicit derived math. A runbook, source study,
-          execution plan, or client contract is useful, but it is not a
-          benchmark result.
+
+    <main>
+      <section id="counts" class="panel wrap">
+        <div class="bug">audit summary</div>
+        <h2>The local audit classified 188 existing artifacts with no unclear labels.</h2>
+        <p class="lead">
+          The important fact is not that there are many result files. The
+          important fact is that they do not have equal evidential strength. A
+          GPU result, a deterministic trace, a runbook, a verifier, and a
+          checksum answer different questions.
         </p>
-        <div id="actualGrid" class="grid"></div>
-        <div id="actualLists" class="runbox">loading experiment split</div>
+        <div class="grid">
+          <div class="card method"><b>artifacts checked</b><strong>188</strong><span>All existed in the local audit snapshot.</span></div>
+          <div class="card method"><b>real GPU measurement</b><strong>46</strong><span>Rows with CUDA, GPU, or Colab measurement metadata.</span></div>
+          <div class="card trade"><b>mixed measured + derived</b><strong>17</strong><span>Measured records plus shape, capacity, or interpretation math.</span></div>
+          <div class="card warn"><b>unclear labels</b><strong>0</strong><span>No audited artifact was left unlabeled.</span></div>
+        </div>
+        <div class="formula">classification counts:
+real GPU measurement: 46
+mixed real GPU and derived math: 17
+local validation contract: 47
+local audit: 26
+local simulation: 13
+source-backed execution plan: 14
+source-backed runbook: 9
+deterministic teaching trace: 8
+source-backed study: 4
+binary artifact: 2
+checksum artifact: 2</div>
       </section>
-      <section id="artifacts" class="panel">
-        <div class="bug">artifact-by-artifact</div>
-        <h2>Result Files</h2>
-        <p>Open the page beside each artifact to see where the result is used.</p>
-        <div id="rows" class="rows"></div>
+
+      <section id="rule" class="panel wrap">
+        <div class="bug">claim rule</div>
+        <h2>Provenance controls what a result is allowed to say.</h2>
+        <p class="lead">
+          The audit lesson is simple: every chart should show whether the numbers
+          are real GPU measurements, local simulations, deterministic teaching
+          traces, source-backed studies, runtime probes, or local validation
+          artifacts. Otherwise a reader can mistake setup evidence for speed
+          evidence.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>Real measurement</b><span>Can support a bounded empirical claim for that model, workload, GPU, dependency set, and run condition.</span></div>
+          <div class="card trade"><b>Mixed record</b><span>Can explain a measured result with derived math, but the derived part must stay visible.</span></div>
+          <div class="card measure"><b>Validation contract</b><span>Can prove the comparison machinery fails closed or accepts shaped inputs; it is not a benchmark.</span></div>
+          <div class="card warn"><b>Runbook or plan</b><span>Can prove readiness, prerequisites, and proof limits; it cannot supply latency or throughput.</span></div>
+        </div>
+      </section>
+
+      <section id="ledger" class="panel wrap">
+        <div class="bug">representative ledger</div>
+        <h2>Representative artifacts and what they prove.</h2>
+        <div class="row real">
+          <b><code>hf_cache_strategy_results.json</code></b>
+          <span><span class="tag">class</span><br />real GPU measurement</span>
+          <span><span class="tag">allowed claim</span><br />Cache mode support, memory fit, compile compatibility, and latency were measured for the saved Colab HF setup.</span>
+          <span><span class="tag">public page</span><br /><a href="hf-results-synthesis.html">HF results synthesis</a>.</span>
+        </div>
+        <div class="row real">
+          <b><code>hf_quantization_fit_results.json</code></b>
+          <span><span class="tag">class</span><br />real GPU measurement</span>
+          <span><span class="tag">allowed claim</span><br />Lower precision changed fit and generation timing for the saved model and Colab dependency set.</span>
+          <span><span class="tag">non-claim</span><br />Not proof that 4-bit or int8 is always faster.</span>
+        </div>
+        <div class="row real">
+          <b><code>hf_speculative_decoding_results.json</code></b>
+          <span><span class="tag">class</span><br />real GPU measurement</span>
+          <span><span class="tag">allowed claim</span><br />Assisted decoding reduced target forward-call work on the saved prompt set.</span>
+          <span><span class="tag">non-claim</span><br />Not proof that speculative decoding always improves wall-clock latency.</span>
+        </div>
+        <div class="row real">
+          <b><code>unsloth_sft_mini_results.json</code></b>
+          <span><span class="tag">class</span><br />real GPU measurement</span>
+          <span><span class="tag">allowed claim</span><br />A short Colab Unsloth SFT run produced adapter artifacts and an inference check.</span>
+          <span><span class="tag">public page</span><br /><a href="unsloth-results-synthesis.html">Unsloth results synthesis</a>.</span>
+        </div>
+        <div class="row real">
+          <b><code>unsloth_grpo_mini_results.json</code></b>
+          <span><span class="tag">class</span><br />real GPU measurement</span>
+          <span><span class="tag">allowed claim</span><br />A tiny GRPO workflow returned saved artifacts under an explicit reward-contract boundary.</span>
+          <span><span class="tag">non-claim</span><br />Not proof of broad reasoning improvement.</span>
+        </div>
+        <div class="row real">
+          <b><code>vllm_maxseq16_arrival_knee_probe_results.json</code></b>
+          <span><span class="tag">class</span><br />real GPU measurement</span>
+          <span><span class="tag">allowed claim</span><br />The saved vLLM Colab run measured queue pressure as arrival rate increased.</span>
+          <span><span class="tag">public page</span><br /><a href="vllm-results-synthesis.html">vLLM results synthesis</a>.</span>
+        </div>
+        <div class="row mixed">
+          <b><code>vllm_admission_gate_from_knee_results.json</code></b>
+          <span><span class="tag">class</span><br />mixed real GPU and derived math</span>
+          <span><span class="tag">allowed claim</span><br />Uses measured vLLM knee evidence to derive an admission-control interpretation.</span>
+          <span><span class="tag">non-claim</span><br />Not a fresh runtime benchmark by itself.</span>
+        </div>
+        <div class="row audit">
+          <b><code>tgi_vllm_final_comparison_verification_results.json</code></b>
+          <span><span class="tag">class</span><br />local validation contract</span>
+          <span><span class="tag">allowed claim</span><br />The final comparison builder passed synthetic locked/unlocked/mismatch and delta-math checks.</span>
+          <span><span class="tag">public page</span><br /><a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>.</span>
+        </div>
+        <div class="row locked">
+          <b><code>tgi_vllm_final_comparison_results.json</code></b>
+          <span><span class="tag">class</span><br />local validation contract</span>
+          <span><span class="tag">current state</span><br /><code>ready_for_speed_claim</code> is false because both measured host result files are absent.</span>
+          <span><span class="tag">non-claim</span><br />No TGI-vLLM speed winner.</span>
+        </div>
+        <div class="row locked">
+          <b><code>tgi_gpu_vm_runbook_results.json</code></b>
+          <span><span class="tag">class</span><br />source-backed runbook</span>
+          <span><span class="tag">allowed claim</span><br />TGI has a host-correct Docker/NVIDIA run path and proof contract.</span>
+          <span><span class="tag">non-claim</span><br />Not measured TGI speed.</span>
+        </div>
+        <div class="row locked">
+          <b><code>vllm_matched_runtime_runbook_results.json</code></b>
+          <span><span class="tag">class</span><br />source-backed runbook</span>
+          <span><span class="tag">allowed claim</span><br />vLLM has a matched runtime run path and required metadata boundary.</span>
+          <span><span class="tag">non-claim</span><br />Not the matched final vLLM result file.</span>
+        </div>
+      </section>
+
+      <section id="host" class="panel wrap">
+        <div class="bug">current locked boundary</div>
+        <h2>The missing production proof is still the same-host TGI/vLLM return archive.</h2>
+        <p class="lead">
+          The provenance audit supports the current public stance: Colab
+          mechanism evidence is substantial, Unsloth adapter evidence is real,
+          vLLM pressure evidence is real, and the final production runtime
+          comparison remains locked until host files return.
+        </p>
+        <div class="formula">locked files:
+tgi_gpu_vm_results.json
+vllm_matched_runtime_results.json
+gpu_host_return_files.tar.gz
+
+unlock path:
+bash receive_gpu_host_returns.sh
+python3 simulate_tgi_vllm_fair_comparison_gate.py
+python3 simulate_tgi_vllm_final_comparison.py
+python3 verify_tgi_vllm_final_comparison.py</div>
+        <div class="grid">
+          <div class="card method"><b>Allowed now</b><span>Use the result pages to teach mechanism evidence and bounded claims.</span></div>
+          <div class="card trade"><b>Allowed after return</b><span>If all gates pass, publish measured metric rows for the exact host, model, workload, and client.</span></div>
+          <div class="card warn"><b>Still locked</b><span>No TGI-vLLM winner, no TensorRT/JetStream final-table extension, no universal runtime ranking.</span></div>
+          <div class="card measure"><b>Why static</b><span>The public site intentionally omits raw JSON, archives, checksums, scripts, and credentials.</span></div>
+        </div>
       </section>
     </main>
-    <script>
-      const $ = (id) => document.getElementById(id);
-      const esc = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-      function metric(label, value) {
-        return `<div class="metric"><b>${esc(label)}</b><span>${esc(value)}</span></div>`;
-      }
-      function cls(kind) {
-        if (kind.includes("real GPU")) return "real";
-        if (kind.includes("simulation")) return "sim";
-        if (kind.includes("trace")) return "trace";
-        if (kind.includes("mixed")) return "mixed";
-        if (kind.includes("audit")) return "audit";
-        if (kind.includes("source")) return "source";
-        return "";
-      }
-      function render(payload) {
-        const s = payload.summary || {};
-        $("summaryGrid").innerHTML = [
-          metric("checked", s.artifacts_checked || 0),
-          metric("existing", s.existing_artifacts || 0),
-          metric("missing", s.missing_artifacts || 0),
-          metric("unclear", s.unlabeled_or_unclear || 0),
-        ].join("");
-        $("actualGrid").innerHTML = [
-          metric("actual experiment artifacts", s.actual_experiment_artifacts || 0),
-          metric("not actual benchmarks", s.not_actual_benchmark_artifacts || 0),
-          metric("simulation, trace, or audit", s.simulation_trace_or_audit_artifacts || 0),
-          metric("next rule", "run before comparing")
-        ].join("");
-        $("actualLists").textContent = [
-          `actual experiments: ${(payload.actual_experiment_artifacts || []).join(", ") || "none"}`,
-          "",
-          `not actual benchmarks yet: ${(payload.not_actual_benchmark_artifacts || []).join(", ") || "none"}`,
-          "",
-          "rule: if the row says runbook, execution plan, source-backed study, or client validation, it should teach setup and proof limits, not claim runtime speed."
-        ].join("\n");
-        $("summaryText").textContent = [
-          `evidence: ${payload.evidence_type || "audit"}`,
-          `missing labels: ${(s.missing_labels || []).join(", ") || "none"}`,
-          `lesson: ${payload.lesson || ""}`
-        ].join("\n");
-        $("classGrid").innerHTML = Object.entries(s.classification_counts || {}).map(([key, value]) => (
-          `<div class="badge"><b>${esc(key)}</b><span>${esc(value)}</span></div>`
-        )).join("");
-        $("rows").innerHTML = (payload.rows || []).map((row) => (
-          `<article class="row">
-            <b><a href="${esc(row.artifact)}">${esc(row.artifact)}</a></b>
-            <span class="kind ${cls(row.classification)}">${esc(row.classification)}</span>
-            <span>${esc(row.reason)}${row.evidence_type ? `<br>evidence: ${esc(row.evidence_type)}` : ""}</span>
-            <span><a href="${esc(row.page)}">open page</a></span>
-          </article>`
-        )).join("");
-      }
-      fetch("result_provenance_audit_results.json", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error("result_provenance_audit_results.json not found")))
-        .then(render)
-        .catch((error) => { $("summaryText").textContent = error.message; });
-    </script>
   </body>
 </html>
