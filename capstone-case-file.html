@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capstone Case File: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1240px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1040px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 130px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 210px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); }
+      .row span { color: var(--muted); font-size: 14px; }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      @media (max-width: 1000px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">capstone case file</div>
+        <h1>A concrete draft of the final serving decision artifact.</h1>
+        <p>
+          This page instantiates the lab's end-to-end goal with one representative
+          workload. The numbers below are design assumptions and first-principles
+          calculations, not benchmark results. The page says exactly which runs
+          are still needed before any production runtime claim is allowed.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="end-to-end-synthesis.html">end-to-end synthesis</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="experiment-design-calculus.html">experiment design calculus</a>
+        <a href="experiment-claim-matrix.html">claim matrix</a>
+        <a href="proof-sketches.html">proof sketches</a>
+        <a href="formula-sheet.html">formula sheet</a>
+        <a href="production-systems.html">production</a>
+        <a href="#workload">workload</a>
+        <a href="#math">math</a>
+        <a href="#evidence">evidence</a>
+        <a href="#decision">decision</a>
+        <a href="#nonclaims">non-claims</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="workload" class="panel wrap">
+        <div class="bug">workload assumption</div>
+        <h2>Representative workload: streaming support answer with retrieved context.</h2>
+        <p class="lead">
+          The user asks a support question. The application builds a chat prompt
+          with system instructions, customer issue text, retrieved documentation,
+          and a short answer requirement. The model streams the answer back.
+        </p>
+        <div class="grid">
+          <div class="card measure"><b>Prompt shape</b><span>System message + user question + 3 retrieved snippets + answer style constraint.</span></div>
+          <div class="card method"><b>Latency budget</b><span>First token should feel quick; steady token stream should avoid long gaps.</span></div>
+          <div class="card warn"><b>Decision boundary</b><span>This case file does not claim general chatbot, coding, agent, or long-document behavior.</span></div>
+        </div>
+        <div class="formula">assumed request distribution for design:
+p50 input tokens: 1,400
+p95 input tokens: 3,200
+output cap: 256 tokens
+streaming: required
+concurrency target: measured in host replay, not assumed as proof</div>
+      </section>
+
+      <section id="math" class="panel wrap">
+        <div class="bug">first-principles accounting</div>
+        <h2>The workload is mostly a prefill and KV-capacity problem before it is a runtime preference.</h2>
+        <p>
+          Long retrieved context makes the prefill phase visible. Streaming makes
+          decode latency visible. The serving decision therefore needs both TTFT
+          and ITL, plus memory headroom for active KV cache.
+        </p>
+        <div class="formula">KV bytes per request =
+layers * active_tokens * kv_heads * head_dim * 2 * bytes_per_element
+
+example placeholder for a 32 layer, 32 KV-head, 128 head-dim, bf16-style KV model:
+KV bytes at p50 = 32 * (1400 + 256) * 32 * 128 * 2 * 2 = 868,220,928 bytes
+KV bytes at p95 = 32 * (3200 + 256) * 32 * 128 * 2 * 2 = 1,811,939,328 bytes
+
+read as design pressure, not final model truth:
+p50 active request ~= 0.81 GiB KV
+p95 active request ~= 1.69 GiB KV</div>
+        <div class="row">
+          <b>Prefill pressure</b>
+          <span><span class="tag">source</span><br />Input tokens create the first large attention pass.</span>
+          <span><span class="tag">metric</span><br />TTFT, prefill queue time, prompt token count, chunked-prefill behavior.</span>
+        </div>
+        <div class="row">
+          <b>Decode pressure</b>
+          <span><span class="tag">source</span><br />Each generated token reads accumulated KV and streams to the client.</span>
+          <span><span class="tag">metric</span><br />ITL, decode batch occupancy, emitted tokens/sec, tail gaps.</span>
+        </div>
+        <div class="row">
+          <b>Memory pressure</b>
+          <span><span class="tag">source</span><br />Weights and KV cache compete for GPU memory.</span>
+          <span><span class="tag">metric</span><br />admitted requests, rejection point, OOM boundary, KV utilization.</span>
+        </div>
+      </section>
+
+      <section id="evidence" class="panel wrap">
+        <div class="bug">evidence ladder</div>
+        <h2>Each experiment promotes exactly one part of the case file.</h2>
+        <div class="row">
+          <b>Colab token run</b>
+          <span><span class="tag">proves</span><br />Template, retrieval context, and answer cap produce the expected token distribution.</span>
+          <span><span class="tag">does not prove</span><br />Serving throughput or production latency.</span>
+        </div>
+        <div class="row">
+          <b>HF quant/cache run</b>
+          <span><span class="tag">proves</span><br />The model can load under a precision policy and KV behavior moves as predicted.</span>
+          <span><span class="tag">does not prove</span><br />Quality or runtime winner without replay.</span>
+        </div>
+        <div class="row">
+          <b>Unsloth adapter run</b>
+          <span><span class="tag">proves</span><br />If adaptation is needed, a LoRA artifact can be trained, saved, hashed, and reloaded.</span>
+          <span><span class="tag">does not prove</span><br />General support-answer quality or serving speed with adapter loaded.</span>
+        </div>
+        <div class="row">
+          <b>Matched host replay</b>
+          <span><span class="tag">proves</span><br />TGI/vLLM behavior for the same requests, model, tokenizer, GPU, client, and metrics.</span>
+          <span><span class="tag">does not prove</span><br />Universal runtime superiority beyond this workload and host.</span>
+        </div>
+      </section>
+
+      <section id="decision" class="panel wrap">
+        <div class="bug">decision rule</div>
+        <h2>The chosen runtime should be the one whose tradeoff matches the bottleneck.</h2>
+        <div class="formula">decision rule:
+if p95 TTFT fails because prefill queue is dominant:
+  prefer runtime/settings that isolate or chunk prefill without wrecking ITL
+
+if p95 ITL fails during active decode:
+  prefer runtime/settings with better decode occupancy and lower step time
+
+if rejection/OOM happens before latency fails:
+  prefer memory policy: paging, quantization, shorter context, prefix reuse, or lower concurrency
+
+if both runtimes pass the SLO:
+  choose the simpler operational path and document remaining headroom</div>
+        <div class="grid">
+          <div class="card method"><b>vLLM candidate</b><span>Strong if variable context and KV pressure dominate, especially with long prompts and shared prefixes.</span></div>
+          <div class="card trade"><b>TGI candidate</b><span>Strong if it passes SLO while giving a clean HF-aligned serving path with streaming and metrics.</span></div>
+          <div class="card measure"><b>TensorRT-LLM candidate</b><span>Strong if the deployment is stable enough to justify engine specialization on NVIDIA hardware.</span></div>
+        </div>
+      </section>
+
+      <section id="nonclaims" class="panel wrap">
+        <div class="bug">explicit non-claims</div>
+        <h2>The case file is only honest if its non-claims are visible.</h2>
+        <div class="formula">not claimed until separately proven:
+- best runtime for every workload
+- best model quality for support answering
+- adapter improves held-out answer quality
+- GRPO improves reasoning
+- quantization preserves quality
+- Colab speed predicts production speed
+- one GPU result predicts multi-GPU or cloud autoscaling behavior</div>
+        <p>
+          The final case file should be updated by replacing the design
+          assumptions on this page with measured artifacts from the run ladder.
+          Until then, this page is the target shape of the answer, not the answer
+          itself.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
