@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capstone Finish Line: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1080px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card strong {
+        display: block;
+        color: var(--ink);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 230px 1fr 1fr 1fr;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row.locked { border-color: rgba(219, 101, 85, .45); }
+      .row.ready { border-color: rgba(121, 212, 147, .45); }
+      @media (max-width: 1150px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">capstone finish line</div>
+        <h1>The finish line is a returned host archive plus five locked reporting updates.</h1>
+        <p>
+          The Colab learning loop has already taught the local mechanics:
+          Hugging Face loading, quantization fit, cache pressure, Unsloth SFT,
+          GRPO mechanics, adapter reloads, and vLLM real-traffic serving. The
+          remaining capstone question is narrower and stricter: on the same GPU
+          host, same model, same prompts, and same client pressure, what serving
+          runtime should this workload use?
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="current-status.html">current status</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="capstone-readiness-checklist.html">capstone readiness</a>
+        <a href="result-provenance.html">provenance</a>
+        <a href="host-replay-runbook.html">host replay</a>
+        <a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>
+        <a href="next-runs-board.html">next runs</a>
+        <a href="#state">state</a>
+        <a href="#return">return files</a>
+        <a href="#commands">commands</a>
+        <a href="#updates">updates</a>
+        <a href="#rules">decision rules</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="state" class="panel wrap">
+        <div class="bug">current lock</div>
+        <h2>The capstone is waiting for measured host evidence, not another loose experiment.</h2>
+        <p class="lead">
+          The current proof contract says 4 of 8 end-to-end criteria are
+          satisfied, 1 is ready, and 3 are locked. The first blocked stage is
+          <code>return_archive_present</code>. The first public page that must
+          change after a return is <code>result-provenance.html</code>.
+        </p>
+        <div class="grid">
+          <div class="card warn"><b>Finish-line state</b><strong>blocked</strong><span>No final serving winner is allowed yet.</span></div>
+          <div class="card warn"><b>Reporting rows ready</b><strong>0 / 5</strong><span>Every HTML reporting update is blocked until host results return.</span></div>
+          <div class="card trade"><b>Return files present</b><strong>1 / 16</strong><span>The run bundle exists; the return archive lane is still missing.</span></div>
+          <div class="card measure"><b>End-to-end criteria</b><strong>4 / 8</strong><span>The conceptual and Colab evidence exists, but the runtime proof is not back.</span></div>
+        </div>
+        <div class="formula">top next command:
+bash run_complete_gpu_host_campaign.sh
+
+claim gate:
+final_speed_claim_ready = false
+return_contracts_ready = false
+fair_gate_ready = false</div>
+      </section>
+
+      <section id="return" class="panel wrap">
+        <div class="bug">required return</div>
+        <h2>The host return must prove that TGI and vLLM did the same work.</h2>
+        <p class="lead">
+          A throughput number by itself is not evidence. The mathematical object
+          we need is a matched comparison: fixed inputs, fixed model, fixed
+          tokenizer and chat template, fixed generation bounds, fixed host,
+          fixed GPU, and runtime logs that explain failures instead of hiding
+          them.
+        </p>
+        <div class="row locked">
+          <b>Archive contract</b>
+          <span class="tag">missing</span>
+          <span><code>gpu_host_return_files.tar.gz</code> and <code>gpu_host_return_files.sha256</code></span>
+          <span>The local repo cannot import or audit host results without these files.</span>
+        </div>
+        <div class="row locked">
+          <b>Manifest contract</b>
+          <span class="tag">missing</span>
+          <span><code>gpu_host_return_archive_manifest.json</code></span>
+          <span>This binds result files, logs, host metadata, and run identity into one return packet.</span>
+        </div>
+        <div class="row locked">
+          <b>TGI result</b>
+          <span class="tag">missing</span>
+          <span><code>tgi_gpu_vm_results.json</code></span>
+          <span>This is the first half of the same-workload runtime measurement.</span>
+        </div>
+        <div class="row locked">
+          <b>vLLM result</b>
+          <span class="tag">missing</span>
+          <span><code>vllm_matched_runtime_results.json</code></span>
+          <span>This is the second half of the same-workload runtime measurement.</span>
+        </div>
+      </section>
+
+      <section id="commands" class="panel wrap">
+        <div class="bug">execution path</div>
+        <h2>The exact remaining workflow is host run, local import, fairness gate, final comparison.</h2>
+        <div class="formula">on the NVIDIA GPU host:
+sha256sum -c gpu_host_run_bundle.sha256
+tar -xzf gpu_host_run_bundle.tar.gz
+bash run_complete_gpu_host_campaign.sh
+
+back on this repo after copying returns:
+bash receive_gpu_host_returns.sh
+python3 simulate_tgi_vllm_fair_comparison_gate.py
+python3 simulate_tgi_vllm_final_comparison.py
+python3 verify_tgi_vllm_final_comparison.py</div>
+        <p>
+          This order matters. Importing first checks the packet shape. The
+          fairness gate then checks whether the two runtime rows are comparable.
+          Only after that should the final comparison page move from locked
+          placeholder to measured claim.
+        </p>
+      </section>
+
+      <section id="updates" class="panel wrap">
+        <div class="bug">public reporting updates</div>
+        <h2>Five public pages should change after the host archive passes the gates.</h2>
+        <div class="row locked">
+          <b><a href="result-provenance.html">result-provenance.html</a></b>
+          <span class="tag">first update</span>
+          <span>Replace missing host-return rows with archive, checksum, manifest, logs, GPU metadata, and measured result provenance.</span>
+          <span>If the host failed, publish diagnostic evidence and keep the speed claim locked.</span>
+        </div>
+        <div class="row locked">
+          <b><a href="tgi-vllm-locked-comparison.html">tgi-vllm-locked-comparison.html</a></b>
+          <span class="tag">metric gate</span>
+          <span>Replace locked placeholders with measured latency, throughput, error, and setup rows only when <code>ready_for_speed_claim</code> is true.</span>
+          <span>No measured winner is allowed from Colab-only or single-runtime evidence.</span>
+        </div>
+        <div class="row locked">
+          <b><a href="capstone-readiness-checklist.html">capstone-readiness-checklist.html</a></b>
+          <span class="tag">criteria gate</span>
+          <span>Move the same-host runtime proof from locked to satisfied only when the return and fairness contracts pass.</span>
+          <span>This protects the capstone from turning setup success into a production claim.</span>
+        </div>
+        <div class="row locked">
+          <b><a href="capstone-serving-decision.html">capstone-serving-decision.html</a></b>
+          <span class="tag">bounded decision</span>
+          <span>Write a recommendation for this workload, model, host, and traffic shape, with all caveats attached.</span>
+          <span>The result can be "TGI", "vLLM", or "no winner because the proof failed".</span>
+        </div>
+        <div class="row locked">
+          <b><a href="next-runs-board.html">next-runs-board.html</a></b>
+          <span class="tag">next queue</span>
+          <span>Replace the top next action with second-order followups only after the main host proof returns.</span>
+          <span>TensorRT-LLM, JetStream, adapter serving, and quality probes come after the core comparison.</span>
+        </div>
+      </section>
+
+      <section id="rules" class="panel wrap">
+        <div class="bug">decision rules</div>
+        <h2>The math of the final claim is controlled comparison, not benchmark theater.</h2>
+        <div class="grid">
+          <div class="card method"><b>Both pass, metadata match</b><span>Unlock a metric comparison. Report per-metric winners and the operating region where each result was measured.</span></div>
+          <div class="card warn"><b>One runtime fails setup</b><span>Publish the failure as a diagnostic result. Do not call the other runtime faster because it was the only one that ran.</span></div>
+          <div class="card warn"><b>Metadata mismatch</b><span>Keep the final winner locked. Different model, tokenizer, prompts, host, GPU, or generation bounds means it was not the same experiment.</span></div>
+          <div class="card trade"><b>Mixed metrics</b><span>If one runtime wins latency and the other wins throughput, the result is conditional. The serving decision follows the workload objective.</span></div>
+        </div>
+        <p>
+          Do not publish JSON files, archives, notebooks, credentials, or
+          private scripts to the public Pages repo. The public site should show
+          the interpreted evidence and the static reasoning, not the raw return
+          packet.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
