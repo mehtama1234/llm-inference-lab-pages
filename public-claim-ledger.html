@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Public Claim Ledger: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1080px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card strong {
+        display: block;
+        color: var(--ink);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 220px 180px 1fr 1fr;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); overflow-wrap: anywhere; }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row.allowed { border-color: rgba(121, 212, 147, .45); }
+      .row.bounded { border-color: rgba(232, 166, 75, .45); }
+      .row.locked { border-color: rgba(219, 101, 85, .45); }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      @media (max-width: 1150px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">public claim ledger</div>
+        <h1>Every public claim is either allowed, bounded, or locked.</h1>
+        <p>
+          This ledger is the public rulebook for the inference lab. It says what
+          the current experiments can already support, what they cannot support,
+          and which concrete artifact would promote a locked claim into a
+          measured conclusion.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="current-status.html">current status</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="result-provenance.html">provenance</a>
+        <a href="experiment-claim-matrix.html">claim matrix</a>
+        <a href="experiment-learning-synthesis.html">learning synthesis</a>
+        <a href="source-driven-run-backlog.html">source backlog</a>
+        <a href="publication-completion-audit.html">completion audit</a>
+        <a href="capstone-finish-line.html">finish line</a>
+        <a href="#rule">rule</a>
+        <a href="#allowed">allowed</a>
+        <a href="#locked">locked</a>
+        <a href="#promotion">promotion</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="rule" class="panel wrap">
+        <div class="bug">evidence rule</div>
+        <h2>A claim must carry its mechanism, evidence boundary, measured movement, and non-claim.</h2>
+        <p class="lead">
+          The mathematical object in this lab is not just latency or throughput.
+          It is a conditional statement: if the workload, model, hardware, and
+          serving policy are fixed, then a mechanism may move one metric for a
+          reason we can explain from memory traffic, arithmetic work, queueing,
+          quantization error, or reward shape. Remove one condition and the
+          conclusion becomes narrower.
+        </p>
+        <div class="formula">public claim =
+mechanism
++ evidence boundary
++ measured metric movement
++ explicit non-claim
+
+promotion rule =
+required artifact exists
+and verifier passes
+and comparison gate is fair
+and the page names what still remains unproved</div>
+        <div class="grid">
+          <div class="card method"><b>allowed decisions</b><strong>6</strong><span>The decision register already supports six bounded conclusions.</span></div>
+          <div class="card warn"><b>locked decisions</b><strong>5</strong><span>Five conclusions remain blocked by missing external host proof or stronger evaluation.</span></div>
+          <div class="card warn"><b>final speed claim</b><strong>false</strong><span>The public site must not name a TGI/vLLM winner yet.</span></div>
+          <div class="card trade"><b>host return files</b><strong>1 / 16</strong><span>The return packet is still missing the archive needed for final comparison.</span></div>
+        </div>
+      </section>
+
+      <section id="allowed" class="panel wrap">
+        <div class="bug">allowed now</div>
+        <h2>These claims are safe because the evidence boundary is explicit.</h2>
+        <p class="lead">
+          These rows are useful now. They should be written as mechanism and
+          workflow conclusions, not as broad production superiority claims.
+        </p>
+        <div class="row allowed">
+          <b>Prompt and template pressure</b>
+          <span class="tag">allowed, bounded</span>
+          <span>Evidence: prompt/context traces and Hugging Face formatting runs show that extra input tokens raise prefill and KV-cache pressure.</span>
+          <span>Non-claim: this alone does not prove model quality, serving stability, or a runtime winner.</span>
+        </div>
+        <div class="row allowed">
+          <b>HF cache, quantization, and speculation mechanics</b>
+          <span class="tag">allowed, bounded</span>
+          <span>Evidence: local and Colab Hugging Face experiments show the direction of cache reuse, memory fit, and speculative accept-rate effects.</span>
+          <span>Non-claim: these mechanics do not by themselves choose production TGI, vLLM, TensorRT-LLM, or JetStream.</span>
+        </div>
+        <div class="row allowed">
+          <b>Unsloth SFT adapter workflow</b>
+          <span class="tag">allowed</span>
+          <span>Evidence: setup, SFT mini train, LoRA archive, and adapter reload were verified on NVIDIA L4 with changed output.</span>
+          <span>Non-claim: this is not a broad fine-tuning quality result or a production serving benchmark.</span>
+        </div>
+        <div class="row bounded">
+          <b>Unsloth GRPO reward workflow</b>
+          <span class="tag">allowed, quality locked</span>
+          <span>Evidence: reward contract, mini training, adapter files, and reload path exist; the reward margin was measured.</span>
+          <span>Non-claim: durable reasoning improvement stays locked because the quality probe showed no positive adapter delta.</span>
+        </div>
+        <div class="row allowed">
+          <b>vLLM pressure mechanics</b>
+          <span class="tag">allowed, bounded</span>
+          <span>Evidence: vLLM real-traffic pressure runs exercised active slots, arrival pressure, prefix reuse, and streaming behavior.</span>
+          <span>Non-claim: the lab still cannot say vLLM beats TGI under the matched workload.</span>
+        </div>
+        <div class="row allowed">
+          <b>Source-backed publication state</b>
+          <span class="tag">allowed</span>
+          <span>Evidence: 56 of 56 source references are reachable and the public static pages are linked and published.</span>
+          <span>Non-claim: the capstone is not complete until the host proof and final reporting pages update.</span>
+        </div>
+      </section>
+
+      <section id="locked" class="panel wrap">
+        <div class="bug">locked now</div>
+        <h2>These claims need stronger evidence before they are public conclusions.</h2>
+        <div class="row locked">
+          <b>TGI versus vLLM runtime winner</b>
+          <span class="tag">locked</span>
+          <span>Promotion evidence: returned host archive, TGI result JSON, vLLM result JSON, shared workload metadata, fair gate, and final verifier.</span>
+          <span>Why locked: only one runtime lane has enough real measured traffic today.</span>
+        </div>
+        <div class="row locked">
+          <b>Production serving recommendation</b>
+          <span class="tag">locked</span>
+          <span>Promotion evidence: the matched runtime proof plus updated readiness, provenance, measured comparison, and bounded decision pages.</span>
+          <span>Why locked: production choice is a systems claim, not a single-run latency number.</span>
+        </div>
+        <div class="row locked">
+          <b>Adapter production serving speed</b>
+          <span class="tag">locked</span>
+          <span>Promotion evidence: the adapter served through the same runtime workload with memory, latency, throughput, and correctness metadata.</span>
+          <span>Why locked: training an adapter and serving it efficiently are separate mechanisms.</span>
+        </div>
+        <div class="row locked">
+          <b>GRPO reasoning quality improvement</b>
+          <span class="tag">locked</span>
+          <span>Promotion evidence: held-out evaluation with a positive adapter delta and failure analysis by prompt class.</span>
+          <span>Why locked: the current mini quality probe produced equal base and adapter correctness.</span>
+        </div>
+        <div class="row locked">
+          <b>TensorRT-LLM and JetStream payback</b>
+          <span class="tag">locked</span>
+          <span>Promotion evidence: external host or cloud runs with setup cost, compile/deploy constraints, workload shape, and measured metrics.</span>
+          <span>Why locked: source study explains likely mechanisms, but no comparable lab measurement exists yet.</span>
+        </div>
+      </section>
+
+      <section id="promotion" class="panel wrap">
+        <div class="bug">promotion path</div>
+        <h2>The next real gate is the matched TGI/vLLM host campaign.</h2>
+        <p class="lead">
+          The meaty end-to-end goal remains: prove an inference optimization
+          ladder from one formatted request through model adaptation, serving
+          pressure, and a defensible production runtime choice.
+        </p>
+        <div class="formula">next command:
+bash run_complete_gpu_host_campaign.sh
+
+if host proof passes:
+update result-provenance.html
+update tgi-vllm-locked-comparison.html
+update capstone-readiness-checklist.html
+update capstone-serving-decision.html
+update next-runs-board.html
+rerun publication-completion-audit.html
+
+if host proof fails:
+publish diagnostic failure
+keep the winner locked
+
+if workload metadata differs:
+rerun the matched campaign
+do not compare unmatched numbers</div>
+      </section>
+    </main>
+  </body>
+</html>
