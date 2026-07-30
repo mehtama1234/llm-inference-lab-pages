@@ -176,6 +176,7 @@
         <a href="capstone-readiness-checklist.html">capstone readiness</a>
         <a href="result-writeup-template.html">result template</a>
         <a href="artifact-inventory.html">artifact inventory</a>
+        <a href="mechanism-experiment-deep-map.html">mechanism map</a>
         <a href="hf-results-synthesis.html">HF results</a>
         <a href="unsloth-results-synthesis.html">Unsloth results</a>
         <a href="vllm-results-synthesis.html">vLLM results</a>
@@ -202,8 +203,9 @@
           <div class="card method"><b>1. Synthesis</b><span><a href="end-to-end-synthesis.html">end-to-end-synthesis.html</a> explains the overall chain from model arithmetic to serving decision.</span></div>
           <div class="card measure"><b>2. Source math</b><span><a href="source-math-deep-dives.html">source-math-deep-dives.html</a> explains why the main papers and systems work.</span></div>
           <div class="card trade"><b>3. Proof sketches</b><span><a href="proof-sketches.html">proof-sketches.html</a> gives the compact mathematical validity checks.</span></div>
-          <div class="card measure"><b>4. Experiment design</b><span><a href="experiment-design-calculus.html">experiment-design-calculus.html</a> turns mechanisms into controlled runs.</span></div>
-          <div class="card warn"><b>5. Capstone gate</b><span><a href="capstone-readiness-checklist.html">capstone-readiness-checklist.html</a> says when a recommendation is allowed.</span></div>
+          <div class="card measure"><b>4. Mechanism map</b><span><a href="mechanism-experiment-deep-map.html">mechanism-experiment-deep-map.html</a> connects source math to falsifiable lab runs.</span></div>
+          <div class="card measure"><b>5. Experiment design</b><span><a href="experiment-design-calculus.html">experiment-design-calculus.html</a> turns mechanisms into controlled runs.</span></div>
+          <div class="card warn"><b>6. Capstone gate</b><span><a href="capstone-readiness-checklist.html">capstone-readiness-checklist.html</a> says when a recommendation is allowed.</span></div>
           <div class="card method"><b>Target artifact</b><span><a href="capstone-case-file.html">capstone-case-file.html</a> is the concrete draft of the final public report.</span></div>
         </div>
       </section>
@@ -235,6 +237,18 @@
           <span><span class="tag">use when</span><br />You need the assumption behind a speed or memory claim.</span>
           <span><span class="tag">next</span><br /><a href="source-math-deep-dives.html">Source math deep dives</a>.</span>
         </div>
+        <div class="route">
+          <b><a href="source-math-deep-dives.html">Source math deep dives</a></b>
+          <span><span class="tag">answers</span><br />Why do the main papers and systems work mathematically?</span>
+          <span><span class="tag">use when</span><br />You want the first-principles explanation before picking an experiment.</span>
+          <span><span class="tag">next</span><br /><a href="mechanism-experiment-deep-map.html">Mechanism experiment map</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="mechanism-experiment-deep-map.html">Mechanism experiment map</a></b>
+          <span><span class="tag">answers</span><br />How does each mathematical idea become a falsifiable run?</span>
+          <span><span class="tag">use when</span><br />You want the bridge from source mechanism to lab artifact and non-claim.</span>
+          <span><span class="tag">next</span><br /><a href="experiment-design-calculus.html">Experiment design calculus</a>.</span>
+        </div>
       </section>
 
       <section id="experiments" class="panel wrap">
@@ -244,7 +258,7 @@
           <b><a href="paper-math-map.html">Paper math map</a></b>
           <span><span class="tag">answers</span><br />Which object does each paper or source change?</span>
           <span><span class="tag">use when</span><br />You are deciding what a source is actually claiming.</span>
-          <span><span class="tag">next</span><br /><a href="experiment-design-calculus.html">Experiment design calculus</a>.</span>
+          <span><span class="tag">next</span><br /><a href="mechanism-experiment-deep-map.html">Mechanism experiment map</a>.</span>
         </div>
         <div class="route">
           <b><a href="experiment-design-calculus.html">Experiment design calculus</a></b>

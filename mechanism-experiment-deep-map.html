@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mechanism Experiment Deep Map: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1080px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 18px; }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 132px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .theme {
+        display: grid;
+        grid-template-columns: 230px repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .theme b { color: var(--ink); }
+      .theme span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .theme .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .theme.method { border-color: rgba(121, 212, 147, .45); }
+      .theme.trade { border-color: rgba(232, 166, 75, .45); }
+      .theme.warn { border-color: rgba(219, 101, 85, .45); }
+      .theme.measure { border-color: rgba(88, 216, 230, .45); }
+      @media (max-width: 1150px) {
+        .grid, .theme { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">mechanism experiment deep map</div>
+        <h1>The papers become useful only when each mathematical idea is tied to a falsifiable run.</h1>
+        <p>
+          This page is the bridge between source reading and lab execution. For
+          every major theme, it names the first-principles object, why the
+          method can work mathematically, where it can fail, and which local or
+          Colab experiment tests that exact claim.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="paper-math-map.html">paper map</a>
+        <a href="source-math-deep-dives.html">source deep dives</a>
+        <a href="experiment-design-calculus.html">experiment design</a>
+        <a href="artifact-inventory.html">artifact inventory</a>
+        <a href="hf-results-synthesis.html">HF results</a>
+        <a href="unsloth-results-synthesis.html">Unsloth results</a>
+        <a href="vllm-results-synthesis.html">vLLM results</a>
+        <a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>
+        <a href="#spine">spine</a>
+        <a href="#model">model math</a>
+        <a href="#memory">memory math</a>
+        <a href="#serving">serving math</a>
+        <a href="#training">training math</a>
+        <a href="#capstone">capstone</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="spine" class="panel wrap">
+        <div class="bug">one problem</div>
+        <h2>The big picture problem is bounded conditional generation under resource pressure.</h2>
+        <p class="lead">
+          A model turns a prefix into a next-token distribution. In a real
+          serving system, many prefixes arrive at once, each prefix creates
+          memory state, and every generated token repeats part of the same
+          computation. The lab is trying to learn which constraint dominates:
+          arithmetic, memory, scheduling, approximation error, or operations.
+        </p>
+        <div class="formula">one generated answer =
+tokenize prompt
++ prefill all prompt positions
++ store K/V history
++ repeat decode until stop or output cap
++ stream tokens through a server
++ keep queue wait inside the user-facing budget
+
+optimization question:
+which term can be reduced without breaking the output claim?</div>
+        <div class="grid">
+          <div class="card measure"><b>Mechanism</b><span>A mathematical reason a method should change compute, bytes, or waiting.</span></div>
+          <div class="card method"><b>Experiment</b><span>A controlled run that changes one variable while holding the claim boundary fixed.</span></div>
+          <div class="card warn"><b>Non-claim</b><span>The explicit statement that prevents a small run from becoming a broad runtime myth.</span></div>
+        </div>
+      </section>
+
+      <section id="model" class="panel wrap">
+        <div class="bug">model math</div>
+        <h2>Transformer and Hugging Face experiments start at the token loop itself.</h2>
+        <div class="theme measure">
+          <b>Attention</b>
+          <span><span class="tag">source</span><br /><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a>.</span>
+          <span><span class="tag">math object</span><br /><code>softmax(QK^T / sqrt(d))V</code>, a weighted read over prior token states.</span>
+          <span><span class="tag">why it works</span><br />The model replaces a serial recurrence with learned similarity scores between all visible positions.</span>
+          <span><span class="tag">experiment</span><br />Attention traces and first-principles pages check Q/K/V shapes, masking, softmax, and logits.</span>
+        </div>
+        <div class="theme measure">
+          <b>KV cache</b>
+          <span><span class="tag">source</span><br />Hugging Face generation and optimization docs.</span>
+          <span><span class="tag">math object</span><br />Stored K and V rows that are deterministic functions of earlier tokens.</span>
+          <span><span class="tag">why it works</span><br />A fixed prior prefix has fixed K/V tensors, so decode can read history instead of recomputing it.</span>
+          <span><span class="tag">experiment</span><br />HF cache strategy runs separate support, memory fit, compile compatibility, and latency.</span>
+        </div>
+        <div class="theme trade">
+          <b>Speculative decoding</b>
+          <span><span class="tag">source</span><br />Hugging Face and vLLM speculative decoding references.</span>
+          <span><span class="tag">math object</span><br />Expected accepted draft tokens per expensive target-model verification.</span>
+          <span><span class="tag">why it works</span><br />If the draft model proposes tokens the target accepts, several decode steps can be verified together.</span>
+          <span><span class="tag">experiment</span><br />HF speculative runs show target-call reduction, then keep end-to-end speed claims narrow.</span>
+        </div>
+      </section>
+
+      <section id="memory" class="panel wrap">
+        <div class="bug">memory math</div>
+        <h2>Most serving improvements become obvious once every token is converted into bytes.</h2>
+        <div class="formula">memory pressure =
+weight_bytes
++ active_KV_bytes
++ activations_and_workspace
++ runtime_overhead
+
+active_KV_bytes =
+layers * active_positions * kv_heads * head_dim * 2 * bytes_per_number</div>
+        <div class="theme method">
+          <b>PagedAttention</b>
+          <span><span class="tag">source</span><br /><a href="https://arxiv.org/abs/2309.06180">vLLM PagedAttention paper</a>.</span>
+          <span><span class="tag">math object</span><br />Logical token positions mapped through block tables to physical KV blocks.</span>
+          <span><span class="tag">why it works</span><br />Attention requires correct logical order, not contiguous physical allocation, so block reuse reduces waste.</span>
+          <span><span class="tag">experiment</span><br />vLLM pressure probes vary active slots, prompt length, output length, prefix reuse, and queue arrival.</span>
+        </div>
+        <div class="theme trade">
+          <b>Quantization</b>
+          <span><span class="tag">source</span><br />Hugging Face bitsandbytes path and <a href="https://arxiv.org/abs/2305.14314">QLoRA</a>.</span>
+          <span><span class="tag">math object</span><br /><code>w_hat = scale * code</code>, replacing large stored weights with compact approximations.</span>
+          <span><span class="tag">why it works</span><br />If output logits stay close enough in task-relevant directions, fewer bytes can improve fit or bandwidth.</span>
+          <span><span class="tag">experiment</span><br />HF quantization results separate memory fit from generation latency and quality-preservation claims.</span>
+        </div>
+        <div class="theme warn">
+          <b>Prefix reuse</b>
+          <span><span class="tag">source</span><br />vLLM prefix caching docs and local prefix-cache probes.</span>
+          <span><span class="tag">math object</span><br />Identical token prefixes imply identical prefill K/V tensors under the same model state.</span>
+          <span><span class="tag">why it works</span><br />The server can reuse completed prefix blocks instead of spending prefill work again.</span>
+          <span><span class="tag">experiment</span><br />Prefix-cache probes must keep token IDs and chat template boundaries exact; similar text is not enough.</span>
+        </div>
+      </section>
+
+      <section id="serving" class="panel wrap">
+        <div class="bug">serving math</div>
+        <h2>TGI, vLLM, TensorRT-LLM, and JetStream differ as policies around the same queue.</h2>
+        <div class="formula">observed latency =
+queue_wait
++ prefill_time
++ sum(decode_step_time)
++ streaming_and_client_overhead
+
+stable service needs:
+arrival_rate * average_work_per_request < service_capacity</div>
+        <div class="theme method">
+          <b>Continuous batching</b>
+          <span><span class="tag">source</span><br />TGI architecture, launcher, and Transformers continuous batching references.</span>
+          <span><span class="tag">math object</span><br />A time-varying active set of requests that share decode steps.</span>
+          <span><span class="tag">why it works</span><br />Larger grouped GPU work can raise utilization while completed requests leave and new requests enter.</span>
+          <span><span class="tag">experiment</span><br />The matched TGI/vLLM host run must report TTFT, completion latency, token rate, queue/stream evidence, and proof limits.</span>
+        </div>
+        <div class="theme trade">
+          <b>Runtime specialization</b>
+          <span><span class="tag">source</span><br />NVIDIA inference optimization and TensorRT-LLM docs.</span>
+          <span><span class="tag">math object</span><br />Repeated graph shapes, precision choices, kernels, communication, and build-time assumptions.</span>
+          <span><span class="tag">why it works</span><br />A stable model/hardware path can pay a setup cost once, then reduce per-token overhead repeatedly.</span>
+          <span><span class="tag">experiment</span><br />TensorRT-LLM belongs after the base host proof, when repeated traffic can justify build-payback measurement.</span>
+        </div>
+        <div class="theme warn">
+          <b>Cloud serving</b>
+          <span><span class="tag">source</span><br />Google JetStream/GKE tutorials and deployment notes.</span>
+          <span><span class="tag">math object</span><br />The same token loop wrapped by quota, accelerator topology, model storage, endpoint health, and rollout controls.</span>
+          <span><span class="tag">why it works</span><br />It proves the serving path can exist under managed infrastructure and operational gates.</span>
+          <span><span class="tag">experiment</span><br />JetStream/GKE runs should be treated as deployment evidence first, then benchmark evidence only after request replay returns.</span>
+        </div>
+      </section>
+
+      <section id="training" class="panel wrap">
+        <div class="bug">training math</div>
+        <h2>Unsloth belongs in the same map because adaptation is a constrained update problem.</h2>
+        <div class="theme method">
+          <b>LoRA</b>
+          <span><span class="tag">source</span><br /><a href="https://arxiv.org/abs/2106.09685">LoRA paper</a> and Unsloth SFT notebooks.</span>
+          <span><span class="tag">math object</span><br /><code>W' = W + BA</code> with <code>rank(BA) <= r</code>.</span>
+          <span><span class="tag">why it works</span><br />A task can require movement in a few important directions rather than a free change to every weight.</span>
+          <span><span class="tag">experiment</span><br />Unsloth SFT mini-runs prove setup, adapter save, hashes, reload, and bounded inference behavior.</span>
+        </div>
+        <div class="theme trade">
+          <b>GRPO-style reward learning</b>
+          <span><span class="tag">source</span><br />Unsloth GRPO reasoning notebooks and local reward-contract probes.</span>
+          <span><span class="tag">math object</span><br />Grouped completions scored by a reward rule, then used to push the policy toward higher-scoring outputs.</span>
+          <span><span class="tag">why it works</span><br />Relative scores can provide a learning signal without a single fixed target string for every prompt.</span>
+          <span><span class="tag">experiment</span><br />Tiny GRPO runs prove workflow and reward-contract shape; held-out quality remains a separate gate.</span>
+        </div>
+        <div class="theme warn">
+          <b>Adapter serving</b>
+          <span><span class="tag">source</span><br />Unsloth adapter artifacts plus runtime serving references.</span>
+          <span><span class="tag">math object</span><br />Base forward pass plus adapter contribution on selected layers.</span>
+          <span><span class="tag">why it works</span><br />The adapted model can change behavior without storing a full second model copy.</span>
+          <span><span class="tag">experiment</span><br />Serving speed needs its own TGI/vLLM-compatible adapter run; training success is not latency proof.</span>
+        </div>
+      </section>
+
+      <section id="capstone" class="panel wrap">
+        <div class="bug">what this unlocks</div>
+        <h2>The meaty end-to-end goal is a causal story, not just a collection of benchmark numbers.</h2>
+        <p class="lead">
+          The public report should eventually say: this workload has this token
+          shape; that shape creates this prefill, decode, KV, queue, and adapter
+          pressure; these mechanisms target those pressures; these runs moved or
+          failed to move the predicted metrics; therefore this bounded serving
+          choice is defensible for this workload and no broader claim is made.
+        </p>
+        <div class="formula">capstone argument:
+source mechanism -> mathematical prediction -> controlled run -> result artifact -> allowed claim -> locked non-claim
+
+current top locked link:
+matched TGI/vLLM host proof
+
+next public write after host return:
+replace the locked comparison shell with measured metric rows only if the gates pass</div>
+        <div class="grid">
+          <div class="card method"><b>Already useful</b><span>The site can now explain why each method should work from the equations and resource constraints.</span></div>
+          <div class="card trade"><b>Next evidence</b><span>The same-host TGI/vLLM run is still the main missing runtime proof.</span></div>
+          <div class="card warn"><b>Guardrail</b><span>Every result page should keep a visible non-claim so the reader sees the real evidence boundary.</span></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
