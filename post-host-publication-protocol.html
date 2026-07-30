@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Post-Host Publication Protocol: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1100px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card strong {
+        display: block;
+        color: var(--ink);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 220px 180px 1fr 1fr;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); overflow-wrap: anywhere; }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row.ready { border-color: rgba(121, 212, 147, .45); }
+      .row.warn { border-color: rgba(232, 166, 75, .45); }
+      .row.locked { border-color: rgba(219, 101, 85, .45); }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      @media (max-width: 1150px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">post-host publication protocol</div>
+        <h1>A returned host archive changes the public site only after import, contract, and fairness gates pass.</h1>
+        <p>
+          This protocol starts after the external NVIDIA host sends back the
+          return archive. It defines the local intake sequence, the five public
+          pages that may change, and the claim rule for pass, diagnostic fail,
+          and workload mismatch.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="current-status.html">current status</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="gpu-host-execution-worksheet.html">host worksheet</a>
+        <a href="host-replay-runbook.html">host runbook</a>
+        <a href="capstone-finish-line.html">finish line</a>
+        <a href="public-claim-ledger.html">claim ledger</a>
+        <a href="result-provenance.html">provenance</a>
+        <a href="tgi-vllm-locked-comparison.html">TGI/vLLM lock</a>
+        <a href="#state">state</a>
+        <a href="#intake">intake</a>
+        <a href="#pages">pages</a>
+        <a href="#outcomes">outcomes</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="state" class="panel wrap">
+        <div class="bug">current state</div>
+        <h2>Today this protocol is not ready to execute because the host archive is absent.</h2>
+        <p class="lead">
+          The protocol is useful now because it fixes the publication path in
+          advance. It prevents the common failure mode: receiving a pile of
+          runtime files and turning them into a broad production claim before
+          checking that both runtimes did the same work.
+        </p>
+        <div class="grid">
+          <div class="card warn"><b>archive present</b><strong>false</strong><span><code>gpu_host_return_files.tar.gz</code> is not present locally.</span></div>
+          <div class="card warn"><b>return files</b><strong>1 / 16</strong><span>Only preflight evidence is present in the current audit.</span></div>
+          <div class="card warn"><b>report rows ready</b><strong>0 / 5</strong><span>Every post-host HTML update is blocked today.</span></div>
+          <div class="card method"><b>diagnostic triage</b><strong>ready</strong><span>If a failed host packet returns, the site can publish diagnostic evidence without a winner.</span></div>
+        </div>
+      </section>
+
+      <section id="intake" class="panel wrap">
+        <div class="bug">local intake</div>
+        <h2>Import is a gate, not a formality.</h2>
+        <p class="lead">
+          The returned archive must prove three things before any metric table is
+          rebuilt: the copied files are intact, the archive members are safe, and
+          both runtime result files satisfy the same workload contract.
+        </p>
+        <div class="formula">after copying files back locally:
+bash receive_gpu_host_returns.sh
+
+required envelope:
+gpu_host_return_files.tar.gz
+gpu_host_return_files.sha256
+gpu_host_return_archive_manifest.json
+
+required gates:
+archive checksum passes
+manifest matches archive
+archive members are safe
+TGI return contract passes
+vLLM return contract passes
+fair TGI/vLLM comparison gate passes</div>
+        <div class="row locked">
+          <b>Missing archive</b>
+          <span class="tag">current state</span>
+          <span>Local receive must fail with a missing-archive status.</span>
+          <span>Public result: keep the capstone blocked and point back to the host execution worksheet.</span>
+        </div>
+        <div class="row warn">
+          <b>Diagnostic archive</b>
+          <span class="tag">possible state</span>
+          <span>Archive returns logs or partial files, but one runtime contract or the fair gate fails.</span>
+          <span>Public result: publish failure evidence and keep the runtime winner locked.</span>
+        </div>
+        <div class="row ready">
+          <b>Complete archive</b>
+          <span class="tag">target state</span>
+          <span>Both runtime contracts pass and the fair comparison gate accepts the shared workload metadata.</span>
+          <span>Public result: update the measured comparison and bounded serving decision.</span>
+        </div>
+      </section>
+
+      <section id="pages" class="panel wrap">
+        <div class="bug">public edit order</div>
+        <h2>Only five public pages should move from locked to measured after a passing return.</h2>
+        <div class="row ready">
+          <b><a href="result-provenance.html">result-provenance.html</a></b>
+          <span class="tag">first edit</span>
+          <span>Record whether the return is missing, diagnostic, failed, mismatched, or measured.</span>
+          <span>Why first: every later page depends on provenance labels.</span>
+        </div>
+        <div class="row ready">
+          <b><a href="tgi-vllm-locked-comparison.html">tgi-vllm-locked-comparison.html</a></b>
+          <span class="tag">second edit</span>
+          <span>Replace locked placeholders only if both runtime rows and fair gate pass.</span>
+          <span>Why second: this is where TTFT, p95, completion latency, token rate, and errors belong.</span>
+        </div>
+        <div class="row ready">
+          <b><a href="capstone-readiness-checklist.html">capstone-readiness-checklist.html</a></b>
+          <span class="tag">third edit</span>
+          <span>Move the same-host runtime proof gate from locked to satisfied, or keep it locked with a failure reason.</span>
+          <span>Why third: readiness is a gate ledger, not a metric table.</span>
+        </div>
+        <div class="row ready">
+          <b><a href="capstone-serving-decision.html">capstone-serving-decision.html</a></b>
+          <span class="tag">fourth edit</span>
+          <span>Publish a bounded recommendation only if the comparison gate passes.</span>
+          <span>Why fourth: the final decision must inherit all earlier boundaries.</span>
+        </div>
+        <div class="row ready">
+          <b><a href="next-runs-board.html">next-runs-board.html</a></b>
+          <span class="tag">fifth edit</span>
+          <span>Replace the P0 host proof with post-host followups only after the P0 gate resolves.</span>
+          <span>Why fifth: second-order experiments need the host baseline.</span>
+        </div>
+      </section>
+
+      <section id="outcomes" class="panel wrap">
+        <div class="bug">allowed outcomes</div>
+        <h2>The final public claim has three legal shapes.</h2>
+        <div class="row ready">
+          <b>Measured bounded winner</b>
+          <span class="tag">allowed if fair gate passes</span>
+          <span>The site may say which runtime won on this model, host, workload, request file, client, and generation bound.</span>
+          <span>It still may not claim a universal runtime ranking.</span>
+        </div>
+        <div class="row warn">
+          <b>Measured no-winner</b>
+          <span class="tag">allowed if inconclusive</span>
+          <span>The site may say the comparison returned but did not justify a winner because error, variance, saturation, or setup instability dominated.</span>
+          <span>It should then name the next correction run.</span>
+        </div>
+        <div class="row locked">
+          <b>Diagnostic locked result</b>
+          <span class="tag">required if gate fails</span>
+          <span>The site may publish host failure evidence, missing files, logs, or mismatch findings.</span>
+          <span>It must keep the production recommendation locked.</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
