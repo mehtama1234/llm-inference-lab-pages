@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Experiment Design Calculus: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1040px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 128px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .lane {
+        display: grid;
+        grid-template-columns: 210px repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .lane b { color: var(--ink); }
+      .lane span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .lane .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .check {
+        display: grid;
+        grid-template-columns: 190px 1fr;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        margin-top: 9px;
+      }
+      .check b {
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .check span { color: var(--muted); font-size: 14px; }
+      @media (max-width: 1100px) {
+        .grid, .lane, .check { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">experiment design calculus</div>
+        <h1>Turn every inference formula into a controlled experiment.</h1>
+        <p>
+          This page is the bridge from the mathematical writeups to the actual
+          Colab, Unsloth, Hugging Face, TGI, vLLM, TensorRT-LLM, and JetStream
+          runs. It says what variable to change, what to hold fixed, what metric
+          should move, and what claim the result can honestly support.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="experiment-claim-matrix.html">claim matrix</a>
+        <a href="source-math-deep-dives.html">source math deep dives</a>
+        <a href="formula-sheet.html">formula sheet</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="first-principles-study-path.html">study path</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="production-systems.html">production</a>
+        <a href="practical-experiments.html">experiments</a>
+        <a href="hf-practical.html">HF practical</a>
+        <a href="#method">method</a>
+        <a href="#lanes">lanes</a>
+        <a href="#colab">Colab</a>
+        <a href="#runtime">runtime</a>
+        <a href="#writeup">writeup</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="method" class="panel wrap">
+        <div class="bug">method</div>
+        <h2>The experiment starts from a predicted movement, not from a command.</h2>
+        <p class="lead">
+          A run is meaningful when we can say the mechanism first. If the
+          mechanism is KV reuse, predict lower repeated compute and higher memory
+          use. If the mechanism is quantization, predict lower bytes and possible
+          reconstruction error. If the mechanism is batching, predict higher GPU
+          occupancy and possible queue waiting.
+        </p>
+        <div class="formula">controlled experiment =
+mechanism formula
++ one changed variable
++ constants held fixed
++ predicted metric direction
++ measured artifact
++ allowed claim
++ locked claim
++ next stronger gate</div>
+        <div class="grid">
+          <div class="card measure">
+            <b>Mechanism before metric</b>
+            <span>Do not ask "is it faster?" first. Ask which term in the equation should shrink or grow.</span>
+          </div>
+          <div class="card method">
+            <b>Control before comparison</b>
+            <span>Same model, tokenizer, prompt template, request IDs, host, client, metric definitions, and output limits.</span>
+          </div>
+          <div class="card warn">
+            <b>Boundary before conclusion</b>
+            <span>A Colab result, a script result, and a production serving result are different kinds of evidence.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="lanes" class="panel wrap">
+        <div class="bug">experiment lanes</div>
+        <h2>Each lane should have a predicted mathematical movement.</h2>
+        <div class="lane">
+          <b>Prompt and template</b>
+          <span><span class="tag">formula</span><br />prefill work grows with prompt tokens.</span>
+          <span><span class="tag">change</span><br />plain prompt vs chat template vs RAG/tool-shaped prompt.</span>
+          <span><span class="tag">hold fixed</span><br />same text payload, tokenizer, model, and generation cap.</span>
+          <span><span class="tag">measure</span><br />token count, prefix reuse opportunity, TTFT risk.</span>
+          <span><span class="tag">claim</span><br />formatting changes the amount of model work before decode.</span>
+        </div>
+        <div class="lane">
+          <b>KV cache</b>
+          <span><span class="tag">formula</span><br />KV bytes scale with layers, tokens, KV heads, head dim, and dtype.</span>
+          <span><span class="tag">change</span><br />cache enabled/disabled, prompt length, output length, shared prefix.</span>
+          <span><span class="tag">hold fixed</span><br />same model weights, sampling, and request sequence.</span>
+          <span><span class="tag">measure</span><br />decode step time, memory growth, admitted tokens, OOM boundary.</span>
+          <span><span class="tag">claim</span><br />cache trades recomputation for persistent memory.</span>
+        </div>
+        <div class="lane">
+          <b>Quantization</b>
+          <span><span class="tag">formula</span><br />w_hat = scale * code; error = w - w_hat.</span>
+          <span><span class="tag">change</span><br />bf16/fp16 baseline vs 8-bit/4-bit load path.</span>
+          <span><span class="tag">hold fixed</span><br />same prompt set, generation params, and model family.</span>
+          <span><span class="tag">measure</span><br />VRAM, load success, latency, output agreement or task score.</span>
+          <span><span class="tag">claim</span><br />fit, speed, and quality must be proven separately.</span>
+        </div>
+        <div class="lane">
+          <b>Speculative decode</b>
+          <span><span class="tag">formula</span><br />accepted target tokens saved must exceed draft and verify overhead.</span>
+          <span><span class="tag">change</span><br />draft model, proposal length, acceptance threshold.</span>
+          <span><span class="tag">hold fixed</span><br />same target model and request distribution.</span>
+          <span><span class="tag">measure</span><br />acceptance rate, target calls avoided, total latency.</span>
+          <span><span class="tag">claim</span><br />speedup depends on acceptance, not on drafting existing.</span>
+        </div>
+        <div class="lane">
+          <b>LoRA / Unsloth SFT</b>
+          <span><span class="tag">formula</span><br />Delta W = B A, rank(Delta W) <= r.</span>
+          <span><span class="tag">change</span><br />rank, target modules, dataset, steps, learning rate.</span>
+          <span><span class="tag">hold fixed</span><br />base model, tokenizer, dataset split, seed where possible.</span>
+          <span><span class="tag">measure</span><br />trainable params, VRAM, loss curve, adapter hash, reload output.</span>
+          <span><span class="tag">claim</span><br />adapter-artifact proof before quality proof.</span>
+        </div>
+        <div class="lane">
+          <b>GRPO / reward probe</b>
+          <span><span class="tag">formula</span><br />group-relative advantage comes from reward differences inside a prompt group.</span>
+          <span><span class="tag">change</span><br />reward function and grouped completions.</span>
+          <span><span class="tag">hold fixed</span><br />prompt set, base adapter, sampling, and reward parser.</span>
+          <span><span class="tag">measure</span><br />reward distribution, invalid reward rate, format adherence.</span>
+          <span><span class="tag">claim</span><br />reward contract validity before reasoning improvement.</span>
+        </div>
+      </section>
+
+      <section id="colab" class="panel wrap">
+        <div class="bug">Colab boundary</div>
+        <h2>Colab is excellent for mechanism and workflow proof, weak for production speed claims.</h2>
+        <p class="lead">
+          Colab gives useful GPU access and lets us run Hugging Face and Unsloth
+          notebooks end to end. The weakness is not that Colab is bad. The
+          weakness is that the host, quota, runtime image, and background load
+          are not controlled enough for a durable production runtime conclusion.
+        </p>
+        <div class="check"><b>strong Colab claim</b><span>Notebook setup works, GPU is visible, model loads, adapter trains, artifact saves, artifact reloads, and the resulting files are hashable.</span></div>
+        <div class="check"><b>medium Colab claim</b><span>A mechanism moves in the predicted direction under that session: token count, memory fit, acceptance rate, loss trend, or output format rate.</span></div>
+        <div class="check"><b>weak Colab claim</b><span>Runtime A is generally faster than runtime B. This needs the matched host capstone with controlled request replay.</span></div>
+        <div class="check"><b>next gate</b><span>Promote only mature Colab lanes to the NVIDIA Docker host run: same prompts, same model, same output caps, same client, same metrics.</span></div>
+      </section>
+
+      <section id="runtime" class="panel wrap">
+        <div class="bug">runtime comparison</div>
+        <h2>The capstone runtime experiment should identify the binding constraint.</h2>
+        <p>
+          A fair TGI/vLLM/TensorRT-style comparison is not a scoreboard until it
+          says what constrained the run. The bottleneck may be model weight
+          bandwidth, KV memory, prefill bursts, decode occupancy, queue wait,
+          client streaming overhead, or admission policy.
+        </p>
+        <div class="formula">runtime result interpretation:
+if TTFT high and prefill queue high -> prefill/admission bottleneck
+if ITL high with active decode batch -> decode step bottleneck
+if OOM/rejection before GPU busy -> KV/weight memory bottleneck
+if throughput high but tail latency bad -> scheduler fairness bottleneck
+if client gaps dominate -> serving/client protocol bottleneck</div>
+        <div class="grid">
+          <div class="card method"><b>vLLM-favoring signal</b><span>Long/variable prompts, shared prefixes, many active sequences, KV pressure, and admission limited by cache memory.</span></div>
+          <div class="card trade"><b>TGI-favoring signal</b><span>Operational simplicity, streaming, metrics, tracing, common HF deployment path, and enough throughput under the target SLO.</span></div>
+          <div class="card measure"><b>TensorRT-LLM-favoring signal</b><span>Stable NVIDIA deployment, acceptable engine build complexity, and performance dominated by kernels/engine specialization.</span></div>
+        </div>
+      </section>
+
+      <section id="writeup" class="panel wrap">
+        <div class="bug">public report template</div>
+        <h2>Every finished run should become a public writeup row or section.</h2>
+        <div class="formula">writeup section =
+1. question
+2. mechanism formula
+3. changed variable
+4. constants
+5. command or notebook path
+6. artifact and hash
+7. observed metric movement
+8. allowed claim
+9. locked claim
+10. next experiment</div>
+        <div class="check"><b>good result</b><span>The metric moved as predicted and the artifact proves the run. Promote the claim one level only if the next gate also passes.</span></div>
+        <div class="check"><b>surprising result</b><span>Do not discard it. Add a first-principles explanation candidate, then run one smaller isolation test.</span></div>
+        <div class="check"><b>failed result</b><span>Keep the failure if it locks a claim, exposes an environment boundary, or clarifies what Colab cannot prove.</span></div>
+      </section>
+    </main>
+  </body>
+</html>
