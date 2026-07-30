@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Artifact Inventory: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1060px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 20px; }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 210px 170px 1fr 1fr 1fr;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row.locked { border-color: rgba(219, 101, 85, .45); }
+      .row.measured { border-color: rgba(121, 212, 147, .45); }
+      .row.mixed { border-color: rgba(232, 166, 75, .45); }
+      .small-list {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+      @media (max-width: 1150px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">artifact inventory</div>
+        <h1>The result files are the lab's evidence, but each file only proves a narrow claim.</h1>
+        <p>
+          This page turns the local experiment pile into a public-safe map. It
+          names the artifact families, the mathematical mechanism each family
+          probes, the claim it can support, the claim it cannot support, and the
+          next writeup or run it should feed.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="public-reader-map.html">reader map</a>
+        <a href="result-provenance.html">result provenance</a>
+        <a href="experiment-claim-matrix.html">claim matrix</a>
+        <a href="result-writeup-template.html">result template</a>
+        <a href="next-runs-board.html">next runs</a>
+        <a href="capstone-readiness-checklist.html">capstone readiness</a>
+        <a href="#rule">rule</a>
+        <a href="#families">families</a>
+        <a href="#claims">claim ledger</a>
+        <a href="#writeups">writeup order</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="rule" class="panel wrap">
+        <div class="bug">inventory rule</div>
+        <h2>An artifact is useful when it narrows uncertainty.</h2>
+        <p class="lead">
+          The lab now has many result files: Colab GPU measurements, Hugging
+          Face traces, Unsloth adapter proofs, vLLM pressure probes, host
+          readiness packets, source audits, and capstone gates. The mistake
+          would be to treat all of them as equal evidence. They are not.
+        </p>
+        <div class="formula">artifact strength =
+environment truth
++ fixed workload truth
++ metric truth
++ mechanism isolation
++ reproducibility proof
+- missing host or cloud gates
+- changed model/request/runtime variables</div>
+        <div class="grid">
+          <div class="card method"><b>Measured</b><span>Real Colab L4/HF/vLLM/Unsloth results can support mechanism and fit claims for that environment.</span></div>
+          <div class="card trade"><b>Runbook</b><span>Host and cloud packets prove readiness and gate logic, not runtime speed, until returned benchmark files exist.</span></div>
+          <div class="card measure"><b>Trace</b><span>Tokenizer, prompt, and source-reference traces explain shape and prerequisites before GPU timing.</span></div>
+          <div class="card warn"><b>Locked</b><span>The production winner remains locked until TGI and vLLM return matched same-host results.</span></div>
+        </div>
+      </section>
+
+      <section id="families" class="panel wrap">
+        <div class="bug">artifact families</div>
+        <h2>What the current files are for.</h2>
+        <div class="row measured">
+          <b>First-principles GPU timing</b>
+          <span><span class="tag">examples</span><br />batch, cache, prefill, decode, KV microscope</span>
+          <span><span class="tag">math object</span><br />matrix work, memory traffic, repeated decode loop, cache reuse.</span>
+          <span><span class="tag">supports</span><br />Why cached decode, batching, and prompt length change latency on a single GPU.</span>
+          <span><span class="tag">does not prove</span><br />Which production runtime should serve real traffic.</span>
+        </div>
+        <div class="row measured">
+          <b>Hugging Face Transformers</b>
+          <span><span class="tag">examples</span><br /><code>hf_cache_strategy_results.json</code>, <code>hf_quantization_fit_results.json</code>, <code>hf_speculative_decoding_results.json</code></span>
+          <span><span class="tag">math object</span><br />KV policy, weight precision, draft-token acceptance, tokenized prompt length.</span>
+          <span><span class="tag">supports</span><br />Cache mode, quantization, and assisted generation are separate levers with separate bottlenecks.</span>
+          <span><span class="tag">does not prove</span><br />That lower precision or fewer target calls always gives lower end-to-end latency.</span>
+        </div>
+        <div class="row measured">
+          <b>Unsloth Colab fine-tuning</b>
+          <span><span class="tag">examples</span><br /><code>unsloth_colab_setup_results.json</code>, <code>unsloth_sft_mini_results.json</code>, <code>unsloth_grpo_mini_results.json</code></span>
+          <span><span class="tag">math object</span><br />Low-rank weight update, adapter merge/reload, reward-shaped policy update.</span>
+          <span><span class="tag">supports</span><br />A notebook GPU can produce portable LoRA artifacts and reload them for inference checks.</span>
+          <span><span class="tag">does not prove</span><br />Production serving quality, GRPO generalization, or runtime speed of the adapted model.</span>
+        </div>
+        <div class="row mixed">
+          <b>vLLM pressure probes</b>
+          <span><span class="tag">examples</span><br />arrival knee, max sequence count, prompt/output pressure, prefix cache.</span>
+          <span><span class="tag">math object</span><br />Paged KV blocks, active sequence slots, queue growth, throughput saturation.</span>
+          <span><span class="tag">supports</span><br />Where capacity stops scaling and latency starts growing for a Colab vLLM path.</span>
+          <span><span class="tag">does not prove</span><br />A fair TGI/vLLM winner before the same host and same workload are used.</span>
+        </div>
+        <div class="row locked">
+          <b>GPU host packets</b>
+          <span><span class="tag">examples</span><br /><code>gpu_host_preflight_results.json</code>, <code>gpu_host_run_packet_results.json</code>, return/import checks.</span>
+          <span><span class="tag">math object</span><br />Experimental control: same model, same prompts, same client, same GPU inventory.</span>
+          <span><span class="tag">supports</span><br />The host proof is ready to run and has a return contract.</span>
+          <span><span class="tag">does not prove</span><br />Speed until <code>tgi_gpu_vm_results.json</code> and <code>vllm_matched_runtime_results.json</code> return.</span>
+        </div>
+        <div class="row locked">
+          <b>Cloud and engine runbooks</b>
+          <span><span class="tag">examples</span><br />TensorRT-LLM container and JetStream/GKE handoff files.</span>
+          <span><span class="tag">math object</span><br />Amortization, compilation overhead, topology, endpoint control-plane gates.</span>
+          <span><span class="tag">supports</span><br />What prerequisites must exist before measuring optimized engine or managed serving paths.</span>
+          <span><span class="tag">does not prove</span><br />TensorRT or JetStream payoff without a live host or cloud run.</span>
+        </div>
+      </section>
+
+      <section id="claims" class="panel wrap">
+        <div class="bug">claim ledger</div>
+        <h2>The same file can unlock one claim while leaving a larger claim locked.</h2>
+        <div class="grid">
+          <div class="card method">
+            <b>Cache math</b>
+            <span>Evidence can show that storing keys and values avoids recomputing prior token states. The larger serving claim needs concurrency and memory pressure.</span>
+          </div>
+          <div class="card method">
+            <b>Quantization</b>
+            <span>Evidence can show memory fit. Latency needs kernel, batch, model-size, and output-shape timing. Quality needs task-specific comparisons.</span>
+          </div>
+          <div class="card method">
+            <b>Speculative decoding</b>
+            <span>Evidence can show fewer target forward passes. Speed requires assistant overhead to be smaller than saved target work.</span>
+          </div>
+          <div class="card method">
+            <b>LoRA and Unsloth</b>
+            <span>Evidence can show low-rank update artifacts and reload. Capability improvement needs held-out prompts and an explicit scoring contract.</span>
+          </div>
+          <div class="card trade">
+            <b>Paged KV</b>
+            <span>Evidence can show that block allocation improves active-sequence handling. Runtime choice needs a matched competitor and workload.</span>
+          </div>
+          <div class="card trade">
+            <b>Batching</b>
+            <span>Evidence can show higher GPU occupancy. User experience still depends on queue wait, TTFT, cancellation, and output length variance.</span>
+          </div>
+          <div class="card warn">
+            <b>TGI versus vLLM</b>
+            <span>The final winner is still locked. A fair claim needs both systems on the same host, same request replay, same model, and same metric contract.</span>
+          </div>
+          <div class="card warn">
+            <b>Cloud serving</b>
+            <span>Cloud runbooks prove setup boundaries. Performance claims wait for account, quota, deployment, endpoint health, and request replay results.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="writeups" class="panel wrap">
+        <div class="bug">writeup order</div>
+        <h2>Turn the pile into public pages in this order.</h2>
+        <p class="lead">
+          The first public writeups should convert high-value evidence into
+          readable claims before adding more runs. The host replay still has the
+          highest priority, but these writeups make the existing Colab and
+          source work legible now.
+        </p>
+        <div class="formula">next static pages:
+1. HF cache and quantization result page
+2. Unsloth adapter result page
+3. vLLM pressure result page
+4. host replay runbook
+5. TGI/vLLM matched result page after returned host files exist</div>
+        <div class="grid">
+          <div class="card measure">
+            <b>HF result page</b>
+            <span>Connect cache, precision, tokenization, and speculative decode into one model.generate evidence story.</span>
+          </div>
+          <div class="card measure">
+            <b>Unsloth result page</b>
+            <span>Explain adapter math from low-rank update to reload proof, then lock quality and serving claims separately.</span>
+          </div>
+          <div class="card measure">
+            <b>vLLM result page</b>
+            <span>Explain active sequence pressure as queueing plus KV block memory, with the saturation knee as the main result.</span>
+          </div>
+          <div class="card warn">
+            <b>Host replay page</b>
+            <span>Publish only the runbook until the returned archive passes contracts; then write the final bounded comparison.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
