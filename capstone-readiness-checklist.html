@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capstone Readiness Checklist: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1040px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .gate {
+        display: grid;
+        grid-template-columns: 190px repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .gate b { color: var(--ink); }
+      .gate span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .gate .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      @media (max-width: 1100px) {
+        .grid, .gate { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">capstone readiness checklist</div>
+        <h1>The serving recommendation is locked until every gate has direct evidence.</h1>
+        <p>
+          This page is the audit checklist for the capstone. It says which
+          calculations, Colab runs, Unsloth artifacts, and matched host replay
+          results are required before the case file can move from draft to
+          defended recommendation.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="capstone-case-file.html">capstone case file</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="end-to-end-synthesis.html">end-to-end synthesis</a>
+        <a href="experiment-design-calculus.html">experiment design calculus</a>
+        <a href="experiment-claim-matrix.html">claim matrix</a>
+        <a href="production-systems.html">production</a>
+        <a href="#status">status</a>
+        <a href="#gates">gates</a>
+        <a href="#promotion">promotion</a>
+        <a href="#failure">failure handling</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="status" class="panel wrap">
+        <div class="bug">current stance</div>
+        <h2>The capstone is structurally ready, but the production recommendation is not unlocked.</h2>
+        <p class="lead">
+          The public writeups now define the mathematical frame, source map,
+          proof sketches, experiment design, and draft case file. The remaining
+          question is evidence: the final recommendation needs a matched host
+          replay and clear pass/fail thresholds.
+        </p>
+        <div class="formula">current capstone state:
+math frame: ready
+source reasoning: ready
+experiment design: ready
+case-file draft: ready
+production runtime recommendation: locked
+
+unlock condition:
+all required gates below have direct artifacts and pass criteria</div>
+        <div class="grid">
+          <div class="card method"><b>Allowed now</b><span>Explain mechanisms, calculations, experiment design, and what each prior run can prove.</span></div>
+          <div class="card trade"><b>Allowed after replay</b><span>Choose a serving path for the stated workload on the tested host.</span></div>
+          <div class="card warn"><b>Still never allowed</b><span>Claim universal runtime superiority from one workload and one GPU boundary.</span></div>
+        </div>
+      </section>
+
+      <section id="gates" class="panel wrap">
+        <div class="bug">readiness gates</div>
+        <h2>Each gate unlocks one claim and only one claim.</h2>
+        <div class="gate">
+          <b>Workload gate</b>
+          <span><span class="tag">required evidence</span><br />Frozen request JSONL with IDs, prompt template, retrieved context policy, output cap, and tokenizer.</span>
+          <span><span class="tag">pass condition</span><br />Token distribution is measured and matches the case-file assumptions or the assumptions are updated.</span>
+          <span><span class="tag">fail condition</span><br />Prompt shape changes during benchmark, or token counts are inferred instead of measured.</span>
+          <span><span class="tag">unlocks</span><br />Workload-specific token and context claim.</span>
+        </div>
+        <div class="gate">
+          <b>Memory gate</b>
+          <span><span class="tag">required evidence</span><br />Model config, dtype/quantization, KV heads, head dim, layer count, memory logs, and OOM/rejection boundary.</span>
+          <span><span class="tag">pass condition</span><br />Weight + KV + runtime overhead estimate explains observed fit or rejection behavior.</span>
+          <span><span class="tag">fail condition</span><br />VRAM numbers are missing, or observed admission contradicts the byte estimate without explanation.</span>
+          <span><span class="tag">unlocks</span><br />Capacity and headroom claim.</span>
+        </div>
+        <div class="gate">
+          <b>Colab/HF gate</b>
+          <span><span class="tag">required evidence</span><br />Notebook or CLI logs for tokenization, model load, cache/quant/speculative probes, package versions, and GPU metadata.</span>
+          <span><span class="tag">pass condition</span><br />Each mechanism moves the predicted metric or records a bounded failure.</span>
+          <span><span class="tag">fail condition</span><br />Only screenshots or informal notes exist; no reproducible artifact or result JSON exists.</span>
+          <span><span class="tag">unlocks</span><br />Mechanism and workflow claim.</span>
+        </div>
+        <div class="gate">
+          <b>Unsloth gate</b>
+          <span><span class="tag">required evidence</span><br />Adapter manifest, training config, saved files, hashes, reload probe, and held-out prompt outputs if quality is discussed.</span>
+          <span><span class="tag">pass condition</span><br />Adapter can be trained, saved, hashed, reloaded, and its claim boundary is explicit.</span>
+          <span><span class="tag">fail condition</span><br />Training ran but adapter files, hashes, or reload behavior are absent.</span>
+          <span><span class="tag">unlocks</span><br />Adapter artifact claim, not broad quality claim.</span>
+        </div>
+        <div class="gate">
+          <b>Host replay gate</b>
+          <span><span class="tag">required evidence</span><br />Same request file, model, tokenizer, output cap, GPU, Docker boundary, client, metrics, and run logs for each runtime.</span>
+          <span><span class="tag">pass condition</span><br />TTFT, ITL, throughput, rejection, queue depth, and GPU/KV signals are comparable across runtimes.</span>
+          <span><span class="tag">fail condition</span><br />Any runtime uses a different model, prompt template, request order, client, or metric definition.</span>
+          <span><span class="tag">unlocks</span><br />Runtime recommendation for this workload and host.</span>
+        </div>
+        <div class="gate">
+          <b>Non-claim gate</b>
+          <span><span class="tag">required evidence</span><br />Final writeup contains explicit non-claims next to the recommendation.</span>
+          <span><span class="tag">pass condition</span><br />The reader can see what was not tested without reading hidden notes.</span>
+          <span><span class="tag">fail condition</span><br />The recommendation sounds broader than the replay boundary.</span>
+          <span><span class="tag">unlocks</span><br />Public publication of the final case file.</span>
+        </div>
+      </section>
+
+      <section id="promotion" class="panel wrap">
+        <div class="bug">promotion rule</div>
+        <h2>Evidence moves through levels; it cannot skip levels.</h2>
+        <div class="formula">claim levels:
+L0 design assumption
+L1 first-principles calculation
+L2 reproducible mechanism run
+L3 artifact/workflow proof
+L4 matched host benchmark
+L5 bounded serving recommendation
+
+promotion rule:
+L(n+1) requires direct evidence for that level, not confidence from L(n)</div>
+        <div class="grid">
+          <div class="card measure"><b>Example</b><span>A KV byte formula can explain capacity pressure, but cannot prove vLLM wins.</span></div>
+          <div class="card method"><b>Example</b><span>An Unsloth adapter hash proves artifact reproducibility, but not support-answer quality.</span></div>
+          <div class="card warn"><b>Example</b><span>A Colab speed observation can motivate a host run, but cannot replace it.</span></div>
+        </div>
+      </section>
+
+      <section id="failure" class="panel wrap">
+        <div class="bug">failure handling</div>
+        <h2>A failed gate is still useful if it locks a claim.</h2>
+        <p class="lead">
+          The lab should keep failed or incomplete runs when they clarify a
+          boundary. A failure is bad only when it is ambiguous: no artifact, no
+          changed variable, no constants, and no claim boundary.
+        </p>
+        <div class="formula">failure report =
+gate attempted
++ command or notebook
++ artifact captured
++ observed failure
++ claim locked
++ smallest next isolation run</div>
+        <div class="grid">
+          <div class="card warn"><b>OOM</b><span>Promote to a memory-boundary result if model, dtype, prompt length, and memory logs are captured.</span></div>
+          <div class="card warn"><b>Timeout</b><span>Promote to a latency-boundary result if queue depth, TTFT/ITL, and client behavior are captured.</span></div>
+          <div class="card warn"><b>Bad adapter</b><span>Promote to a reward/data boundary if hashes, reload output, and held-out prompts are preserved.</span></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
