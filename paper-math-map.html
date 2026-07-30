@@ -267,6 +267,22 @@ adapter wrapper -> frozen W plus trainable low-rank update -> new behavior claim
         <div class="map">
           <article class="source">
             <div>
+              <h3>Transformer paper</h3>
+              <p class="meta">
+                <a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a>
+              </p>
+            </div>
+            <div class="claims">
+              <div><b>object</b><span>Scaled dot-product attention and multi-head attention: <code>softmax(QK^T / sqrt(d))V</code>.</span></div>
+              <div><b>why it works</b><span>Every token builds a learned query, compares it to visible keys, and uses the resulting weights to mix value vectors.</span></div>
+              <div><b>assumption</b><span>Sequence relationships can be represented by learned vector comparisons rather than recurrence or convolution alone.</span></div>
+              <div><b>failure mode</b><span>The formula explains model computation, but not serving capacity, KV memory pressure, or runtime queue behavior by itself.</span></div>
+              <div><b>experiment</b><span>Attention math page plus local tensor/attention traces: Q/K/V shapes, mask, softmax, value mix, logits.</span></div>
+            </div>
+          </article>
+
+          <article class="source">
+            <div>
               <h3>vLLM PagedAttention paper</h3>
               <p class="meta">
                 <a href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for Large Language Model Serving with PagedAttention</a>
@@ -343,6 +359,38 @@ adapter wrapper -> frozen W plus trainable low-rank update -> new behavior claim
               <div><b>assumption</b><span>Cloud setup and accelerator quota are available, and the model/runtime pair is supported by that path.</span></div>
               <div><b>failure mode</b><span>Deployment success does not prove runtime superiority; it proves portability and operational readiness.</span></div>
               <div><b>experiment</b><span>JetStream/GKE handoff run after local host proof, with model bucket, cluster, service, and request evidence.</span></div>
+            </div>
+          </article>
+
+          <article class="source">
+            <div>
+              <h3>LoRA paper</h3>
+              <p class="meta">
+                <a href="https://arxiv.org/abs/2106.09685">LoRA: Low-Rank Adaptation of Large Language Models</a>
+              </p>
+            </div>
+            <div class="claims">
+              <div><b>object</b><span>Low-rank adapter update: freeze <code>W</code> and train <code>A B</code> so the layer uses <code>W + A B</code>.</span></div>
+              <div><b>why it works</b><span>If the useful behavior change lies in a low-dimensional subspace, a small rank-r update can move logits enough.</span></div>
+              <div><b>assumption</b><span>The adaptation needed for the task is lower-rank than a fully arbitrary update to every weight matrix.</span></div>
+              <div><b>failure mode</b><span>Low training loss or successful adapter save does not prove broad quality, safety, or serving speed.</span></div>
+              <div><b>experiment</b><span>Unsloth SFT lane: train small LoRA adapter, save archive, hash files, reload in a fresh session.</span></div>
+            </div>
+          </article>
+
+          <article class="source">
+            <div>
+              <h3>QLoRA paper</h3>
+              <p class="meta">
+                <a href="https://arxiv.org/abs/2305.14314">QLoRA: Efficient Finetuning of Quantized LLMs</a>
+              </p>
+            </div>
+            <div class="claims">
+              <div><b>object</b><span>Frozen quantized base weights plus trainable LoRA adapters, with gradients flowing into adapter parameters.</span></div>
+              <div><b>why it works</b><span>Quantized base weights lower memory while the adapter still supplies trainable directions for behavior change.</span></div>
+              <div><b>assumption</b><span>The low-bit base approximation is good enough for the adapter to learn useful changes through it.</span></div>
+              <div><b>failure mode</b><span>Fitting training into Colab memory is not the same as proving durable quality or production deployment performance.</span></div>
+              <div><b>experiment</b><span>Unsloth setup/SFT/GRPO workflow proofs plus held-out probes; longer quality runs remain a separate gate.</span></div>
             </div>
           </article>
 
