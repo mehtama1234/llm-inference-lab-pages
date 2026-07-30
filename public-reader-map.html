@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Public Reader Map: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1040px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 132px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .route {
+        display: grid;
+        grid-template-columns: 220px 1fr 1fr 1fr;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .route b { color: var(--ink); }
+      .route span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .route .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      @media (max-width: 1100px) {
+        .grid, .route { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">public reader map</div>
+        <h1>Use this map to read the inference lab without getting lost.</h1>
+        <p>
+          The public site now has conceptual pages, proof pages, experiment
+          pages, and capstone pages. This map tells you where each page fits,
+          what question it answers, and what action it should trigger.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="end-to-end-synthesis.html">end-to-end synthesis</a>
+        <a href="capstone-case-file.html">capstone case file</a>
+        <a href="capstone-readiness-checklist.html">capstone readiness</a>
+        <a href="#fast">fast route</a>
+        <a href="#math">math route</a>
+        <a href="#experiments">experiment route</a>
+        <a href="#capstone">capstone route</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="fast" class="panel wrap">
+        <div class="bug">fast route</div>
+        <h2>Read five pages if you want the whole argument quickly.</h2>
+        <p class="lead">
+          This route is for a reader who wants the end-to-end problem, the
+          mathematical reason the techniques work, the experiment discipline,
+          and the final decision gate without reading every microscope page.
+        </p>
+        <div class="grid">
+          <div class="card method"><b>1. Synthesis</b><span><a href="end-to-end-synthesis.html">end-to-end-synthesis.html</a> explains the overall chain from model arithmetic to serving decision.</span></div>
+          <div class="card measure"><b>2. Source math</b><span><a href="source-math-deep-dives.html">source-math-deep-dives.html</a> explains why the main papers and systems work.</span></div>
+          <div class="card trade"><b>3. Proof sketches</b><span><a href="proof-sketches.html">proof-sketches.html</a> gives the compact mathematical validity checks.</span></div>
+          <div class="card measure"><b>4. Experiment design</b><span><a href="experiment-design-calculus.html">experiment-design-calculus.html</a> turns mechanisms into controlled runs.</span></div>
+          <div class="card warn"><b>5. Capstone gate</b><span><a href="capstone-readiness-checklist.html">capstone-readiness-checklist.html</a> says when a recommendation is allowed.</span></div>
+          <div class="card method"><b>Target artifact</b><span><a href="capstone-case-file.html">capstone-case-file.html</a> is the concrete draft of the final public report.</span></div>
+        </div>
+      </section>
+
+      <section id="math" class="panel wrap">
+        <div class="bug">math route</div>
+        <h2>Use this order for first-principles study.</h2>
+        <div class="route">
+          <b><a href="math-glossary.html">Math glossary</a></b>
+          <span><span class="tag">answers</span><br />What does each word mean without jargon?</span>
+          <span><span class="tag">use when</span><br />A symbol, metric, or serving term is fuzzy.</span>
+          <span><span class="tag">next</span><br /><a href="formula-sheet.html">Formula sheet</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="formula-sheet.html">Formula sheet</a></b>
+          <span><span class="tag">answers</span><br />What are the equations used across the lab?</span>
+          <span><span class="tag">use when</span><br />You need the compact mathematical reference.</span>
+          <span><span class="tag">next</span><br /><a href="worked-examples-math.html">Worked examples</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="worked-examples-math.html">Worked examples</a></b>
+          <span><span class="tag">answers</span><br />What do the formulas produce with real numbers?</span>
+          <span><span class="tag">use when</span><br />You want token, KV, queue, LoRA, and speculative payoff arithmetic.</span>
+          <span><span class="tag">next</span><br /><a href="proof-sketches.html">Proof sketches</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="proof-sketches.html">Proof sketches</a></b>
+          <span><span class="tag">answers</span><br />Why does the method work, and when does it fail?</span>
+          <span><span class="tag">use when</span><br />You need the assumption behind a speed or memory claim.</span>
+          <span><span class="tag">next</span><br /><a href="source-math-deep-dives.html">Source math deep dives</a>.</span>
+        </div>
+      </section>
+
+      <section id="experiments" class="panel wrap">
+        <div class="bug">experiment route</div>
+        <h2>Use this order to go from paper to runnable evidence.</h2>
+        <div class="route">
+          <b><a href="paper-math-map.html">Paper math map</a></b>
+          <span><span class="tag">answers</span><br />Which object does each paper or source change?</span>
+          <span><span class="tag">use when</span><br />You are deciding what a source is actually claiming.</span>
+          <span><span class="tag">next</span><br /><a href="experiment-design-calculus.html">Experiment design calculus</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="experiment-design-calculus.html">Experiment design calculus</a></b>
+          <span><span class="tag">answers</span><br />What variable should change, what stays fixed, and what metric should move?</span>
+          <span><span class="tag">use when</span><br />You are about to run Colab, HF, Unsloth, TGI, vLLM, or TensorRT work.</span>
+          <span><span class="tag">next</span><br /><a href="experiment-claim-matrix.html">Experiment claim matrix</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="experiment-claim-matrix.html">Experiment claim matrix</a></b>
+          <span><span class="tag">answers</span><br />What does the run prove and what stays locked?</span>
+          <span><span class="tag">use when</span><br />You are writing the HTML result after a run.</span>
+          <span><span class="tag">next</span><br /><a href="result-provenance.html">Result provenance</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="production-systems.html">Production systems</a></b>
+          <span><span class="tag">answers</span><br />How do serving systems expose the runtime tradeoffs?</span>
+          <span><span class="tag">use when</span><br />You are comparing TGI, vLLM, TensorRT-LLM, JetStream, and overload controls.</span>
+          <span><span class="tag">next</span><br /><a href="capstone-readiness-checklist.html">Capstone readiness</a>.</span>
+        </div>
+      </section>
+
+      <section id="capstone" class="panel wrap">
+        <div class="bug">capstone route</div>
+        <h2>Use this order to finish the public case file.</h2>
+        <div class="route">
+          <b><a href="capstone-serving-decision.html">Capstone decision</a></b>
+          <span><span class="tag">answers</span><br />What does a defended serving decision require?</span>
+          <span><span class="tag">use when</span><br />You need the decision rule and claim template.</span>
+          <span><span class="tag">next</span><br /><a href="capstone-case-file.html">Capstone case file</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="capstone-case-file.html">Capstone case file</a></b>
+          <span><span class="tag">answers</span><br />What does the final report look like for one support/RAG streaming workload?</span>
+          <span><span class="tag">use when</span><br />You need a concrete target artifact.</span>
+          <span><span class="tag">next</span><br /><a href="capstone-readiness-checklist.html">Capstone readiness</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="capstone-readiness-checklist.html">Capstone readiness</a></b>
+          <span><span class="tag">answers</span><br />Which evidence gates must pass before recommendation?</span>
+          <span><span class="tag">use when</span><br />You are deciding whether a run is enough to publish a conclusion.</span>
+          <span><span class="tag">next</span><br />Run the missing host replay or lock the claim.</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
