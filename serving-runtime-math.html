@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Serving Runtime Math: LLM Inference</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1000px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 920px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 940px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .step {
+        display: grid;
+        grid-template-columns: 210px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .step b { color: var(--ink); }
+      .step span { color: var(--muted); font-size: 14px; }
+      .diagram {
+        min-height: 330px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        overflow: hidden;
+      }
+      svg { width: 100%; height: 100%; display: block; }
+      .node { fill: #132126; stroke: #31484e; stroke-width: 1.5; }
+      .node2 { fill: #10272b; stroke: #3c6a72; stroke-width: 1.5; }
+      .wire { fill: none; stroke: #45676f; stroke-width: 2; }
+      .label { fill: var(--ink); font: 13px var(--mono); }
+      .tiny { fill: var(--muted); font: 11px var(--mono); }
+      .cyan { fill: var(--cyan); }
+      .green { fill: var(--green); }
+      .amber { fill: var(--amber); }
+      .red { fill: var(--red); }
+      @media (max-width: 900px) {
+        .grid, .two, .step { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">serving runtime math</div>
+        <h1>A serving runtime is a queueing system wrapped around the token loop.</h1>
+        <p>
+          This page connects the transformer math to TGI, vLLM, runtime flags,
+          batching, streaming, overload control, and the final host proof. The
+          core question is simple: which requests enter, which token work runs
+          together, how much KV memory is reserved, and how long users wait?
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="kv-cache-math.html">KV cache math</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="production-systems.html">production</a>
+        <a href="#frame">frame</a>
+        <a href="#queue">queue</a>
+        <a href="#admission">admission</a>
+        <a href="#batching">batching</a>
+        <a href="#latency">latency</a>
+        <a href="#runtime">runtime flags</a>
+        <a href="#proof">proof</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="frame" class="panel wrap">
+        <div class="bug">core frame</div>
+        <h2>The runtime does not change the model function. It controls when and how often that function is called.</h2>
+        <p class="lead">
+          A model call estimates the next-token distribution. A serving runtime
+          manages many such calls under finite GPU memory, finite bandwidth,
+          finite compute, and impatient clients. That is why serving math is
+          queueing plus cache accounting plus repeated decode scheduling.
+        </p>
+        <div class="formula">request -> validate tokens -> admit or reject -> queue
+queue -> prefill batch -> first token
+active set -> repeated decode batches -> stream tokens
+finish -> free KV cache -> update metrics</div>
+        <div class="grid">
+          <div class="card measure">
+            <b>Request shape</b>
+            <span>Prompt tokens, max output tokens, sampling options, and stream mode define the work contract.</span>
+          </div>
+          <div class="card method">
+            <b>Runtime shape</b>
+            <span>Batch limits, sequence limits, KV allocator policy, and scheduler policy define what can run together.</span>
+          </div>
+          <div class="card warn">
+            <b>Evidence shape</b>
+            <span>A runtime claim is only fair when model, workload, host, GPU, client, and run ID match.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="queue" class="panel wrap">
+        <div class="bug">queueing</div>
+        <h2>If arrival rate exceeds service rate, waiting grows.</h2>
+        <p class="lead">
+          This is the first production fact. No runtime flag can make unlimited
+          traffic fit a finite server. If requests arrive faster than the server
+          can complete useful token work, queued work accumulates.
+        </p>
+        <div class="formula">lambda = arrival rate
+mu = sustainable service rate
+
+stable only if lambda < mu over the measured window
+if lambda >= mu, queue_wait and p95 latency grow</div>
+        <div class="step">
+          <b>Why average is weak</b>
+          <span>Average latency can look acceptable while a tail of users waits behind long prompts or long outputs.</span>
+          <span>p95 and p99 expose whether the queue is staying bounded for most users.</span>
+        </div>
+        <div class="step">
+          <b>Why retries matter</b>
+          <span>A failed or timed-out request can become a second arrival if the client retries immediately.</span>
+          <span>Without backoff and retry budgets, overload creates more overload.</span>
+        </div>
+      </section>
+
+      <section id="admission" class="panel wrap">
+        <div class="bug">admission control</div>
+        <h2>Admission flags are mathematical gates around token count and KV memory.</h2>
+        <div class="formula">request can enter only if:
+input_tokens <= max_input_tokens
+input_tokens + requested_output_tokens <= max_total_tokens
+active_sequences + 1 <= max_active_sequences
+batch_prefill_tokens + input_tokens <= max_batch_prefill_tokens
+estimated_KV_after_admission <= available_KV_room</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Reject early</b>
+            <span>Rejecting or trimming before prefill avoids wasting GPU work on a request that cannot finish safely.</span>
+          </div>
+          <div class="card trade">
+            <b>Reserve honestly</b>
+            <span>Output-token caps are part of memory planning because future generated tokens append future KV rows.</span>
+          </div>
+          <div class="card warn">
+            <b>False safety</b>
+            <span>Only checking prompt length can still admit too much total cache growth during decode.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="batching" class="panel wrap">
+        <div class="bug">batching</div>
+        <h2>Batching trades lower per-token overhead for higher shared-memory pressure.</h2>
+        <div class="two">
+          <div>
+            <p>
+              A GPU likes larger matrix shapes. Batching gives the runtime more
+              token work per scheduling step. During decode, continuous batching
+              keeps a changing active set: finished requests leave, waiting
+              requests enter, and each active request usually advances by one
+              generated token per decode round.
+            </p>
+            <div class="formula">decode round work =
+one query token per active sequence
++ read cached K/V for each active sequence
++ append one K/V row per active sequence that continues</div>
+          </div>
+          <div class="diagram" aria-label="Continuous batching diagram">
+            <svg viewBox="0 0 760 330" role="img">
+              <text class="label cyan" x="45" y="42">time</text>
+              <path class="wire" d="M80 70 H700" />
+              <rect class="node2" x="90" y="95" width="120" height="52" rx="8" />
+              <text class="tiny" x="116" y="126">prefill A</text>
+              <rect class="node" x="230" y="95" width="90" height="52" rx="8" />
+              <text class="tiny" x="254" y="126">decode</text>
+              <rect class="node" x="340" y="95" width="90" height="52" rx="8" />
+              <text class="tiny" x="364" y="126">decode</text>
+              <rect class="node2" x="450" y="95" width="120" height="52" rx="8" />
+              <text class="tiny" x="474" y="126">prefill B</text>
+              <rect class="node" x="590" y="95" width="90" height="52" rx="8" />
+              <text class="tiny" x="614" y="126">decode</text>
+              <text class="label green" x="45" y="204">active set changes each round</text>
+              <text class="tiny" x="58" y="236">A: prompt done, streams token by token</text>
+              <text class="tiny" x="58" y="260">B: admitted later if token and KV budgets allow</text>
+              <text class="tiny amber" x="58" y="284">scheduler goal: keep useful work high without blowing up queue wait or KV bytes</text>
+            </svg>
+          </div>
+        </div>
+        <div class="step">
+          <b>Throughput win</b>
+          <span>Loaded weights are shared across requests, and larger shapes can use the GPU better.</span>
+          <span>This matters when the server is underfilled.</span>
+        </div>
+        <div class="step">
+          <b>Latency risk</b>
+          <span>Admitting too much work can delay first tokens and increase inter-token gaps.</span>
+          <span>This matters when user-visible streaming latency is the product requirement.</span>
+        </div>
+      </section>
+
+      <section id="latency" class="panel wrap">
+        <div class="bug">metrics</div>
+        <h2>Latency metrics are measurements of different parts of the chain.</h2>
+        <div class="formula">TTFT = queue_wait + validation/tokenization + prefill_wait + first_decode_gap
+ITL = time between streamed output tokens during decode
+completion_latency = TTFT + remaining_decode_time
+p95 = latency below which 95 percent of observed requests completed</div>
+        <div class="step">
+          <b>TTFT</b>
+          <span>Mostly exposes queueing and prompt prefill pressure.</span>
+          <span>Long prompts, cold starts, and overloaded prefill batches show up here.</span>
+        </div>
+        <div class="step">
+          <b>ITL</b>
+          <span>Exposes decode scheduler pressure and per-token runtime cost.</span>
+          <span>KV reads, active sequence count, batch policy, and memory bandwidth show up here.</span>
+        </div>
+        <div class="step">
+          <b>Tokens/sec</b>
+          <span>Useful for capacity planning, but incomplete alone.</span>
+          <span>A system can have high aggregate token rate while some users have bad p95 latency.</span>
+        </div>
+      </section>
+
+      <section id="runtime" class="panel wrap">
+        <div class="bug">runtime flags</div>
+        <h2>TGI and vLLM expose different surfaces over the same constraints.</h2>
+        <p class="lead">
+          TGI documents the serving split into router, launcher, and model
+          server. The router receives requests, queues them, forms batches, and
+          sends work to the model server. The important flags are not just
+          configuration names; they are limits on the equations above.
+        </p>
+        <div class="step">
+          <b>TGI router</b>
+          <span><a href="https://huggingface.co/docs/text-generation-inference/architecture">TGI architecture docs</a> describe router/webserver, launcher, and model server roles.</span>
+          <span>The router is where request buffering, batching, queues, schedulers, and block allocators become operational behavior.</span>
+        </div>
+        <div class="step">
+          <b>TGI limits</b>
+          <span><a href="https://huggingface.co/docs/text-generation-inference/basic_tutorials/launcher">TGI launcher arguments</a> include max concurrent requests, max input tokens, max total tokens, max batch prefill tokens, max batch total tokens, and max waiting tokens.</span>
+          <span>Each one bounds a different source of work, memory, or waiting.</span>
+        </div>
+        <div class="step">
+          <b>vLLM side</b>
+          <span>The vLLM/PagedAttention result is centered on efficient KV block allocation and high-throughput serving under dynamic sequence lengths.</span>
+          <span>Its advantage must still be measured under the same workload and host rather than inferred from mechanism alone.</span>
+        </div>
+      </section>
+
+      <section id="proof" class="panel wrap">
+        <div class="bug">fair proof</div>
+        <h2>The matched host proof is the moment mechanism becomes a benchmark claim.</h2>
+        <p class="lead">
+          Colab runs taught mechanisms: cache, quantization, speculative decode,
+          vLLM pressure, Unsloth adapters. The final runtime claim needs a
+          stricter standard because runtime behavior depends on host details.
+        </p>
+        <div class="formula">fair TGI/vLLM comparison =
+same model id and revision
++ same tokenizer and prompt formatting
++ same workload file and request ids
++ same host and GPU inventory
++ same client behavior
++ same measured fields
++ returned logs and run id</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Allowed before host</b>
+            <span>Mechanism explanations, local simulations, Colab workflow proof, and bounded source-backed expectations.</span>
+          </div>
+          <div class="card warn">
+            <b>Locked before host</b>
+            <span>Production winner, final speedup number, and general claim that one runtime is faster for our workload.</span>
+          </div>
+          <div class="card trade">
+            <b>Next evidence</b>
+            <span>Run the prepared NVIDIA Docker host bundle and import the returned archive before writing the final speed section.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
