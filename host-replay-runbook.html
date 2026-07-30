@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Host Replay Runbook: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1260px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1040px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      p { color: var(--muted); }
+      header p { max-width: 980px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 980px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card, .metric {
+        min-height: 124px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b, .metric b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .metric b {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .metric strong {
+        display: block;
+        color: var(--ink);
+        font-size: 26px;
+        line-height: 1.05;
+      }
+      .card span, .card p, .metric span, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .row {
+        display: grid;
+        grid-template-columns: 210px repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); }
+      .row span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row .tag {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row.ready { border-color: rgba(121, 212, 147, .45); }
+      .row.locked { border-color: rgba(219, 101, 85, .45); }
+      .row.mixed { border-color: rgba(232, 166, 75, .45); }
+      @media (max-width: 1150px) {
+        .grid, .metric-grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">host replay runbook</div>
+        <h1>The capstone runtime claim starts only after the same workload runs on a real NVIDIA Docker host.</h1>
+        <p>
+          This is the public-safe handoff for the matched TGI and vLLM run. It
+          explains what is ready, what host is required, what command sequence
+          should run, what files must return, and why the final speed claim stays
+          locked until the return contracts pass.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="next-runs-board.html">next runs</a>
+        <a href="capstone-readiness-checklist.html">capstone readiness</a>
+        <a href="capstone-serving-decision.html">capstone decision</a>
+        <a href="artifact-inventory.html">artifact inventory</a>
+        <a href="vllm-results-synthesis.html">vLLM results</a>
+        <a href="production-systems.html">production</a>
+        <a href="#state">state</a>
+        <a href="#host">host gate</a>
+        <a href="#run">run</a>
+        <a href="#return">return</a>
+        <a href="#claims">claims</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="state" class="panel wrap">
+        <div class="bug">current state</div>
+        <h2>The bundle is ready to transfer; this local machine is not the proof host.</h2>
+        <p class="lead">
+          The local audit says the GPU-host handoff archive is reproducible,
+          self-tested, and ready to copy. The local preflight also says Docker
+          alone is not enough: the proof host must expose NVIDIA drivers through
+          <code>nvidia-smi</code> and Docker <code>--gpus all</code>.
+        </p>
+        <div class="metric-grid">
+          <div class="metric"><b>bundle files</b><strong>14 / 14</strong><span>Required bundle inputs present.</span></div>
+          <div class="metric"><b>archive members</b><strong>16</strong><span>Bundle self-test passed.</span></div>
+          <div class="metric"><b>archive bytes</b><strong>26,751</strong><span>Small handoff bundle, not model weights.</span></div>
+          <div class="metric"><b>local blocker</b><strong>GPU access</strong><span>No local NVIDIA/Docker-GPU proof.</span></div>
+        </div>
+        <div class="formula">ready local files:
+gpu_host_run_bundle.tar.gz
+gpu_host_run_bundle.sha256
+
+verified first host command:
+sha256sum -c gpu_host_run_bundle.sha256 && tar -xzf gpu_host_run_bundle.tar.gz && bash run_complete_gpu_host_campaign.sh</div>
+      </section>
+
+      <section id="host" class="panel wrap">
+        <div class="bug">host gate</div>
+        <h2>The required host is a Linux NVIDIA GPU host with Docker GPU runtime.</h2>
+        <p class="lead">
+          Colab is useful for mechanism learning, but it is not the right surface
+          for this TGI proof because TGI needs a Docker-capable host. The host
+          gate exists to fail early before model pulls and server launches waste
+          time.
+        </p>
+        <div class="row ready">
+          <b>Required host</b>
+          <span><span class="tag">GPU</span><br />NVIDIA GPU visible through <code>nvidia-smi</code>.</span>
+          <span><span class="tag">Docker</span><br />Docker daemon works.</span>
+          <span><span class="tag">GPU container</span><br /><code>docker run --gpus all ... nvidia-smi</code> succeeds.</span>
+          <span><span class="tag">disk/network</span><br />Enough room and network access for image/model pulls.</span>
+        </div>
+        <div class="row locked">
+          <b>Local preflight</b>
+          <span><span class="tag">passed</span><br />4 of 6 checks.</span>
+          <span><span class="tag">blocked</span><br /><code>nvidia_smi</code> and <code>docker_gpu_access</code>.</span>
+          <span><span class="tag">meaning</span><br />Local machine cannot unlock TGI host proof.</span>
+          <span><span class="tag">next</span><br />Run the bundle on the external NVIDIA host.</span>
+        </div>
+      </section>
+
+      <section id="run" class="panel wrap">
+        <div class="bug">host command sequence</div>
+        <h2>Run one shared campaign so TGI and vLLM use the same workload contract.</h2>
+        <p class="lead">
+          The wrapper sets one campaign identity, runs preflight first, runs TGI
+          and matched vLLM using the shared workload, and attempts return
+          packaging so partial failures still come back as evidence.
+        </p>
+        <div class="formula">on the NVIDIA host:
+sha256sum -c gpu_host_run_bundle.sha256
+tar -xzf gpu_host_run_bundle.tar.gz
+bash run_complete_gpu_host_campaign.sh
+
+manual fallback:
+bash run_gpu_host_preflight.sh
+bash run_gpu_host_campaign.sh
+bash collect_gpu_host_returns.sh</div>
+        <div class="row ready">
+          <b>TGI leg</b>
+          <span><span class="tag">script</span><br /><code>run_tgi_gpu_vm_benchmark.sh</code></span>
+          <span><span class="tag">port</span><br />Default 8080.</span>
+          <span><span class="tag">output</span><br /><code>tgi_gpu_vm_results.json</code></span>
+          <span><span class="tag">proof limit</span><br />No TGI speed claim until vLLM matched result also exists.</span>
+        </div>
+        <div class="row ready">
+          <b>vLLM leg</b>
+          <span><span class="tag">script</span><br /><code>run_vllm_matched_runtime_benchmark.sh</code></span>
+          <span><span class="tag">port</span><br />Default 8000.</span>
+          <span><span class="tag">output</span><br /><code>vllm_matched_runtime_results.json</code></span>
+          <span><span class="tag">proof limit</span><br />Must record matched CUDA/PyTorch/vLLM runtime metadata.</span>
+        </div>
+      </section>
+
+      <section id="return" class="panel wrap">
+        <div class="bug">return archive</div>
+        <h2>The benchmark is not usable until the return archive is imported and checked locally.</h2>
+        <p class="lead">
+          Returning files is a separate evidence step. The local importer fails
+          closed on checksum, manifest, and unsafe archive members. Only after
+          the returned files pass shape checks should the comparison builder
+          compute speed deltas.
+        </p>
+        <div class="formula">copy back from host:
+gpu_host_return_files.tar.gz
+gpu_host_return_files.sha256
+gpu_host_return_archive_manifest.json
+
+then locally:
+bash receive_gpu_host_returns.sh</div>
+        <div class="row locked">
+          <b>Current return state</b>
+          <span><span class="tag">expected</span><br />16 return files.</span>
+          <span><span class="tag">present</span><br />1 present locally.</span>
+          <span><span class="tag">archive</span><br /><code>gpu_host_return_files.tar.gz</code> is absent.</span>
+          <span><span class="tag">comparison</span><br />Final speed claim is locked.</span>
+        </div>
+        <div class="row ready">
+          <b>Import safety</b>
+          <span><span class="tag">checks</span><br />7 of 7 safety checks passed.</span>
+          <span><span class="tag">checksum</span><br />Mismatch fails closed.</span>
+          <span><span class="tag">manifest</span><br />Mismatch fails closed.</span>
+          <span><span class="tag">archive members</span><br />Unsafe paths fail closed.</span>
+        </div>
+      </section>
+
+      <section id="claims" class="panel wrap">
+        <div class="bug">claim locks</div>
+        <h2>The runbook itself proves readiness, not speed.</h2>
+        <div class="grid">
+          <div class="card method">
+            <b>Allowed now</b>
+            <span>The handoff archive is ready to copy to a proper NVIDIA Docker host, and the return/import path is defined and safety-checked.</span>
+          </div>
+          <div class="card trade">
+            <b>Allowed after return</b>
+            <span>If TGI and vLLM both return valid matched result files, the final builder can compare TTFT, p95 TTFT, completion latency, p95 completion, and token rates for this workload.</span>
+          </div>
+          <div class="card warn">
+            <b>Still locked</b>
+            <span>No TGI-vLLM production winner, no universal runtime ranking, and no post-host follow-up recommendations until the returned archive and fair-comparison gates pass.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
