@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Math First Principles: LLM Inference</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 980px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 900px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 940px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        align-items: stretch;
+      }
+      .card {
+        min-height: 132px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .table { display: grid; gap: 10px; }
+      .row {
+        display: grid;
+        grid-template-columns: 220px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .row b { color: var(--ink); }
+      .row span { color: var(--muted); font-size: 14px; }
+      .source-row {
+        display: grid;
+        grid-template-columns: 230px 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .source-row b {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .source-row span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .callout {
+        padding: 16px;
+        border: 1px solid rgba(232, 166, 75, .45);
+        border-radius: 8px;
+        background: rgba(232, 166, 75, .08);
+      }
+      .callout b { color: var(--amber); }
+      @media (max-width: 900px) {
+        .grid, .two, .row, .source-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">math first principles</div>
+        <h1>LLM inference works because every word becomes a sequence of vector operations under hard memory limits.</h1>
+        <p>
+          This page connects the papers, Hugging Face notebooks, Unsloth runs,
+          vLLM/TGI serving work, NVIDIA optimization notes, and Google serving
+          path into one mathematical story. The aim is to explain why each
+          method works, what it changes, and what it cannot prove by itself.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="big-picture-inference.html">big picture</a>
+        <a href="mechanisms.html">mechanisms</a>
+        <a href="scale-concepts.html">scale concepts</a>
+        <a href="practical-experiments.html">experiments</a>
+        <a href="production-systems.html">production</a>
+        <a href="result-provenance.html">provenance</a>
+        <a href="#problem">problem</a>
+        <a href="#math">core math</a>
+        <a href="#serving">serving math</a>
+        <a href="#papers">per source</a>
+        <a href="#experiments">what we ran</a>
+        <a href="#goal">end goal</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="problem" class="panel wrap">
+        <div class="bug">big problem</div>
+        <h2>The real problem is not making a model answer. It is making repeated conditional probability cheap enough to serve.</h2>
+        <p class="lead">
+          A language model is a function that turns a token history into scores
+          for the next token. In symbols, it estimates <code>P(next token | prior tokens)</code>.
+          In production, the same function is called again and again while many
+          requests compete for the same GPU memory and compute.
+        </p>
+        <div class="formula">request text -> token ids x_1 ... x_n
+model step -> logits z over vocabulary
+probabilities p_i = exp(z_i) / sum_j exp(z_j)
+sample or choose token x_(n+1)
+append token and repeat</div>
+        <div class="grid">
+          <div class="card measure">
+            <b>Mathematical unit</b>
+            <span>The unit is not a word. It is a token position with vectors flowing through layers.</span>
+          </div>
+          <div class="card method">
+            <b>Systems unit</b>
+            <span>The unit is not one request. It is prompt tokens, active decode tokens, KV cache blocks, and queue slots.</span>
+          </div>
+          <div class="card trade">
+            <b>Proof unit</b>
+            <span>A benchmark claim only means something when model, workload, host, client, runtime, and run ID match.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="math" class="panel wrap">
+        <div class="bug">core math</div>
+        <h2>The transformer turns lookup, similarity, weighted averages, and matrix products into next-token probabilities.</h2>
+        <div class="table">
+          <div class="row">
+            <b>Tokens and embeddings</b>
+            <span>Tokenization maps text to integers. An embedding table maps each integer to a vector.</span>
+            <span><code>h_0[t] = E[x_t]</code>. This is a table lookup, but after lookup every token is a point in a learned coordinate system.</span>
+          </div>
+          <div class="row">
+            <b>Dot products</b>
+            <span>A dot product adds coordinate-by-coordinate agreements. Large positive terms pull the score up; negative terms push it down.</span>
+            <span><code>a . b = sum_i a_i b_i</code>. This is why matrix multiply is the workhorse: it is many dot products at once.</span>
+          </div>
+          <div class="row">
+            <b>Attention scores</b>
+            <span>Each token creates a query, key, and value. The query asks what it needs; keys describe what each position offers; values carry content to mix.</span>
+            <span><code>Q = H W_Q</code>, <code>K = H W_K</code>, <code>V = H W_V</code>, <code>S = Q K^T / sqrt(d)</code>.</span>
+          </div>
+          <div class="row">
+            <b>Causal mask</b>
+            <span>During generation, position t can read positions up to t, but not future positions.</span>
+            <span>The mask sets illegal future scores to a very negative number before softmax, so their probability becomes nearly zero.</span>
+          </div>
+          <div class="row">
+            <b>Softmax</b>
+            <span>Softmax turns arbitrary scores into positive shares that sum to one.</span>
+            <span><code>softmax(s_i) = exp(s_i - max(s)) / sum_j exp(s_j - max(s))</code>. Subtracting the max keeps the arithmetic stable.</span>
+          </div>
+          <div class="row">
+            <b>Value mix</b>
+            <span>Attention output is a weighted average of value vectors, one vector per position.</span>
+            <span><code>O = softmax(S) V</code>. The model is literally blending earlier token states according to learned relevance scores.</span>
+          </div>
+          <div class="row">
+            <b>MLP block</b>
+            <span>Attention moves information across positions. The feed-forward network transforms each position's vector independently.</span>
+            <span><code>MLP(h) = W_2 activation(W_1 h)</code>. The expansion layer gives the model room to compute features, then project them back.</span>
+          </div>
+          <div class="row">
+            <b>Final logits</b>
+            <span>The last hidden vector is projected against vocabulary vectors to score possible next tokens.</span>
+            <span><code>z = h_last W_vocab^T</code>. Temperature and top-k/top-p reshape the distribution before selection.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="serving" class="panel wrap">
+        <div class="bug">serving math</div>
+        <h2>Inference optimization works by changing which arithmetic is repeated, stored, batched, or skipped.</h2>
+        <div class="grid">
+          <div class="card measure">
+            <b>Prefill</b>
+            <span>Prompt length n creates many token positions at once. Attention score work contains an n by n shape inside each layer, so long prompts delay the first token.</span>
+          </div>
+          <div class="card measure">
+            <b>Decode</b>
+            <span>After prefill, each step adds one query token but reads the stored past. The visible sequence grows by one token per step.</span>
+          </div>
+          <div class="card method">
+            <b>KV cache</b>
+            <span>Instead of recomputing old K and V rows, the server stores them and reads them during decode.</span>
+          </div>
+        </div>
+        <div class="formula">KV bytes =
+layers * 2(K and V) * positions * KV_heads * head_dim * active_sequences * bytes_per_number</div>
+        <p>
+          This formula explains why "the model fits" is not enough. Weights are
+          mostly fixed after loading. KV cache grows with active traffic. Longer
+          prompts, longer outputs, more users, and higher precision all push the
+          same memory wall.
+        </p>
+        <div class="table">
+          <div class="row">
+            <b>Continuous batching</b>
+            <span>Each decode round can serve many active requests, usually one new token per active request.</span>
+            <span>It works when the GPU would otherwise sit underused. It fails when admission exceeds KV memory or batch-token limits.</span>
+          </div>
+          <div class="row">
+            <b>PagedAttention</b>
+            <span>Same attention equation, different storage policy for K and V.</span>
+            <span>Logical token order maps to fixed physical blocks, reducing wasted cache space from uneven request lengths.</span>
+          </div>
+          <div class="row">
+            <b>Prefix cache</b>
+            <span>If two requests share an exact token prefix, the server can reuse completed K/V blocks for that prefix.</span>
+            <span>This skips repeated prefill work only when token IDs, template, and prefix boundary match.</span>
+          </div>
+          <div class="row">
+            <b>Quantization</b>
+            <span>Store weights or cache values with fewer bytes per number.</span>
+            <span>It helps fit and bandwidth. It may add conversion overhead or numerical error, so speed is measured, not assumed.</span>
+          </div>
+          <div class="row">
+            <b>Speculative decoding</b>
+            <span>A smaller draft model proposes several tokens; the target model verifies them.</span>
+            <span>Expected win depends on accepted draft tokens minus draft overhead. If acceptance is low, the extra work can erase the gain.</span>
+          </div>
+          <div class="row">
+            <b>Queue control</b>
+            <span>If arrivals are faster than service, waiting grows without bound.</span>
+            <span>Rate limits, admission caps, timeouts, and retry budgets are mathematical controls around finite service rate.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="papers" class="panel wrap">
+        <div class="bug">per paper and source</div>
+        <h2>Each source is teaching one part of the same chain.</h2>
+        <div class="table">
+          <div class="source-row">
+            <b>vLLM PagedAttention paper</b>
+            <span>
+              The paper's central move is not changing attention math. It changes
+              KV cache allocation. Attention still reads K and V in token order,
+              but physical memory is split into blocks. This lets the runtime
+              admit more uneven-length sequences before memory waste becomes the
+              bottleneck. Source: <a href="https://arxiv.org/abs/2309.06180">arxiv.org/abs/2309.06180</a>.
+            </span>
+          </div>
+          <div class="source-row">
+            <b>vLLM blog</b>
+            <span>
+              The blog makes the systems intuition concrete: requests grow and
+              finish at different times, so contiguous reservation is a bad fit
+              for dynamic KV memory. Block tables preserve logical order while
+              allowing physical reuse. Source: <a href="https://vllm.ai/blog/2023-06-20-vllm">vllm.ai/blog/2023-06-20-vllm</a>.
+            </span>
+          </div>
+          <div class="source-row">
+            <b>Hugging Face Transformers</b>
+            <span>
+              The model-level docs explain knobs close to <code>model.generate()</code>:
+              cache choice, precision loading, quantization, static cache,
+              compilation, and speculative decoding. These affect memory,
+              repeated decode work, or launch overhead before we even add a
+              serving runtime. Source: <a href="https://huggingface.co/docs/transformers/main/llm_optims">Transformers LLM optimization docs</a>.
+            </span>
+          </div>
+          <div class="source-row">
+            <b>Hugging Face TGI</b>
+            <span>
+              TGI turns generation math into a service with router, launcher,
+              model server, queues, streaming, token limits, batching controls,
+              metrics, tensor parallelism, quantization, and attention kernels.
+              Source: <a href="https://huggingface.co/docs/text-generation-inference/index">TGI docs</a>.
+            </span>
+          </div>
+          <div class="source-row">
+            <b>NVIDIA inference optimization</b>
+            <span>
+              NVIDIA's material focuses on making the same graph run faster:
+              precision, KV cache, batching, kernel efficiency, and engine
+              optimization. TensorRT-LLM can pay off when repeated production
+              traffic justifies build and deployment complexity. Source:
+              <a href="https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/">NVIDIA inference optimization</a>.
+            </span>
+          </div>
+          <div class="source-row">
+            <b>Google JetStream/GKE</b>
+            <span>
+              Google adds the cloud deployment proof: model storage, project
+              identity, quota, cluster, service endpoint, and operational
+              readiness. It is not new token math; it is the proof that the
+              serving system can exist on managed infrastructure. Source:
+              <a href="https://docs.cloud.google.com/kubernetes-engine/docs/tutorials/serve-llm-tpu-jetstream-pytorch">JetStream on GKE tutorial</a>.
+            </span>
+          </div>
+          <div class="source-row">
+            <b>Unsloth notebooks</b>
+            <span>
+              Unsloth is the training-adapter lane. LoRA changes a weight matrix
+              from <code>W</code> to <code>W + A B</code> with low-rank trainable
+              factors. GRPO-style runs create reward-shaped updates from grouped
+              completions. Our tiny Colab runs prove setup, adapter creation,
+              reload, and contract boundaries, not general quality. Source:
+              <a href="https://unsloth.ai/docs/get-started/unsloth-notebooks">Unsloth notebooks</a>.
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section id="experiments" class="panel wrap">
+        <div class="bug">what we ran</div>
+        <h2>Our experiments separate mechanism proof from speed proof.</h2>
+        <div class="grid">
+          <div class="card method">
+            <b>Hugging Face / Colab</b>
+            <span>Tokenizer, chat-template, cache, quantization-fit, and speculative-decoding probes show how model-level settings change token count, memory, and decode work.</span>
+          </div>
+          <div class="card method">
+            <b>vLLM / Colab</b>
+            <span>Serving probes show queue pressure, active sequences, prompt and output length pressure, prefix cache behavior, and streaming latency shape.</span>
+          </div>
+          <div class="card method">
+            <b>Unsloth / Colab</b>
+            <span>Setup, SFT LoRA, reload, GRPO reward contract, GRPO mini-run, reload, and quality probe show that adapter workflows run and produce bounded artifacts.</span>
+          </div>
+          <div class="card warn">
+            <b>Not yet unlocked</b>
+            <span>The final TGI versus vLLM speed claim is locked until the same workload runs on the same NVIDIA Docker host and returns the archive.</span>
+          </div>
+          <div class="card measure">
+            <b>Why this matters</b>
+            <span>Colab is good for learning mechanisms. A fair runtime comparison needs controlled host, GPU, model, workload, and client conditions.</span>
+          </div>
+          <div class="card trade">
+            <b>Next after host proof</b>
+            <span>Prompt-shape pressure, quantized serving variant, TensorRT-LLM build payback, JetStream cloud gate, and overload controls anchored to measured capacity.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="goal" class="panel wrap">
+        <div class="bug">meaty end-to-end goal</div>
+        <h2>The capstone is a defended serving decision, not a pile of notebook outputs.</h2>
+        <p class="lead">
+          The strong end-to-end goal is to take one workload from text shape to
+          production serving choice. We should be able to say: here is the
+          prompt and output distribution, here is how many tokens it creates,
+          here is the prefill/decode split, here is the KV memory bill, here is
+          what model-level settings changed, here is what vLLM and TGI did on
+          the same host, here is the overload policy, and here is the narrow
+          claim we can defend.
+        </p>
+        <div class="formula">defensible claim =
+same model + same workload + same host + same GPU + same client + same run id
++ measured TTFT, ITL, throughput, p95 latency, queue wait, GPU memory, and logs</div>
+        <div class="callout">
+          <b>Boundary</b>
+          <p>
+            Math explains why an optimization should help. Experiments decide
+            whether it helped here. Public pages should keep those two things
+            separate: mechanism, measured result, claim boundary, next proof.
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
