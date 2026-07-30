@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Adapter Training Math: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1000px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 920px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 940px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .step {
+        display: grid;
+        grid-template-columns: 215px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .step b { color: var(--ink); }
+      .step span { color: var(--muted); font-size: 14px; }
+      .diagram {
+        min-height: 330px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        overflow: hidden;
+      }
+      svg { width: 100%; height: 100%; display: block; }
+      .node { fill: #132126; stroke: #31484e; stroke-width: 1.5; }
+      .node2 { fill: #10272b; stroke: #3c6a72; stroke-width: 1.5; }
+      .wire { fill: none; stroke: #45676f; stroke-width: 2; }
+      .label { fill: var(--ink); font: 13px var(--mono); }
+      .tiny { fill: var(--muted); font: 11px var(--mono); }
+      .cyan { fill: var(--cyan); }
+      .green { fill: var(--green); }
+      .amber { fill: var(--amber); }
+      .red { fill: var(--red); }
+      @media (max-width: 900px) {
+        .grid, .two, .step { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">adapter training math</div>
+        <h1>Adapter training changes behavior by adding a small learned update to a frozen model.</h1>
+        <p>
+          This page explains why LoRA, QLoRA, and Unsloth-style notebook runs
+          belong in the inference lab. They do not optimize serving directly.
+          They answer a different question: can we change the model's behavior
+          with a small portable artifact while keeping the base model fixed?
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="kv-cache-math.html">KV cache math</a>
+        <a href="serving-runtime-math.html">serving runtime math</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="production-systems.html">production</a>
+        <a href="#frame">frame</a>
+        <a href="#lora">LoRA</a>
+        <a href="#qlora">QLoRA</a>
+        <a href="#loss">SFT loss</a>
+        <a href="#grpo">GRPO</a>
+        <a href="#unsloth">Unsloth</a>
+        <a href="#claims">claims</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="frame" class="panel wrap">
+        <div class="bug">problem</div>
+        <h2>Full fine-tuning is expensive because every weight becomes trainable state.</h2>
+        <p class="lead">
+          A pretrained model is a function with many matrices. Full fine-tuning
+          changes those matrices directly. That means gradients, optimizer
+          states, and updated weights for a very large parameter set. Adapter
+          training asks whether the needed behavior change can be represented by
+          a much smaller update.
+        </p>
+        <div class="formula">base inference:
+y = f(x; W)
+
+full fine-tune:
+y = f(x; W + DeltaW_full), where every element of W may move
+
+adapter fine-tune:
+y = f(x; W + DeltaW_small), where DeltaW_small has constrained form</div>
+        <div class="grid">
+          <div class="card measure">
+            <b>Serving question</b>
+            <span>How cheaply can fixed weights answer many requests?</span>
+          </div>
+          <div class="card method">
+            <b>Adapter question</b>
+            <span>How cheaply can we move model behavior for a task or style?</span>
+          </div>
+          <div class="card warn">
+            <b>Quality question</b>
+            <span>Did that movement generalize beyond the tiny training probe?</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="lora" class="panel wrap">
+        <div class="bug">low-rank update</div>
+        <h2>LoRA restricts the weight update to a product of two small matrices.</h2>
+        <div class="two">
+          <div>
+            <p>
+              A dense matrix update can change every direction independently.
+              LoRA assumes the useful change lives in a lower-dimensional
+              subspace. Instead of learning a full update matrix, it learns two
+              thinner matrices whose product has rank at most r.
+            </p>
+            <div class="formula">original layer:
+y = x W
+
+LoRA layer:
+y = x (W + (alpha / r) A B)
+
+W is frozen
+A and B are trainable
+rank(A B) <= r</div>
+          </div>
+          <div class="diagram" aria-label="LoRA low rank diagram">
+            <svg viewBox="0 0 760 330" role="img">
+              <text class="label cyan" x="45" y="42">full update</text>
+              <rect class="node2" x="45" y="65" width="170" height="190" rx="8" />
+              <text class="tiny" x="92" y="162">DeltaW</text>
+              <text class="tiny" x="67" y="184">d_in x d_out</text>
+              <path class="wire" d="M245 160 H330" />
+              <text class="label amber" x="360" y="42">LoRA factorization</text>
+              <rect class="node" x="365" y="65" width="90" height="190" rx="8" />
+              <text class="tiny" x="397" y="158">A</text>
+              <text class="tiny" x="382" y="181">d_in x r</text>
+              <text class="label" x="475" y="165">*</text>
+              <rect class="node2" x="510" y="112" width="170" height="90" rx="8" />
+              <text class="tiny" x="586" y="152">B</text>
+              <text class="tiny" x="552" y="174">r x d_out</text>
+              <text class="tiny green" x="365" y="278">train far fewer parameters when r is small</text>
+            </svg>
+          </div>
+        </div>
+        <div class="step">
+          <b>Why it can work</b>
+          <span>Many task adaptations do not need an arbitrary full-rank move in weight space.</span>
+          <span>If the useful change lies near a few directions, low rank captures enough movement at much lower cost.</span>
+        </div>
+        <div class="step">
+          <b>Parameter count</b>
+          <span>Full update: <code>d_in * d_out</code> trainable values.</span>
+          <span>LoRA update: <code>r * (d_in + d_out)</code> trainable values for that matrix.</span>
+        </div>
+        <div class="step">
+          <b>Inference boundary</b>
+          <span>The adapter can be merged into weights or applied at runtime depending on tooling.</span>
+          <span>Adapter creation is not the same as proving TGI/vLLM serving speed.</span>
+        </div>
+      </section>
+
+      <section id="qlora" class="panel wrap">
+        <div class="bug">quantized base</div>
+        <h2>QLoRA freezes a quantized base and trains adapters through it.</h2>
+        <p class="lead">
+          QLoRA lowers memory by keeping the pretrained base model in a low-bit
+          quantized form while training LoRA adapters. The gradients update the
+          adapter parameters, not the base quantized weights.
+        </p>
+        <div class="formula">base weights:
+W_quantized = quantize(W)
+
+forward path:
+y = f(x; dequantize(W_quantized) + A B)
+
+training:
+update A, B
+keep W_quantized frozen</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Memory win</b>
+            <span>Frozen base weights take fewer bytes, and optimizer state is needed mainly for adapter parameters.</span>
+          </div>
+          <div class="card trade">
+            <b>Approximation risk</b>
+            <span>The quantized base approximates the original base. Training must still produce useful logits through that approximation.</span>
+          </div>
+          <div class="card warn">
+            <b>Claim boundary</b>
+            <span>A QLoRA setup proof says the path fits and runs, not that the resulting model is generally better.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="loss" class="panel wrap">
+        <div class="bug">supervised fine-tuning</div>
+        <h2>SFT moves the adapter by penalizing wrong next-token probabilities on examples.</h2>
+        <p class="lead">
+          In supervised fine-tuning, each training example gives target tokens.
+          The model assigns probabilities to those tokens. The loss is high when
+          the target tokens receive low probability. Gradient descent changes
+          adapter weights to lower that loss.
+        </p>
+        <div class="formula">for target sequence y_1 ... y_T:
+loss = - sum_t log P_adapter(y_t | prompt, y_1 ... y_(t-1))
+
+update:
+A <- A - learning_rate * gradient_A(loss)
+B <- B - learning_rate * gradient_B(loss)</div>
+        <div class="step">
+          <b>What SFT learns</b>
+          <span>It increases probability of target continuations under the training distribution.</span>
+          <span>It does not automatically prove reasoning, safety, or broad task quality.</span>
+        </div>
+        <div class="step">
+          <b>Why held-out probes matter</b>
+          <span>The model can memorize tiny examples or learn formatting cues.</span>
+          <span>A separate held-out set checks whether the behavior moved beyond the exact training rows.</span>
+        </div>
+      </section>
+
+      <section id="grpo" class="panel wrap">
+        <div class="bug">group reward optimization</div>
+        <h2>GRPO-style training uses relative rewards across sampled completions.</h2>
+        <p class="lead">
+          Reward optimization does not start from one gold token sequence in the
+          same way as SFT. It samples completions, scores them, and updates the
+          policy toward completions that scored better under the reward rule.
+        </p>
+        <div class="formula">for one prompt:
+sample completions c_1 ... c_G
+score rewards r_1 ... r_G
+advantage_i = normalize(r_i within the group)
+update adapter to raise probability of completions with positive advantage
+and lower relative probability of poor completions</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Why it can work</b>
+            <span>The reward gives a direction when exact target text is not the only acceptable answer.</span>
+          </div>
+          <div class="card trade">
+            <b>Reward risk</b>
+            <span>The model optimizes the reward it sees. A narrow reward can teach shortcuts.</span>
+          </div>
+          <div class="card warn">
+            <b>Tiny-run boundary</b>
+            <span>A two-step GRPO run is an API and artifact proof. It is not evidence of stable reasoning improvement.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="unsloth" class="panel wrap">
+        <div class="bug">Unsloth lane</div>
+        <h2>Unsloth is useful here because it makes adapter experiments cheap enough to run in Colab.</h2>
+        <p class="lead">
+          The Unsloth notebook path gives us a practical way to run setup, SFT,
+          GRPO reward-contract checks, adapter save/reload, and held-out probes
+          on a rented notebook GPU. In this lab, its role is learning-by-doing
+          for adapter workflows, not replacing the serving runtime proof.
+        </p>
+        <div class="step">
+          <b>Setup proof</b>
+          <span>Install/import path, GPU metadata, package versions, and a successful model/adaptation path.</span>
+          <span>This proves the notebook environment can run the workflow.</span>
+        </div>
+        <div class="step">
+          <b>Artifact proof</b>
+          <span>Saved LoRA adapter files, tokenizer/config files, archive hash, manifest, and fresh-session reload.</span>
+          <span>This proves the training output is portable enough to inspect and reuse.</span>
+        </div>
+        <div class="step">
+          <b>Quality proof</b>
+          <span>Requires longer training, held-out prompts, baseline comparison, reward audit, and repeated runs.</span>
+          <span>Our tiny Colab runs intentionally do not claim this.</span>
+        </div>
+      </section>
+
+      <section id="claims" class="panel wrap">
+        <div class="bug">sources and claim boundary</div>
+        <h2>The adapter lane changes model behavior; the serving lane measures runtime behavior.</h2>
+        <div class="step">
+          <b>LoRA paper</b>
+          <span><a href="https://arxiv.org/abs/2106.09685">LoRA</a> freezes pretrained weights and learns low-rank trainable matrices inside transformer layers.</span>
+          <span>Our page uses that as the mathematical reason adapter files can be much smaller than full model updates.</span>
+        </div>
+        <div class="step">
+          <b>QLoRA paper</b>
+          <span><a href="https://arxiv.org/abs/2305.14314">QLoRA</a> backpropagates through a frozen quantized base into LoRA adapters, lowering memory enough for larger fine-tunes.</span>
+          <span>Our Colab setup lane should be read as a memory/workflow proof before any quality claim.</span>
+        </div>
+        <div class="step">
+          <b>PEFT and Unsloth</b>
+          <span><a href="https://huggingface.co/docs/peft/main/en/package_reference/lora">Hugging Face PEFT LoRA docs</a> and <a href="https://unsloth.ai/docs/get-started/unsloth-notebooks">Unsloth notebooks</a> are the practical notebook/tooling bridge.</span>
+          <span>They tell us how to run the workflow; our artifacts tell us what we actually ran.</span>
+        </div>
+        <div class="step">
+          <b>Final boundary</b>
+          <span>Adapter result: did behavior move under a training/evaluation protocol?</span>
+          <span>Serving result: did TGI or vLLM serve the same workload better on the same host?</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
