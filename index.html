@@ -243,6 +243,41 @@
             page should improve after the result.
           </span>
         </div>
+        <div class="audit-note">
+          <b>First-principles math track.</b>
+          <span>
+            Start with <a href="first-principles-study-path.html">the study path</a>,
+            use <a href="math-glossary.html">the glossary</a> when a term is
+            unclear, then read the deep pages for attention, KV cache, serving
+            runtimes, and adapter training before the capstone decision.
+          </span>
+        </div>
+        <div class="foundation-grid">
+          <article>
+            <span class="step-num">A</span>
+            <h3>Read the route</h3>
+            <p><a href="first-principles-study-path.html">Study path</a> orders the public pages by dependency, from token math to serving decision.</p>
+            <div class="mini-flow"><span>terms</span><span>-></span><span>math</span></div>
+          </article>
+          <article>
+            <span class="step-num">B</span>
+            <h3>Open the deep math</h3>
+            <p><a href="attention-math.html">Attention</a>, <a href="kv-cache-math.html">KV cache</a>, and <a href="serving-runtime-math.html">serving runtime</a> explain why the methods work.</p>
+            <div class="mini-flow"><span>QKV</span><span>-></span><span>queue</span></div>
+          </article>
+          <article>
+            <span class="step-num">C</span>
+            <h3>Separate claims</h3>
+            <p><a href="experiment-claim-matrix.html">Experiment claim matrix</a> says what each notebook or host run can prove and what stays locked.</p>
+            <div class="mini-flow"><span>run</span><span>-></span><span>claim</span></div>
+          </article>
+          <article>
+            <span class="step-num">D</span>
+            <h3>Make the decision</h3>
+            <p><a href="capstone-serving-decision.html">Capstone decision</a> ties workload, token bill, KV bill, runtime proof, and non-claims together.</p>
+            <div class="mini-flow"><span>evidence</span><span>-></span><span>choice</span></div>
+          </article>
+        </div>
         <div class="walkthrough">
           <div class="walk-controls">
             <button id="walkNext" type="button">Next step</button>
