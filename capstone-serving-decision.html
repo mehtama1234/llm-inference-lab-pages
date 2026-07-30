@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capstone Serving Decision: LLM Inference Lab</title>
+    <style>
+      :root {
+        --bg: #071012;
+        --panel: #0d171a;
+        --panel2: #111e22;
+        --ink: #e8f4f2;
+        --muted: #9eb0ad;
+        --line: #26383d;
+        --cyan: #58d8e6;
+        --green: #79d493;
+        --amber: #e8a64b;
+        --red: #db6555;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.58;
+      }
+      header {
+        padding: 54px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgba(88, 216, 230, .06) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(88, 216, 230, .05) 1px, transparent 1px),
+          var(--bg);
+        background-size: 42px 42px;
+      }
+      .wrap { width: min(1220px, calc(100% - 36px)); margin: 0 auto; }
+      .bug {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 {
+        max-width: 1000px;
+        margin: 12px 0 16px;
+        font-size: clamp(36px, 5vw, 64px);
+        line-height: 1;
+      }
+      h2 {
+        margin-bottom: 10px;
+        font-size: clamp(26px, 3vw, 40px);
+        line-height: 1.06;
+      }
+      h3 { margin-bottom: 8px; font-size: 17px; }
+      p { color: var(--muted); }
+      header p { max-width: 930px; font-size: 18px; }
+      a { color: #a4eef4; }
+      code {
+        font-family: var(--mono);
+        color: #d7f8fb;
+        background: #0b1518;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: rgba(7, 16, 18, .92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .nav .wrap {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px 0;
+      }
+      .nav a {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 7px 10px;
+        color: #a4eef4;
+        text-decoration: none;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      main { padding: 28px 0 70px; }
+      .panel {
+        margin: 0 0 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .lead {
+        max-width: 960px;
+        color: #c8d8d5;
+        font-size: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .card {
+        min-height: 126px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+      }
+      .card b {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .card span, .card p, li {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card.method { border-color: rgba(121, 212, 147, .45); }
+      .card.trade { border-color: rgba(232, 166, 75, .45); }
+      .card.warn { border-color: rgba(219, 101, 85, .45); }
+      .card.measure { border-color: rgba(88, 216, 230, .45); }
+      .formula {
+        margin: 14px 0;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #091315;
+        color: #d7f8fb;
+        font-family: var(--mono);
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 220px 1fr 1fr;
+        gap: 12px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        margin-top: 10px;
+      }
+      .row b { color: var(--ink); }
+      .row span { color: var(--muted); font-size: 14px; }
+      @media (max-width: 1000px) {
+        .grid, .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="bug">capstone serving decision</div>
+        <h1>The end-to-end goal is a defended serving decision with bounded claims.</h1>
+        <p>
+          This is the public case-file template for the lab. The deep pages
+          explain the math. This page says how that math becomes a decision:
+          which workload we serve, what it costs in tokens and KV memory, what
+          TGI and vLLM prove on the same host, and what we still refuse to claim.
+        </p>
+      </div>
+    </header>
+
+    <div class="nav">
+      <div class="wrap">
+        <a href="index.html">lab</a>
+        <a href="math-first-principles.html">math first principles</a>
+        <a href="attention-math.html">attention math</a>
+        <a href="kv-cache-math.html">KV cache math</a>
+        <a href="serving-runtime-math.html">serving runtime math</a>
+        <a href="adapter-training-math.html">adapter training math</a>
+        <a href="math-glossary.html">math glossary</a>
+        <a href="paper-math-map.html">paper math map</a>
+        <a href="production-systems.html">production</a>
+        <a href="#question">question</a>
+        <a href="#evidence">evidence</a>
+        <a href="#calculus">decision calculus</a>
+        <a href="#template">claim template</a>
+        <a href="#next">next proof</a>
+      </div>
+    </div>
+
+    <main>
+      <section id="question" class="panel wrap">
+        <div class="bug">decision question</div>
+        <h2>For one real workload, which serving path should we trust and why?</h2>
+        <p class="lead">
+          The capstone is not "learn every inference trick." The capstone is:
+          choose a serving path for a defined workload and defend that choice
+          from first principles, measured experiments, and explicit non-claims.
+        </p>
+        <div class="formula">serving decision =
+workload shape
++ model and tokenizer choice
++ prompt/output token distribution
++ prefill/decode accounting
++ KV memory capacity
++ runtime comparison evidence
++ overload policy
++ adapter boundary
++ deployment boundary</div>
+        <div class="grid">
+          <div class="card measure">
+            <b>Workload</b>
+            <span>Prompt lengths, output lengths, streaming requirement, concurrency, timeout budget, and prompt-template stability.</span>
+          </div>
+          <div class="card method">
+            <b>Runtime</b>
+            <span>TGI, vLLM, TensorRT-LLM, or cloud serving path selected by measured bottleneck, not preference.</span>
+          </div>
+          <div class="card warn">
+            <b>Boundary</b>
+            <span>Colab proves mechanisms and workflows. The final TGI/vLLM speed claim needs the matched NVIDIA Docker host run.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="evidence" class="panel wrap">
+        <div class="bug">evidence stack</div>
+        <h2>Every layer of evidence answers a different question.</h2>
+        <div class="row">
+          <b>First-principles math</b>
+          <span>What computation is the model doing?</span>
+          <span><a href="attention-math.html">Attention math</a>, <a href="kv-cache-math.html">KV cache math</a>, and <a href="math-glossary.html">glossary</a> explain the objects.</span>
+        </div>
+        <div class="row">
+          <b>Model-level probes</b>
+          <span>What do tokenization, cache, quantization, and decoding settings change before a server is added?</span>
+          <span>Hugging Face/Colab runs are mechanism proof, not production speed proof.</span>
+        </div>
+        <div class="row">
+          <b>Adapter lane</b>
+          <span>Can we create and reload small LoRA/GRPO artifacts?</span>
+          <span><a href="adapter-training-math.html">Adapter training math</a> separates workflow proof from quality proof.</span>
+        </div>
+        <div class="row">
+          <b>Serving pressure</b>
+          <span>Which resource hits first under concurrency: prompt tokens, output tokens, active sequences, batch budget, or KV memory?</span>
+          <span><a href="serving-runtime-math.html">Serving runtime math</a> maps those pressures to queue and admission formulas.</span>
+        </div>
+        <div class="row">
+          <b>Matched host proof</b>
+          <span>On the same NVIDIA host, same model, same workload, and same client, how do TGI and vLLM differ?</span>
+          <span>This is the locked evidence gate for a runtime winner.</span>
+        </div>
+      </section>
+
+      <section id="calculus" class="panel wrap">
+        <div class="bug">decision calculus</div>
+        <h2>The runtime choice follows the bottleneck.</h2>
+        <div class="row">
+          <b>Long TTFT</b>
+          <span>Likely pressure: queue wait, prompt length, prefill batching, cold start, or tokenizer/template bloat.</span>
+          <span>Try prompt reduction, prefix cache, chunked prefill, admission limits, and separate long-prompt traffic.</span>
+        </div>
+        <div class="row">
+          <b>Bad ITL</b>
+          <span>Likely pressure: decode step time, active sequence count, memory bandwidth, KV reads, or scheduler policy.</span>
+          <span>Try decode batching settings, lower active sequence cap, quantization checks, or a runtime with better decode scheduling.</span>
+        </div>
+        <div class="row">
+          <b>OOM under traffic</b>
+          <span>Likely pressure: KV cache growth, too many active requests, large context, large output cap, or poor allocation.</span>
+          <span>Use KV byte accounting, PagedAttention/vLLM evidence, stricter token caps, lower precision where safe, and admission control.</span>
+        </div>
+        <div class="row">
+          <b>High average throughput, bad p95</b>
+          <span>Likely pressure: unfair scheduling, overload, mixed long/short requests, or retry amplification.</span>
+          <span>Use p95, queue wait, timeout, breaker, retry budget, and traffic shaping rather than tokens/sec alone.</span>
+        </div>
+        <div class="row">
+          <b>Need changed behavior</b>
+          <span>Serving knobs do not change model skill. Adapter training may move behavior.</span>
+          <span>Use LoRA/Unsloth only with a separate quality protocol; do not treat adapter setup as serving proof.</span>
+        </div>
+      </section>
+
+      <section id="template" class="panel wrap">
+        <div class="bug">claim template</div>
+        <h2>The final writeup should make one narrow claim and show its proof.</h2>
+        <p class="lead">
+          The fair TGI/vLLM comparison is the center of the final serving claim:
+          same workload, same host, same client, same model, same metrics, and
+          the same willingness to report failures.
+        </p>
+        <div class="formula">We tested:
+model: [id + revision]
+tokenizer/template: [exact version or hash]
+workload: [file + SHA + request IDs]
+host: [GPU inventory + driver + container/runtime]
+runtimes: [TGI flags] vs [vLLM flags]
+client: [same client, timeout, concurrency, streaming mode]
+metrics: TTFT, ITL, completion latency, p95, tokens/sec, queue wait, GPU memory
+
+Allowed claim:
+For this workload on this host, runtime A/B showed [measured difference].
+
+Not claimed:
+Universal runtime superiority, quality improvement, cloud performance, or adapter benefit unless separately tested.</div>
+        <div class="grid">
+          <div class="card method">
+            <b>Mechanism section</b>
+            <span>Explain why the result makes sense using attention, KV, batching, and queue math.</span>
+          </div>
+          <div class="card trade">
+            <b>Evidence section</b>
+            <span>Show raw run identity, metrics, logs, workload hash, and pass/fail contracts.</span>
+          </div>
+          <div class="card warn">
+            <b>Non-claim section</b>
+            <span>Explicitly list what this run does not prove so the page stays honest.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="next" class="panel wrap">
+        <div class="bug">next proof</div>
+        <h2>The immediate unfinished capstone step is still the matched TGI/vLLM host archive.</h2>
+        <p class="lead">
+          The public pages now explain the math and the evidence contract. The
+          remaining runtime unlock is the prepared NVIDIA Docker host campaign.
+          Until that archive returns and passes verification, the final speed
+          claim stays locked.
+        </p>
+        <div class="formula">current next action:
+sha256sum -c gpu_host_run_bundle.sha256
+tar -xzf gpu_host_run_bundle.tar.gz
+bash run_complete_gpu_host_campaign.sh
+
+then return and import:
+gpu_host_return_files.tar.gz</div>
+      </section>
+    </main>
+  </body>
+</html>
