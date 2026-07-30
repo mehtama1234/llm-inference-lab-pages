@@ -171,6 +171,7 @@
     <div class="nav">
       <div class="wrap">
         <a href="index.html">lab</a>
+        <a href="public-static-audit.html">static audit</a>
         <a href="end-to-end-synthesis.html">end-to-end synthesis</a>
         <a href="capstone-case-file.html">capstone case file</a>
         <a href="capstone-readiness-checklist.html">capstone readiness</a>
@@ -289,6 +290,12 @@
           <b><a href="result-provenance.html">Result provenance</a></b>
           <span><span class="tag">answers</span><br />Which artifacts are real measurements, mixed records, contracts, runbooks, simulations, or audits?</span>
           <span><span class="tag">use when</span><br />You are about to promote a number into a public claim.</span>
+          <span><span class="tag">next</span><br /><a href="public-static-audit.html">Public static audit</a>.</span>
+        </div>
+        <div class="route">
+          <b><a href="public-static-audit.html">Public static audit</a></b>
+          <span><span class="tag">answers</span><br />Which public pages are standalone reports and which older pages are local dashboards?</span>
+          <span><span class="tag">use when</span><br />You are reading the site on GitHub Pages without the private JSON artifacts.</span>
           <span><span class="tag">next</span><br /><a href="hf-results-synthesis.html">HF results synthesis</a>.</span>
         </div>
         <div class="route">
@@ -324,7 +331,7 @@
         <div class="route">
           <b><a href="production-systems.html">Production systems</a></b>
           <span><span class="tag">answers</span><br />How do serving systems expose the runtime tradeoffs?</span>
-          <span><span class="tag">use when</span><br />You are comparing TGI, vLLM, TensorRT-LLM, JetStream, and overload controls.</span>
+          <span><span class="tag">use when</span><br />You are running the local lab with private JSON artifacts; on public Pages, use the static audit and locked comparison first.</span>
           <span><span class="tag">next</span><br /><a href="capstone-readiness-checklist.html">Capstone readiness</a>.</span>
         </div>
       </section>
